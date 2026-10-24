@@ -1,7 +1,7 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const N=require('./network.js');
-test('extract allowed prefixes, S/M/X, lengths, and internal separators',()=>{
+test('extract allowed prefixes, S/M/X/T, lengths, and internal separators',()=>{
  assert.deepEqual(N.extract('A_12-S345-C12X3456'),['A12S345','C12X3456']);
  assert.deepEqual(N.extract('O12M1234'),['O12M1234']);
  for(const value of ['B12S345','A12Z345','A1S345','A12S34567'])assert.deepEqual(N.extract(value),[]);
@@ -15,7 +15,7 @@ test('extract identifiers while discarding descriptive prefixes, suffixes and wh
 });
 test('GNE keeps the primary name and rejects unsupported primary types instead of using annotations',()=>{
  assert.equal(N.primaryName('A12X345 Main site (C12M3456)_IDU1'),'A12X345');
- assert.equal(N.primaryName('A12T345 (C12M3456)'), '');
+ assert.equal(N.primaryName('A12Z345 (C12M3456)'), '');
  assert.equal(N.primaryName('A12X345_6900'),'A12X345');
  assert.equal(N.primaryName('A12X34567'),'');
  assert.deepEqual(N.extract('A12X345_6900-C12M3456 IDU1'),['A12X345','C12M3456']);
@@ -25,10 +25,16 @@ test('GNE table reads the name column only, never subnet names',()=>{
   {value:'Subnet',row:1,column:1},{value:'GNE Name',row:1,column:2},
   {value:'O12S345',row:2,column:1},{value:'A12X345 Primary (C12M3456)',row:2,column:2},
   {value:'O12S345',row:3,column:1},{value:'A12X345_IDU2',row:3,column:2},
-  {value:'C12M3456',row:4,column:1},{value:'A12T345 (C12M3456)',row:4,column:2}
+  {value:'C12M3456',row:4,column:1},{value:'A12Z345 (C12M3456)',row:4,column:2}
  ]);
  assert.equal(result.column,2);assert.deepEqual(result.valid,[['A12X345'],['A12X345']]);
  assert.equal(result.review[2][3],'مكرر بعد التنظيف');assert.equal(result.review[3][2],'');
+});
+test('T is accepted for primary GNE names, links, and both numeric lengths',()=>{
+ assert.equal(N.primaryName('O48T084_IDU1'),'O48T084');
+ assert.equal(N.primaryName('a 12 t 3456_Site (C12M3456)'),'A12T3456');
+ assert.deepEqual(N.parseCells([{value:'O48T084_IDU1-C12T3456_RTN'}],2).valid,[['O48T084','C12T3456']]);
+ assert.deepEqual(N.parseGates([{value:'GNE Name',column:1,row:1},{value:'O48T084_IDU1',column:1,row:2}]).valid,[['O48T084']]);
 });
 test('reject malformed rows and self links',()=>{
  const r=N.parseCells([{value:'link'},{value:'A12S345-A12S345'},{value:'A12S345-C12X3456'}],2);

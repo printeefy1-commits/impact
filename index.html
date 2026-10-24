@@ -11,7 +11,7 @@
 <label class="upload">ملف الروابط <small>كل رابط مثل A12S345-C12M3456</small><input id="links" type="file" accept=".csv,.txt,.xlsx"></label>
 <label class="upload">ملف بوابات GNE <small>عمود GNE Name أو GNE؛ وإلا يُستخدم العمود الأول</small><input id="gates" type="file" accept=".csv,.txt,.xlsx"></label>
 <p class="hint">Excel ‏(.xlsx) أو CSV أو نص. تُقرأ جميع الخلايا في الورقة الأولى. يمكن وجود عنوان في الصف الأول. تبقى ملفاتك داخل المتصفح.</p>
-<p class="hint">في GNE يُحتفظ بالاسم الأساسي في بداية الخلية ويُحذف الوصف بعده، حتى لو احتوى أسماء أخرى. مثال: O01S478 Adrar (O01X005) → O01S478. في الروابط يجب وجود اسمين مطابقين فقط.</p>
+<p class="hint">الحروف المقبولة في موضع نوع العنصر: S وM وX وT. في GNE يُحتفظ بالاسم الأساسي في بداية الخلية ويُحذف الوصف بعده، حتى لو احتوى أسماء أخرى. مثال: O01S478 Adrar (O01X005) → O01S478. في الروابط يجب وجود اسمين مطابقين فقط.</p>
 <button id="load" class="primary">تنظيف الملفات وإنشاء الخريطة ←</button>
 <div class="exports"><strong>تنزيل البيانات بعد التنظيف</strong><button id="downloadLinks" class="secondary" disabled>تنزيل الروابط المنظّفة CSV</button><button id="downloadGates" class="secondary" disabled>تنزيل بوابات GNE المنظّفة CSV</button><button id="downloadReview" class="secondary" disabled>تنزيل مقارنة أسماء GNE مع الأصل CSV</button><p id="exportSummary" class="hint">تتاح الملفات بعد الاستيراد. تُصدّر الأسماء الصالحة فقط دون تكرار؛ راجع الخلايا المستبعدة لضمان اكتمالها.</p></div>
 <button id="demo" class="secondary">استكشاف شبكة تجريبية</button>

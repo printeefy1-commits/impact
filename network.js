@@ -1,5 +1,5 @@
 (function(root){
-  const identifier='[ACO][_-]*\\d[_-]*\\d[_-]*[SMX][_-]*\\d{3,4}(?!\\d)';
+  const identifier='[ACO][_-]*\\d[_-]*\\d[_-]*[SMXT][_-]*\\d{3,4}(?!\\d)';
   // Preserve suffix boundaries: O31X400_6900 must not become O31X4006900.
   function extract(value){
     const compact=String(value??'').toUpperCase().replace(/\s/g,'');
