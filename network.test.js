@@ -43,6 +43,26 @@ test('SU is a two-letter type in primary names, links and future GNE imports',()
  assert.equal(N.primaryName('O01SU47890'),'');
  assert.deepEqual(N.parseGates([{value:'GNE'},{value:'O01SU478_IDU1'},{value:'O01SU478_IDU2'}]).valid,[['O01SU478'],['O01SU478']]);
 });
+test('TSU normalizes to SU, B is accepted, and numeric suffixes remain separate',()=>{
+ assert.equal(N.primaryName('O01TSU137'),'O01SU137');
+ assert.equal(N.primaryName('O01TSU141_IDU1'),'O01SU141');
+ assert.deepEqual(N.extract('O01TSU137-O01SU141'),['O01SU137','O01SU141']);
+ assert.equal(N.primaryName('A12B3456 site'),'A12B3456');
+ assert.deepEqual(N.extract('A12B345-C12M3456'),['A12B345','C12M3456']);
+ assert.equal(N.primaryName('A16X1801 6900'),'A16X1801');
+ assert.equal(N.primaryName('O31X400_6900'),'O31X400');
+});
+test('approved A33 gateway connection applies only to its network and does not duplicate',()=>{
+ const original=[['A33X005','A33T001']],gates=['A33CA01'];
+ const corrected=N.applyConnections(original,gates);
+ assert.deepEqual(corrected.added,[['A33T001','A33CA01']]);
+ assert.deepEqual(N.analyze(N.graph(corrected.links,gates),gates).offline,[]);
+ assert.equal(original.length,1);
+ assert.deepEqual(N.applyConnections(corrected.links,gates).added,[]);
+ assert.deepEqual(N.applyConnections([['A33CA01','A33T001']],gates).added,[]);
+ assert.deepEqual(N.applyConnections(original,['A01S001']).added,[]);
+ assert.deepEqual(N.applyConnections([['A01S001','C01M001']],gates).added,[]);
+});
 test('approved corrections are applied consistently on every subsequent upload',()=>{
  const cells=[{value:'GNE Name'},...['O01-CA-BBM','O01CA_Aoulef','A33CA03 djaneT (AT)-','A33CA02 ain aminas','A33CA01 illizi____','A11CA-Ain-Guezzam','A11CA02 ain salah','A11CA01','A33CABordj alhaouas'].map(value=>({value}))];
  const expected=['CA-BBM','O01CA03','A33CA03','A33CA02','A33CA01','A11CA03','A11CA02','A11CA01','A33CA04'];

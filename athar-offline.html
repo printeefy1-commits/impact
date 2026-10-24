@@ -40,7 +40,7 @@ SOFTWARE.
 <label class="upload">ملف الروابط <small>كل رابط مثل A12S345-C12M3456</small><input id="links" type="file" accept=".csv,.txt,.xlsx"></label>
 <label class="upload">ملف بوابات GNE <small>عمود GNE Name أو GNE؛ وإلا يُستخدم العمود الأول</small><input id="gates" type="file" accept=".csv,.txt,.xlsx"></label>
 <p class="hint">Excel ‏(.xlsx) أو CSV أو نص. تُقرأ الورقة الأولى فقط. في MLR تُستخدم أعمدة Source NE Name وSink NE Name إن وُجدت، وإلا عمود اسم الرابط. يمكن وجود عنوان في الصف الأول. تبقى ملفاتك داخل المتصفح.</p>
-<p class="hint">الحروف المقبولة في موضع نوع العنصر: S وM وX وT وSU. تُقبل أيضًا أسماء مثل A11CA03 والبوابة CA-BBM. في GNE يُحتفظ بالاسم الأساسي في بداية الخلية ويُحذف الوصف بعده، حتى لو احتوى أسماء أخرى. مثال: O01S478 Adrar (O01X005) → O01S478. في الروابط يجب وجود اسمين مطابقين فقط.</p>
+<p class="hint">الحروف المقبولة في موضع نوع العنصر: S وM وX وT وB وSU. تُوحّد TSU إلى SU تلقائيًا. تُقبل أيضًا أسماء مثل A11CA03 والبوابة CA-BBM. في GNE يُحتفظ بالاسم الأساسي في بداية الخلية ويُحذف الوصف بعده، حتى لو احتوى أسماء أخرى. مثال: O01S478 Adrar (O01X005) → O01S478. في الروابط يجب وجود اسمين مطابقين فقط.</p>
 <button id="load" class="primary">تنظيف الملفات وإنشاء الخريطة ←</button>
 <div class="exports"><strong>تنزيل البيانات بعد التنظيف</strong><button id="downloadLinks" class="secondary" disabled>تنزيل الروابط المنظّفة CSV</button><button id="downloadGates" class="secondary" disabled>تنزيل بوابات GNE المنظّفة CSV</button><button id="downloadReview" class="secondary" disabled>تنزيل مقارنة أسماء GNE مع الأصل CSV</button><p id="exportSummary" class="hint">تتاح الملفات بعد الاستيراد. تُصدّر الأسماء الصالحة فقط دون تكرار؛ راجع الخلايا المستبعدة لضمان اكتمالها.</p></div>
 <button id="demo" class="secondary">استكشاف شبكة تجريبية</button>
@@ -101,15 +101,17 @@ https://github.com/nodeca/pako/blob/main/LICENSE
  * @copyright Louis-Dominique Dubeau
  */function n(e){return e>=65&&e<=90||95===e||e>=97&&e<=122||e>=192&&e<=214||e>=216&&e<=246||e>=248&&e<=767||e>=880&&e<=893||e>=895&&e<=8191||e>=8204&&e<=8205||e>=8304&&e<=8591||e>=11264&&e<=12271||e>=12289&&e<=55295||e>=63744&&e<=64975||e>=65008&&e<=65533||e>=65536&&e<=983039}Object.defineProperty(r,"__esModule",{value:!0}),r.NC_NAME_START_CHAR="A-Z_a-z\xc0-\xd6\xd8-\xf6\xf8-\u02ff\u0370-\u037d\u037f-\u1fff\u200c-\u200d\u2070-\u218f\u2c00-\u2fef\u3001-\ud7ff\uf900-\ufdcf\ufdf0-\ufffd\ud800\udc00-\udb7f\udfff",r.NC_NAME_CHAR="-"+r.NC_NAME_START_CHAR+".0-9\xb7\u0300-\u036f\u203f-\u2040",r.NC_NAME_START_CHAR_RE=new RegExp("^["+r.NC_NAME_START_CHAR+"]$","u"),r.NC_NAME_CHAR_RE=new RegExp("^["+r.NC_NAME_CHAR+"]$","u"),r.NC_NAME_RE=new RegExp("^["+r.NC_NAME_START_CHAR+"]["+r.NC_NAME_CHAR+"]*$","u"),r.isNCNameStartChar=n,r.isNCNameChar=function(e){return n(e)||45===e||46===e||e>=48&&e<=57||183===e||e>=768&&e<=879||e>=8255&&e<=8256}},{}]},{},[15])(15)}));
 //# sourceMappingURL=exceljs.min.js.map</script><script>(function(root){
-  const identifier='(?:O01[-_]+)?CA[-_]+BBM|[ACO][_-]*\\d[_-]*\\d[_-]*CA[_-]*\\d{2}(?!\\d)|[ACO][_-]*\\d[_-]*\\d[_-]*(?:SU|[SMXT])[_-]*\\d{3,4}(?!\\d)';
+  const separator='[_\\s-]*',prefix='[ACO]'+separator+'\\d'+separator+'\\d'+separator;
+  const identifier='(?:O01[_\\s-]+)?CA[_\\s-]+BBM|'+prefix+'CA'+separator+'\\d{2}(?!\\d)|'+prefix+'(?:SU|[SMXTB])'+separator+'\\d{3,4}(?!\\d)';
   // Explicit user-approved corrections; never infer a numbered CA name from a place name.
   const aliases=new Map([['O01CA_AOULEF','O01CA03'],['A11CA-AIN-GUEZZAM','A11CA03'],['A33CABORDJALHAOUAS','A33CA04'],['CAATAINGUEZZAM','A11CA03'],['CA_AT_BBM','CA-BBM'],['A33CABORJALHAOUES','A33CA04'],['O01CA_TIMIMOUNE','O01CA02']]);
+  const aliasPatterns=[...aliases].map(([original,corrected])=>[new RegExp(original.split('').map(c=>c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('\\s*'),'g'),corrected]);
   function normalize(value){
-    let compact=String(value??'').toUpperCase().replace(/\s/g,'');
-    for(const [original,corrected] of aliases)compact=compact.split(original).join(corrected);
+    let compact=String(value??'').trim().toUpperCase().replace(/T\s*S\s*U(?=[_\s-]*\d)/g,'SU');
+    for(const [pattern,corrected] of aliasPatterns)compact=compact.replace(pattern,corrected);
     return compact;
   }
-  function canonical(name){return /^(?:O01[-_]+)?CA[-_]+BBM$/.test(name)?'CA-BBM':name.replace(/[-_]/g,'');}
+  function canonical(name){const compact=name.replace(/[-_\s]/g,'');return ['CABBM','O01CABBM'].includes(compact)?'CA-BBM':compact;}
   // Preserve suffix boundaries: O31X400_6900 must not become O31X4006900.
   function extract(value){
     const compact=normalize(value);
@@ -171,6 +173,13 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     for(const [a,b] of links){add(a);add(b);adjacency.get(a).add(b);adjacency.get(b).add(a);}
     gates.forEach(add);return adjacency;
   }
+  function applyConnections(links,gates){
+    const source='A33T001',target='A33CA01';
+    const relevant=gates.includes(target)&&links.some(pair=>pair.includes(source));
+    const exists=links.some(([a,b])=>a===source&&b===target||a===target&&b===source);
+    const added=relevant&&!exists?[[source,target]]:[];
+    return {links:added.length?links.concat(added):links,added};
+  }
   function traverse(adj,gates,failed=''){
     const visited=new Set(),parent=new Map(),depth=new Map(),owner=new Map(),queue=[];
     for(const gate of gates){if(gate===failed)continue;visited.add(gate);queue.push(gate);depth.set(gate,0);owner.set(gate,gate);}
@@ -193,7 +202,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     }
     return {visited,parent,depth};
   }
-  const api={extract,primaryName,parseCells,parseGates,parseLinks,graph,traverse,analyze,branch};
+  const api={extract,primaryName,parseCells,parseGates,parseLinks,applyConnections,graph,traverse,analyze,branch};
   if(typeof module!=='undefined')module.exports=api;else root.Network=api;
 })(globalThis);
 </script><script>(function(root){
@@ -415,10 +424,11 @@ $('load').onclick=async()=>{const button=$('load');button.disabled=true;
   try{
   const [l,g]=await Promise.all([readCells($('links').files[0],'links'),readCells($('gates').files[0],'gates')]);
   const pl=Network.parseLinks(l),pg=Network.parseGates(g);
-  prepareDownloads(pl.valid,pg.valid.flat());
+  const confirmed=Network.applyConnections(pl.valid,pg.valid.flat());
+  prepareDownloads(confirmed.links,pg.valid.flat());
   gneReview=pg.review;$('downloadReview').disabled=false;
   const issues=[...pl.invalid.map(x=>`ملف الروابط · ${x.location}: ${x.value}`),...pg.invalid.map(x=>`ملف GNE · ${x.location}: ${x.value}`)];
-  setData(pl.valid,pg.valid.flat(),issues,`قراءة أسماء GNE من العمود ${pg.column} فقط. ${pl.mode==='endpoints'?'استخدم طرفا الرابط من عمودي Source NE Name وSink NE Name.':'استخدم عمود اسم الرابط.'} تظهر البوابات غير الموجودة في الروابط منفردة.`);
+  setData(confirmed.links,pg.valid.flat(),issues,`قراءة أسماء GNE من العمود ${pg.column} فقط. ${pl.mode==='endpoints'?'استخدم طرفا الرابط من عمودي Source NE Name وSink NE Name.':'استخدم عمود اسم الرابط.'} ${confirmed.added.length?'أُضيف الرابط A33T001 ↔ A33CA01 وفق تأكيد المستخدم؛ وهو مضمن في تنزيل الروابط المنظّفة.':''} تظهر البوابات غير الموجودة في الروابط منفردة.`);
 }catch(e){$('status').textContent='لم يتم الاستيراد: '+e.message;}finally{button.disabled=false;}};
 $('demo').onclick=()=>{gneReview=null;$('downloadReview').disabled=true;cleanedFiles=null;$('downloadLinks').disabled=true;$('downloadGates').disabled=true;$('exportSummary').textContent='هذا مثال تجريبي. ارفع ملفيك لتنزيل بياناتك بعد التنظيف.';setData([['A01S001','C01M001'],['C01M001','O01X001'],['C01M001','A02S002'],['A02S002','O02M002'],['C02X002','O02M002'],['A03X003','C03S003']],['A01S001','C02X002'],[],'بيانات تجريبية وليست بيانات ملفاتك.');};
 $('failure').onchange=()=>{draw();if(!$('failure').value)$('status').textContent='أُعيد الاتصال؛ لا توجد محاكاة عطل فعالة.';};

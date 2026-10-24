@@ -1,13 +1,15 @@
 (function(root){
-  const identifier='(?:O01[-_]+)?CA[-_]+BBM|[ACO][_-]*\\d[_-]*\\d[_-]*CA[_-]*\\d{2}(?!\\d)|[ACO][_-]*\\d[_-]*\\d[_-]*(?:SU|[SMXT])[_-]*\\d{3,4}(?!\\d)';
+  const separator='[_\\s-]*',prefix='[ACO]'+separator+'\\d'+separator+'\\d'+separator;
+  const identifier='(?:O01[_\\s-]+)?CA[_\\s-]+BBM|'+prefix+'CA'+separator+'\\d{2}(?!\\d)|'+prefix+'(?:SU|[SMXTB])'+separator+'\\d{3,4}(?!\\d)';
   // Explicit user-approved corrections; never infer a numbered CA name from a place name.
   const aliases=new Map([['O01CA_AOULEF','O01CA03'],['A11CA-AIN-GUEZZAM','A11CA03'],['A33CABORDJALHAOUAS','A33CA04'],['CAATAINGUEZZAM','A11CA03'],['CA_AT_BBM','CA-BBM'],['A33CABORJALHAOUES','A33CA04'],['O01CA_TIMIMOUNE','O01CA02']]);
+  const aliasPatterns=[...aliases].map(([original,corrected])=>[new RegExp(original.split('').map(c=>c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('\\s*'),'g'),corrected]);
   function normalize(value){
-    let compact=String(value??'').toUpperCase().replace(/\s/g,'');
-    for(const [original,corrected] of aliases)compact=compact.split(original).join(corrected);
+    let compact=String(value??'').trim().toUpperCase().replace(/T\s*S\s*U(?=[_\s-]*\d)/g,'SU');
+    for(const [pattern,corrected] of aliasPatterns)compact=compact.replace(pattern,corrected);
     return compact;
   }
-  function canonical(name){return /^(?:O01[-_]+)?CA[-_]+BBM$/.test(name)?'CA-BBM':name.replace(/[-_]/g,'');}
+  function canonical(name){const compact=name.replace(/[-_\s]/g,'');return ['CABBM','O01CABBM'].includes(compact)?'CA-BBM':compact;}
   // Preserve suffix boundaries: O31X400_6900 must not become O31X4006900.
   function extract(value){
     const compact=normalize(value);
@@ -69,6 +71,13 @@
     for(const [a,b] of links){add(a);add(b);adjacency.get(a).add(b);adjacency.get(b).add(a);}
     gates.forEach(add);return adjacency;
   }
+  function applyConnections(links,gates){
+    const source='A33T001',target='A33CA01';
+    const relevant=gates.includes(target)&&links.some(pair=>pair.includes(source));
+    const exists=links.some(([a,b])=>a===source&&b===target||a===target&&b===source);
+    const added=relevant&&!exists?[[source,target]]:[];
+    return {links:added.length?links.concat(added):links,added};
+  }
   function traverse(adj,gates,failed=''){
     const visited=new Set(),parent=new Map(),depth=new Map(),owner=new Map(),queue=[];
     for(const gate of gates){if(gate===failed)continue;visited.add(gate);queue.push(gate);depth.set(gate,0);owner.set(gate,gate);}
@@ -91,6 +100,6 @@
     }
     return {visited,parent,depth};
   }
-  const api={extract,primaryName,parseCells,parseGates,parseLinks,graph,traverse,analyze,branch};
+  const api={extract,primaryName,parseCells,parseGates,parseLinks,applyConnections,graph,traverse,analyze,branch};
   if(typeof module!=='undefined')module.exports=api;else root.Network=api;
 })(globalThis);

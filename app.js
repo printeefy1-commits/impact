@@ -112,10 +112,11 @@ $('load').onclick=async()=>{const button=$('load');button.disabled=true;
   try{
   const [l,g]=await Promise.all([readCells($('links').files[0],'links'),readCells($('gates').files[0],'gates')]);
   const pl=Network.parseLinks(l),pg=Network.parseGates(g);
-  prepareDownloads(pl.valid,pg.valid.flat());
+  const confirmed=Network.applyConnections(pl.valid,pg.valid.flat());
+  prepareDownloads(confirmed.links,pg.valid.flat());
   gneReview=pg.review;$('downloadReview').disabled=false;
   const issues=[...pl.invalid.map(x=>`ملف الروابط · ${x.location}: ${x.value}`),...pg.invalid.map(x=>`ملف GNE · ${x.location}: ${x.value}`)];
-  setData(pl.valid,pg.valid.flat(),issues,`قراءة أسماء GNE من العمود ${pg.column} فقط. ${pl.mode==='endpoints'?'استخدم طرفا الرابط من عمودي Source NE Name وSink NE Name.':'استخدم عمود اسم الرابط.'} تظهر البوابات غير الموجودة في الروابط منفردة.`);
+  setData(confirmed.links,pg.valid.flat(),issues,`قراءة أسماء GNE من العمود ${pg.column} فقط. ${pl.mode==='endpoints'?'استخدم طرفا الرابط من عمودي Source NE Name وSink NE Name.':'استخدم عمود اسم الرابط.'} ${confirmed.added.length?'أُضيف الرابط A33T001 ↔ A33CA01 وفق تأكيد المستخدم؛ وهو مضمن في تنزيل الروابط المنظّفة.':''} تظهر البوابات غير الموجودة في الروابط منفردة.`);
 }catch(e){$('status').textContent='لم يتم الاستيراد: '+e.message;}finally{button.disabled=false;}};
 $('demo').onclick=()=>{gneReview=null;$('downloadReview').disabled=true;cleanedFiles=null;$('downloadLinks').disabled=true;$('downloadGates').disabled=true;$('exportSummary').textContent='هذا مثال تجريبي. ارفع ملفيك لتنزيل بياناتك بعد التنظيف.';setData([['A01S001','C01M001'],['C01M001','O01X001'],['C01M001','A02S002'],['A02S002','O02M002'],['C02X002','O02M002'],['A03X003','C03S003']],['A01S001','C02X002'],[],'بيانات تجريبية وليست بيانات ملفاتك.');};
 $('failure').onchange=()=>{draw();if(!$('failure').value)$('status').textContent='أُعيد الاتصال؛ لا توجد محاكاة عطل فعالة.';};
