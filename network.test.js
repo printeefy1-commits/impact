@@ -36,6 +36,18 @@ test('T is accepted for primary GNE names, links, and both numeric lengths',()=>
  assert.deepEqual(N.parseCells([{value:'O48T084_IDU1-C12T3456_RTN'}],2).valid,[['O48T084','C12T3456']]);
  assert.deepEqual(N.parseGates([{value:'GNE Name',column:1,row:1},{value:'O48T084_IDU1',column:1,row:2}]).valid,[['O48T084']]);
 });
+test('SU is a two-letter type in primary names, links and future GNE imports',()=>{
+ assert.equal(N.primaryName('O01SU478_IDU1'),'O01SU478');
+ assert.equal(N.primaryName('a 12 su 3456 (C12M3456)'),'A12SU3456');
+ assert.deepEqual(N.extract('O01SU478-C12T3456'),['O01SU478','C12T3456']);
+ assert.equal(N.primaryName('O01SU47890'),'');
+ assert.deepEqual(N.parseGates([{value:'GNE'},{value:'O01SU478_IDU1'},{value:'O01SU478_IDU2'}]).valid,[['O01SU478'],['O01SU478']]);
+});
+test('approved corrections are applied consistently on every subsequent upload',()=>{
+ const cells=[{value:'GNE Name'},...['O01-CA-BBM','O01CA_Aoulef','A33CA03 djaneT (AT)-','A33CA02 ain aminas','A33CA01 illizi____','A11CA-Ain-Guezzam','A11CA02 ain salah','A11CA01','A33CABordj alhaouas'].map(value=>({value}))];
+ const expected=['CA-BBM','O01CA03','A33CA03','A33CA02','A33CA01','A11CA03','A11CA02','A11CA01','A33CA04'];
+ for(let upload=0;upload<2;upload++)assert.deepEqual(N.parseGates(cells).valid.flat(),expected);
+});
 test('CA site identifiers and the special CA-BBM gateway remain importable',()=>{
  for(const name of ['O01CA03','A33CA03','A33CA02','A33CA01','A11CA03','A11CA02','A11CA01','CA-BBM'])assert.equal(N.primaryName(name),name);
  assert.equal(N.primaryName('O01-CA-BBM'),'CA-BBM');
