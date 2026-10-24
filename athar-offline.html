@@ -104,8 +104,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   const separator='[_\\s-]*',prefix='[ACO]'+separator+'\\d'+separator+'\\d'+separator;
   const identifier='(?:O01[_\\s-]+)?CA[_\\s-]+BBM|'+prefix+'CA'+separator+'\\d{2}(?!\\d)|'+prefix+'(?:SU|[SMXTB])'+separator+'\\d{3,4}(?!\\d)';
   // Explicit user-approved corrections; never infer a numbered CA name from a place name.
-  const aliases=new Map([['O01CA_AOULEF','O01CA03'],['A11CA-AIN-GUEZZAM','A11CA03'],['A33CABORDJALHAOUAS','A33CA04'],['CAATAINGUEZZAM','A11CA03'],['CA_AT_BBM','CA-BBM'],['A33CABORJALHAOUES','A33CA04'],['O01CA_TIMIMOUNE','O01CA02']]);
-  const aliasPatterns=[...aliases].map(([original,corrected])=>[new RegExp(original.split('').map(c=>c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('\\s*'),'g'),corrected]);
+  const aliases=new Map([['O01CA_AOULEF','O01CA03'],['A11CA-AIN-GUEZZAM','A11CA03'],['A33CABORDJALHAOUAS','A33CA04'],['CAATAINGUEZZAM','A11CA03'],['CA_AT_BBM','CA-BBM'],['A33CABORJALHAOUES','A33CA04'],['O01CA_TIMIMOUNE','O01CA02'],['O46WX158','O46X158'],['O46WX159','O46X159']]);
+  const aliasPatterns=[...aliases].map(([original,corrected])=>[new RegExp(original.split('').map(c=>c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('\\s*')+(/\d$/.test(original)?'(?!\\d)':''),'g'),corrected]);
   function normalize(value){
     let compact=String(value??'').trim().toUpperCase().replace(/T\s*S\s*U(?=[_\s-]*\d)/g,'SU');
     for(const [pattern,corrected] of aliasPatterns)compact=compact.replace(pattern,corrected);

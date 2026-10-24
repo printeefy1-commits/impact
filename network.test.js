@@ -52,6 +52,20 @@ test('TSU normalizes to SU, B is accepted, and numeric suffixes remain separate'
  assert.equal(N.primaryName('A16X1801 6900'),'A16X1801');
  assert.equal(N.primaryName('O31X400_6900'),'O31X400');
 });
+test('approved O46 WX corrections restore routes in names, GNE tables and MLR endpoints',()=>{
+ assert.equal(N.primaryName('O46WX158_IDU1'),'O46X158');
+ assert.equal(N.primaryName('o46wx159 site'),'O46X159');
+ assert.deepEqual(N.extract('O46WX158-O46WX159'),['O46X158','O46X159']);
+ assert.deepEqual(N.parseGates([{value:'GNE'},{value:'O46WX158'},{value:'O46WX159'}]).valid,[['O46X158'],['O46X159']]);
+ const cells=[{row:1,column:3,value:'Source NE Name'},{row:1,column:8,value:'Sink NE Name'}];
+ const links=[['O46X001','O46WX158'],['O46WX158','O46T078'],['O46X117','O46X001'],['O46X209','O46X001'],['O46WX158','O46WX159']];
+ links.forEach(([a,b],i)=>cells.push({row:i+2,column:3,value:a},{row:i+2,column:8,value:b}));
+ const parsed=N.parseLinks(cells),adj=N.graph(parsed.valid,['O46T078']);
+ assert.equal(parsed.invalid.length,0);
+ assert.deepEqual(N.analyze(adj,['O46T078']).offline,[]);
+ for(const n of ['O46X001','O46X117','O46X209','O46X158','O46X159'])assert.ok(adj.has(n));
+ for(const unknown of ['O46WX1589','O46WX1590','O47WX158','O46WX157'])assert.equal(N.primaryName(unknown),'');
+});
 test('approved A33 gateway connection applies only to its network and does not duplicate',()=>{
  const original=[['A33X005','A33T001']],gates=['A33CA01'];
  const corrected=N.applyConnections(original,gates);
