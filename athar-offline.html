@@ -4,6 +4,7 @@
 <title>أثر | خريطة شبكة الميكروويف</title>
 <style>*{box-sizing:border-box}body{margin:0;background:#f4f6f9;color:#152b43;font-family:Tahoma,Arial,sans-serif;font-size:14px}header{height:78px;background:#fff;border-bottom:1px solid #e1e7ed;display:flex;justify-content:space-between;align-items:center;padding:0 5%}.brand{font-size:30px;font-weight:bold;color:#087e8b}.brand small{font-size:10px;letter-spacing:2px;margin-right:16px;color:#7b8a9b}.badge{background:#e7f5f3;border-radius:30px;padding:10px 18px;color:#187567}main{max-width:1500px;margin:auto;padding:38px 5%}.eyebrow{color:#088d90;font-weight:bold;font-size:12px}.intro h1{font-size:42px;line-height:1.5;margin:10px 0}.intro h1 span{color:#08868b}.intro>p:last-child{color:#738196;line-height:1.9;margin-bottom:30px}.workspace{display:grid;grid-template-columns:300px minmax(0,1fr);gap:24px}aside,.map-panel,details{background:#fff;border:1px solid #e2e8ef;border-radius:16px}aside{padding:24px;height:fit-content}h2{font-size:16px;margin:0 0 20px}aside h2{color:#0c9296}aside h2 span{color:#20354b;margin-right:8px}.upload{display:block;border:1px dashed #bdced8;padding:16px 12px;border-radius:10px;margin-bottom:14px;font-weight:bold;background:#fafcfd}small{display:block;font-weight:normal;font-size:11px;color:#78869a;margin:9px 0}input[type=file]{width:100%;font-size:11px;color:#53677a}.hint{font-size:11px;line-height:1.9;color:#7b8798}button{cursor:pointer;border:0;border-radius:8px;padding:13px;font-family:inherit;font-weight:bold}button:disabled{opacity:.5;cursor:wait}.primary{background:#07898e;color:white;width:100%;margin:8px 0}.secondary{background:#eef3f7;color:#375066;width:100%;margin:7px 0}a{font-size:10px;color:#087d85}hr{border:0;border-top:1px solid #e8edf2;margin:24px 0}select{width:100%;padding:12px;background:#f9fbfc;border:1px solid #dce4ed;border-radius:8px;margin-top:10px;font-family:inherit;direction:ltr}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}.stats>div{background:#fff;border:1px solid #e2e8ef;border-radius:12px;padding:19px}.stats b{display:block;font-size:28px;margin-bottom:8px}.stats span{color:#7c8b9c;font-size:11px}.stats>div:nth-child(3) b{color:#de8b32}.stats>div:nth-child(4) b{color:#8c98a5}#status{padding:13px 16px;background:#e7f3f4;border-radius:9px;line-height:1.8;font-size:12px}.map-heading{display:flex;justify-content:space-between;gap:15px;padding:22px 22px 8px}.map-heading h2{margin-bottom:8px}.map-heading p{color:#8390a0;font-size:10px}.map-heading input{width:180px;align-self:start;padding:10px;border:1px solid #dce4ed;border-radius:8px;font-family:inherit}.legend{padding:10px 22px;display:flex;flex-wrap:wrap;gap:16px;color:#94a0ad;font-size:10px}.gne{color:#087e8b}.online{color:#408ad1}.affected{color:#da932e}.failed{color:#dc5266}.map{height:480px;overflow:auto;direction:ltr;background-image:radial-gradient(#dfe6ed 1px,transparent 1px);background-size:20px 20px;border-radius:0 0 16px 16px}.empty{text-align:center;margin-top:160px;color:#9aa7b5}.map svg{display:block}.map text{font-family:Arial,sans-serif;font-size:11px}.map g{cursor:pointer}.map g:focus{outline:2px solid #087e8b}details{margin-top:18px;padding:18px;font-size:12px}summary{cursor:pointer}#importReport{line-height:1.9}#issues{max-height:140px;overflow:auto;color:#a34f43}#nodeList{max-height:260px;overflow:auto}.node-row{display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #edf1f5;gap:10px}.node-row code{direction:ltr}footer{padding:28px 0;color:#8d99a7;font-size:10px}#search{direction:ltr}@media(max-width:900px){.workspace{grid-template-columns:1fr}.intro h1{font-size:32px}.stats{gap:6px}.stats>div{padding:12px}.brand small{display:none}.map-heading{flex-wrap:wrap}main{padding:24px 4%}.badge{font-size:10px}}
 .workspace>*{min-width:0}@media(max-width:900px){.workspace{grid-template-columns:minmax(0,1fr)}}
+.gateway-controls{display:flex;gap:16px;padding:12px 22px;flex-wrap:wrap}.gateway-controls label{flex:1;min-width:180px;font-size:12px}.gateway-controls input{display:block;width:100%;padding:12px;margin-top:10px;border:1px solid #dce4ed;border-radius:8px;direction:ltr;font-family:inherit}.view-summary{padding:0 22px;color:#64788d;font-size:11px;line-height:1.9}.map-heading p{line-height:1.8;max-width:480px}
 </style>
 <body>
 <!-- ExcelJS 4.4.0, MIT license: The MIT License (MIT)
@@ -44,7 +45,10 @@ SOFTWARE.
 <hr><h2>02 <span>محاكاة العطل</span></h2><label>العنصر المتعطل<select id="failure"><option value="">بدون عطل</option></select></label><button id="reset" class="secondary">إعادة الاتصال</button>
 <p class="hint">يُعد العنصر متأثرًا إذا فقد كل مساراته إلى أي بوابة فعالة. قد تحافظ الروابط البديلة على الاتصال.</p>
 </aside><div class="content"><div id="status" role="status" aria-live="polite">ابدأ بتحميل الملفين أو استكشف المثال التجريبي.</div><div class="stats"><div><b id="nodesCount">0</b><span>عناصر الشبكة</span></div><div><b id="gatesCount">0</b><span>بوابات GNE</span></div><div><b id="impactCount">0</b><span>متأثر بالعطل</span></div><div><b id="offlineCount">0</b><span>غير متصل أصلًا</span></div></div>
-<section class="map-panel"><div class="map-heading"><div><h2>خريطة الاتصال</h2><p>الفروع مرتبة حسب أقرب GNE · الروابط ثنائية الاتجاه</p></div><input id="search" placeholder="ابحث عن عنصر…" aria-label="البحث عن عنصر"></div><div class="legend"><span class="gne">● بوابة</span><span class="online">● متصل</span><span class="affected">● متأثر</span><span class="failed">● متعطل</span><span>● غير متصل أصلًا</span></div><div id="map" class="map"><p class="empty">ستظهر فروع الشبكة هنا</p></div></section>
+<section class="map-panel"><div class="map-heading"><div><h2>خريطة بوابة واحدة</h2><p>اختر GNE لعرض العناصر المتصلة بها دون المرور ببوابة أخرى. قد يظهر العنصر المشترك في أكثر من فرع.</p></div><input id="search" placeholder="ابحث عن عنصر في الفرع…" aria-label="البحث عن عنصر في الفرع"></div>
+<div class="gateway-controls"><label>البحث عن بوابة GNE<input id="gneSearch" type="search" placeholder="مثال: A01S001" disabled></label><label>البوابة المعروضة<select id="gneSelect" disabled><option value="">اختر بوابة GNE…</option></select></label></div>
+<p id="viewSummary" class="view-summary" aria-live="polite">حمّل البيانات ثم اختر بوابة لعرض فرعها فقط.</p>
+<div class="legend"><span class="gne">● بوابة</span><span class="online">● متصل</span><span class="affected">● متأثر</span><span class="failed">● متعطل</span><span>● غير متصل أصلًا</span></div><div id="map" class="map"><p class="empty">اختر بوابة GNE لعرض الخريطة</p></div></section>
 <details id="report"><summary>تفاصيل العناصر ومراجعة الاستيراد</summary><p id="importReport"></p><div id="issues"></div><div id="nodeList"></div></details></div></section>
 <footer>أثر — أداة تخطيط وتحليل اتصال · المحاكاة مبنية على الروابط المستوردة، ولا تتصل بالمعدات.</footer></main>
 <script>/*! ExcelJS 19-10-2023 */
@@ -125,7 +129,17 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     const offline=[...adj.keys()].filter(n=>!baseline.visited.has(n));
     return {baseline,current,affected,offline};
   }
-  const api={extract,parseCells,graph,traverse,analyze};
+  function branch(adj,gates,selected){
+    const visited=new Set(),parent=new Map(),depth=new Map();
+    if(!gates.includes(selected))return {visited,parent,depth};
+    const boundaries=new Set(gates),queue=[selected];visited.add(selected);depth.set(selected,0);
+    for(let i=0;i<queue.length;i++)for(const next of adj.get(queue[i])||[]){
+      if(visited.has(next)||boundaries.has(next))continue;
+      visited.add(next);parent.set(next,queue[i]);depth.set(next,depth.get(queue[i])+1);queue.push(next);
+    }
+    return {visited,parent,depth};
+  }
+  const api={extract,parseCells,graph,traverse,analyze,branch};
   if(typeof module!=='undefined')module.exports=api;else root.Network=api;
 })(globalThis);
 </script><script>const $=id=>document.getElementById(id);
@@ -176,6 +190,8 @@ function setData(links,gates,issues=[],message=''){
   const uniqueGates=[...new Set(gates)];
   if(!uniqueLinks.length||!uniqueGates.length)throw Error('لم نجد روابط وبوابات صالحة. النمط المطلوب مثل A12S345-C12X3456 وقائمة GNE مثل C12X3456.');
   state={adj:Network.graph(uniqueLinks,uniqueGates),links:uniqueLinks,gates:uniqueGates};
+  $('gneSearch').value='';$('gneSearch').disabled=false;$('gneSelect').disabled=false;
+  $('search').value='';$('gneSelect').value='';filterGateways();
   replaceItems($('failure'),(function*(){yield new Option('بدون عطل','');for(const n of [...state.adj.keys()].sort())yield new Option(n,n);})());
   const previewLimit=200;
   $('importReport').textContent=`${uniqueLinks.length} رابط فريد، ${uniqueGates.length} بوابة. تم تجاهل ${issues.length} خلية غير مطابقة (تشمل العناوين). ${issues.length>previewLimit?`تُعرض أول ${previewLimit} خلية مستبعدة فقط؛ جميع الخلايا الصالحة تدخل في التحليل.`:''} ${message}`;
@@ -190,12 +206,21 @@ function replaceItems(container,items){
   container.replaceChildren(fragment);
 }
 function svgEl(tag,attrs={}){const el=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));return el;}
+function filterGateways(){
+  if(!state)return;
+  const query=$('gneSearch').value.trim().toUpperCase(),previous=$('gneSelect').value;
+  const matches=state.gates.filter(g=>g.includes(query)).sort();
+  replaceItems($('gneSelect'),(function*(){yield new Option(matches.length?'اختر بوابة GNE…':'لا توجد بوابات مطابقة','');for(const gate of matches)yield new Option(gate,gate);})());
+  $('gneSelect').value=matches.includes(previous)?previous:'';
+}
 function draw(){
   if(!state)return;
   const failed=$('failure').value,{adj,gates,links}=state;
-  const a=Network.analyze(adj,gates,failed),affected=new Set(a.affected),offline=new Set(a.offline),base=a.baseline;
+  const a=Network.analyze(adj,gates,failed),affected=new Set(a.affected),offline=new Set(a.offline);
   $('nodesCount').textContent=adj.size;$('gatesCount').textContent=gates.length;$('impactCount').textContent=affected.size;$('offlineCount').textContent=offline.size;
-  const groups=[...gates.map(g=>({title:g,nodes:[...adj.keys()].filter(n=>base.owner.get(n)===g)})),{title:'بدون اتصال ببوابة',nodes:a.offline}].filter(g=>g.nodes.length);
+  const selected=$('gneSelect').value,base=Network.branch(adj,gates,selected);
+  $('viewSummary').textContent=selected?`${selected} · ${base.visited.size} عنصر مع البوابة · ${[...base.visited].filter(n=>affected.has(n)).length} متأثر بالعطل في هذا الفرع. الإحصاءات العلوية وحساب الأعطال للشبكة كاملة.`:'اختر بوابة GNE من القائمة. يمكنك البحث باسمها لتصفية الخيارات. الإحصاءات العلوية للشبكة كاملة.';
+  const groups=selected?[{title:selected,nodes:[...base.visited]}]:[];
   const positions=new Map();let y=50,maxDepth=0;
   for(const group of groups){const levels=new Map();for(const n of group.nodes){const d=base.depth.get(n)||0;maxDepth=Math.max(maxDepth,d);if(!levels.has(d))levels.set(d,[]);levels.get(d).push(n);}
     let rows=0;for(const nodes of levels.values())rows=Math.max(rows,nodes.length);
@@ -205,6 +230,7 @@ function draw(){
   const svg=svgEl('svg',{width:Math.max(730,220+maxDepth*190),height:Math.max(450,y),role:'img','aria-label':'خريطة عناصر الشبكة وروابطها'});
   for(const g of groups){const t=svgEl('text',{x:30,y:g.y,fill:'#71849a'});t.textContent=g.title;svg.append(t);}
   for(const [u,v] of links){const p=positions.get(u),q=positions.get(v),tree=base.parent.get(u)===v||base.parent.get(v)===u;
+    if(!p||!q)continue;
     svg.append(svgEl('line',{x1:p.x,y1:p.y,x2:q.x,y2:q.y,stroke:u===failed||v===failed?'#e8a7b0':tree?'#b4c9db':'#adb6c6','stroke-width':tree?2:1,'stroke-dasharray':tree?'':'5 5'}));
   }
   const query=$('search').value.trim().toUpperCase();
@@ -216,8 +242,9 @@ function draw(){
     const t=svgEl('text',{x:p.x,y:p.y+4,'text-anchor':'middle',fill:color,'font-weight':'bold'});t.textContent=n;g.append(t);
     const choose=()=>{$('failure').value=n;draw();};g.onclick=choose;g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose();}};svg.append(g);
   }
-  $('map').replaceChildren(svg);
-  replaceItems($('nodeList'),(function*(){for(const n of [...adj.keys()].sort()){if(query&&!n.includes(query))continue;const row=document.createElement('div');row.className='node-row';const code=document.createElement('code');code.textContent=n;const text=document.createElement('span');text.textContent=status(n);row.append(code,text);yield row;}})());
+  if(selected)$('map').replaceChildren(svg);
+  else{const empty=document.createElement('p');empty.className='empty';empty.textContent='اختر بوابة GNE لعرض الخريطة';$('map').replaceChildren(empty);}
+  replaceItems($('nodeList'),(function*(){for(const n of [...base.visited].sort()){if(query&&!n.includes(query))continue;const row=document.createElement('div');row.className='node-row';const code=document.createElement('code');code.textContent=n;const text=document.createElement('span');text.textContent=status(n);row.append(code,text);yield row;}})());
   if(failed)$('status').textContent=`محاكاة تعطل ${failed}: ${affected.size} عنصر يفقد الاتصال بسبب هذا العطل، باستثناء العنصر المتعطل نفسه. ${offline.size} عنصر غير متصل أصلًا.`;
 }
 $('load').onclick=async()=>{const button=$('load');button.disabled=true;
@@ -234,5 +261,7 @@ $('demo').onclick=()=>{cleanedFiles=null;$('downloadLinks').disabled=true;$('dow
 $('failure').onchange=()=>{draw();if(!$('failure').value)$('status').textContent='أُعيد الاتصال؛ لا توجد محاكاة عطل فعالة.';};
 $('reset').onclick=()=>{$('failure').value='';draw();$('status').textContent='أُعيد الاتصال؛ لا توجد محاكاة عطل فعالة.';};
 $('search').oninput=draw;
+$('gneSearch').oninput=()=>{filterGateways();draw();};
+$('gneSelect').onchange=()=>{$('search').value='';draw();$('map').scrollTop=0;$('map').scrollLeft=0;};
 </script>
 </body></html>

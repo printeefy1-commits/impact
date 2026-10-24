@@ -31,3 +31,15 @@ test('redundant path and multiple gateways maintain connectivity',()=>{
  assert.deepEqual(N.analyze(cycle,['A01S001'],'C01M001').affected,[]);
  assert.equal(N.analyze(cycle,['A01S001'],'A01S001').affected.length,3);
 });
+test('selected gateway branch stops at other gateways, excludes disconnected nodes, and handles shared paths',()=>{
+ const adj=N.graph([['A01S001','C01M001'],['C01M001','O01X001'],['O01X001','A02S002'],['A02S002','C02M002'],['A03S003','C03M003']],['A01S001','A02S002','O04X004']);
+ const gates=['A01S001','A02S002','O04X004'];
+ assert.deepEqual([...N.branch(adj,gates,'A01S001').visited],['A01S001','C01M001','O01X001']);
+ assert.deepEqual([...N.branch(adj,gates,'O04X004').visited],['O04X004']);
+ assert.equal(N.branch(adj,gates,'').visited.size,0);
+ const other=N.branch(adj,gates,'A02S002');
+ assert.ok(other.visited.has('O01X001'));assert.ok(other.visited.has('C02M002'));
+ assert.ok(!other.visited.has('A01S001'));assert.ok(!other.visited.has('A03S003'));
+ // The other gateway still supplies alternate connectivity during a failure.
+ assert.deepEqual(N.analyze(adj,gates,'C01M001').affected,[]);
+});

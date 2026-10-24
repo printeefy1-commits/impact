@@ -32,6 +32,16 @@
     const offline=[...adj.keys()].filter(n=>!baseline.visited.has(n));
     return {baseline,current,affected,offline};
   }
-  const api={extract,parseCells,graph,traverse,analyze};
+  function branch(adj,gates,selected){
+    const visited=new Set(),parent=new Map(),depth=new Map();
+    if(!gates.includes(selected))return {visited,parent,depth};
+    const boundaries=new Set(gates),queue=[selected];visited.add(selected);depth.set(selected,0);
+    for(let i=0;i<queue.length;i++)for(const next of adj.get(queue[i])||[]){
+      if(visited.has(next)||boundaries.has(next))continue;
+      visited.add(next);parent.set(next,queue[i]);depth.set(next,depth.get(queue[i])+1);queue.push(next);
+    }
+    return {visited,parent,depth};
+  }
+  const api={extract,parseCells,graph,traverse,analyze,branch};
   if(typeof module!=='undefined')module.exports=api;else root.Network=api;
 })(globalThis);
