@@ -1,22 +1,23 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const Network=require('./network.js');
-const {layout}=require('./topology.js');
+const {layout,segment}=require('./topology.js');
 
-test('subtrees have separate lanes and parents are centered over children',()=>{
- const adj=Network.graph([['G','A'],['G','B'],['A','C'],['A','D'],['B','E']],['G']);
- const tree=Network.branch(adj,['G'],'G'),result=layout(tree),p=result.points;
- assert.equal(p.size,6);
- assert.equal(p.get('A').x,(p.get('C').x+p.get('D').x)/2);
- assert.ok(p.get('D').x<p.get('E').x);
- for(const parent of tree.parent.values())assert.ok(p.has(parent));
- for(const [child,parent] of tree.parent)assert.equal(p.get(child).y-p.get(parent).y,150);
- const rows=new Map();for(const [n,point] of p){const d=tree.depth.get(n);if(!rows.has(d))rows.set(d,[]);rows.get(d).push(point.x);}
- for(const row of rows.values()){row.sort((a,b)=>a-b);for(let i=1;i<row.length;i++)assert.ok(row[i]-row[i-1]>=180);}
+test('topology layout distributes root neighbors around the GNE',()=>{
+ const tree=Network.branch(Network.graph([['G','A'],['G','B'],['G','C'],['G','D'],['A','E']],['G']),['G'],'G');
+ const result=layout(tree),root=result.points.get('G');
+ assert.equal(result.points.size,6);
+ const children=['A','B','C','D'].map(n=>result.points.get(n));
+ assert.ok(children.some(p=>p.x<root.x));assert.ok(children.some(p=>p.x>root.x));
+ assert.ok(children.some(p=>p.y<root.y));assert.ok(children.some(p=>p.y>root.y));
 });
-test('very deep trees are laid out without a recursive call stack',()=>{
- const visited=new Set(),parent=new Map(),depth=new Map();
- for(let i=0;i<20000;i++){visited.add(i);depth.set(i,i);if(i)parent.set(i,i-1);}
- const result=layout({visited,parent,depth});
- assert.equal(result.points.size,20000);assert.equal(result.points.get(0).x,result.points.get(19999).x);
+
+test('each edge is a direct segment clipped to the device boundaries',()=>{
+ assert.deepEqual(segment({x:0,y:0},{x:200,y:0}),{x1:33,y1:0,x2:167,y2:0});
+ assert.deepEqual(segment({x:0,y:0},{x:0,y:200}),{x1:0,y1:37,x2:0,y2:163});
+ const p={x:20,y:40},q={x:400,y:300},s=segment(p,q);
+ assert.ok(Math.abs((s.x1-p.x)*(q.y-p.y)-(s.y1-p.y)*(q.x-p.x))<1e-8);
+ assert.ok(Math.abs((s.x2-p.x)*(q.y-p.y)-(s.y2-p.y)*(q.x-p.x))<1e-8);
+ assert.ok(s.x1>p.x&&s.x2<q.x);
+ for(const value of Object.values(segment(p,p)))assert.ok(Number.isFinite(value));
 });

@@ -1,21 +1,12 @@
 (function(root){
-  // Allocate a separate horizontal span to each subtree, without recursive calls.
-  function layout(branch){
-    const nodes=[...branch.visited],children=new Map(nodes.map(n=>[n,[]]));
-    for(const [child,parent] of branch.parent)children.get(parent)?.push(child);
-    for(const list of children.values())list.sort();
-    const ordered=nodes.slice().sort((a,b)=>(branch.depth.get(b)||0)-(branch.depth.get(a)||0));
-    const spans=new Map();
-    for(const n of ordered){let span=0;for(const child of children.get(n))span+=spans.get(child);spans.set(n,Math.max(180,span));}
-    const points=new Map(),roots=nodes.filter(n=>!branch.parent.has(n));
-    let width=100,maxDepth=0;const queue=[];
-    for(const n of roots){queue.push({n,left:width-50});width+=spans.get(n);}
-    for(let i=0;i<queue.length;i++){
-      const {n,left}=queue[i],depth=branch.depth.get(n)||0;
-      points.set(n,{x:left+spans.get(n)/2,y:85+depth*150});maxDepth=Math.max(maxDepth,depth);
-      let nextLeft=left;for(const child of children.get(n)){queue.push({n:child,left:nextLeft});nextLeft+=spans.get(child);}
-    }
-    return {points,width:Math.max(280,width),height:Math.max(210,180+maxDepth*150)};
+  const radial=typeof module!=='undefined'?require('./radial-layout.js'):root.RadialLayout;
+  const layout=branch=>radial.layout(branch);
+  // Each physical adjacency gets one direct segment, clipped to the two device icons.
+  function segment(p,q){
+    const dx=q.x-p.x,dy=q.y-p.y;
+    const inset=Math.min(.45,1/Math.max(Math.abs(dx)/33,Math.abs(dy)/37));
+    if(!Number.isFinite(inset))return {x1:p.x,y1:p.y,x2:q.x,y2:q.y};
+    return {x1:p.x+dx*inset,y1:p.y+dy*inset,x2:q.x-dx*inset,y2:q.y-dy*inset};
   }
   function el(tag,attrs={}){
     const node=document.createElementNS('http://www.w3.org/2000/svg',tag);
@@ -28,15 +19,16 @@
     render({key,branch,links,failed,affected,query,showExtra,onSelect}){
       const changed=this.key!==key;
       if(changed){this.points=layout(branch).points;this.key=key;}
-      const svg=el('svg',{width:'100%',height:'100%',role:'group','aria-label':`خريطة شجرية للبوابة ${key}`});
+      const svg=el('svg',{width:'100%',height:'100%',role:'group','aria-label':`خريطة نجمية للبوابة ${key}`});
       const layer=el('g',{'class':'topology-layer'}),edges=el('g',{'class':'topology-edges'}),nodes=el('g',{'class':'topology-nodes'});
       svg.append(layer);layer.append(edges,nodes);this.svg=svg;this.layer=layer;this.edges=[];this.nodeElements=new Map();
-      let extraCount=0;
+      let extraCount=0;const drawn=new Set();
       for(const [a,b] of links){
-        if(!this.points.has(a)||!this.points.has(b))continue;
+        if(a===b||!this.points.has(a)||!this.points.has(b))continue;
+        const identity=JSON.stringify([a,b].sort());if(drawn.has(identity))continue;drawn.add(identity);
         const tree=branch.parent.get(a)===b||branch.parent.get(b)===a;
         if(!tree)extraCount++;
-        const path=el('path',{'class':tree?'tree-link':'extra-link',fill:'none',stroke:a===failed||b===failed?'#f48a98':affected.has(a)||affected.has(b)?'#ffc068':tree?'#45ed8a':'#f6d77d','stroke-width':tree?2:1.5,'stroke-dasharray':tree?'':'6 5',display:tree||showExtra?'':'none'});
+        const path=el('line',{'data-source':a,'data-target':b,'class':tree?'tree-link':'extra-link',fill:'none',stroke:a===failed||b===failed?'#f48a98':affected.has(a)||affected.has(b)?'#ffc068':tree?'#45ed8a':'#f6d77d','stroke-width':tree?2:1.5,'stroke-dasharray':tree?'':'6 5',display:tree||showExtra?'':'none'});
         const title=el('title');title.textContent=`${a} ↔ ${b}${tree?'':' · رابط إضافي'}`;path.append(title);edges.append(path);
         const parent=branch.parent.get(a)===b?b:a,child=parent===a?b:a;
         this.edges.push({a:parent,b:child,path,tree});
@@ -60,14 +52,19 @@
         nodes.append(g);this.nodeElements.set(n,g);
       }
       this.updateEdges();this.container.replaceChildren(svg);this.bindInteractions(svg);
-      if(changed)this.fit();else this.applyCamera();
+      if(changed)this.open();else this.applyCamera();
       return extraCount;
     }
     updateEdges(){
-      for(const {a,b,path,tree} of this.edges){const p=this.points.get(a),q=this.points.get(b);
-        if(tree){const middle=(p.y+31+q.y-49)/2;path.setAttribute('d',`M ${p.x} ${p.y+31} V ${middle} H ${q.x} V ${q.y-49}`);}
-        else{const bend=Math.max(65,Math.abs(p.x-q.x)*.18);path.setAttribute('d',`M ${p.x+29} ${p.y} C ${p.x+29+bend} ${p.y}, ${q.x+29+bend} ${q.y}, ${q.x+29} ${q.y}`);}
+      for(const {a,b,path} of this.edges){
+        const coordinates=segment(this.points.get(a),this.points.get(b));
+        for(const [name,value] of Object.entries(coordinates))path.setAttribute(name,value);
       }
+    }
+    open(){
+      if(!this.svg)return;
+      const p=this.points.get(this.key),k=1;
+      this.camera={k,x:this.container.clientWidth/2-p.x*k,y:this.container.clientHeight/2-p.y*k};this.applyCamera();
     }
     applyCamera(){if(!this.layer)return;const c=this.camera;this.layer.setAttribute('transform',`translate(${c.x} ${c.y}) scale(${c.k})`);this.onZoom?.(c.k);}
     fit(){
@@ -77,7 +74,7 @@
       const w=this.container.clientWidth,h=this.container.clientHeight,k=Math.min(1.35,(w-40)/(right-left),(h-40)/(bottom-top));
       this.camera={k,x:(w-(right-left)*k)/2-left*k,y:(h-(bottom-top)*k)/2-top*k};this.applyCamera();
     }
-    center(){if(!this.svg)return;const p=this.points.get(this.key);this.camera={k:1,x:this.container.clientWidth/2-p.x,y:85-p.y};this.applyCamera();}
+    center(){if(!this.svg)return;const p=this.points.get(this.key);this.camera={k:1,x:this.container.clientWidth/2-p.x,y:this.container.clientHeight/2-p.y};this.applyCamera();}
     zoom(factor,x=this.container.clientWidth/2,y=this.container.clientHeight/2){
       if(!this.svg)return;const c=this.camera,k=Math.max(.001,Math.min(4,c.k*factor)),ratio=k/c.k;
       this.camera={k,x:x-(x-c.x)*ratio,y:y-(y-c.y)*ratio};this.applyCamera();
@@ -101,5 +98,5 @@
       svg.addEventListener('wheel',e=>{e.preventDefault();const rect=this.container.getBoundingClientRect();this.zoom(e.deltaY<0?1.15:1/1.15,e.clientX-rect.left,e.clientY-rect.top);},{passive:false});
     }
   }
-  const api={layout,View};if(typeof module!=='undefined')module.exports=api;else root.Topology=api;
+  const api={layout,segment,View};if(typeof module!=='undefined')module.exports=api;else root.Topology=api;
 })(globalThis);

@@ -8,6 +8,7 @@
 /* Microwave topology: separate subtree lanes, device symbols, and a movable canvas. */
 .map{height:580px;position:relative;overflow:hidden;background-color:#4c788b;background-image:radial-gradient(#6b91a1 .7px,transparent .7px);background-size:24px 24px;touch-action:none;cursor:grab;user-select:none}.map:active{cursor:grabbing}.map svg{width:100%;height:100%}.map .empty{color:#e3f2f6;padding:20px;margin-top:180px}.map text{font-family:Arial,sans-serif;font-size:inherit}.map .network-node{cursor:grab;outline:none}.map .network-node:focus .node-label-bg{stroke:#fff17d;stroke-width:3px}.map .network-node:hover .node-label-bg{fill:#fff9cc}.topology-layer,.topology-nodes,.topology-edges{cursor:inherit!important}.tree-link,.extra-link{pointer-events:stroke}.map-toolbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;padding:12px 22px;background:#f3f7fa;border-block:1px solid #e0e8ef}.map-toolbar button{padding:9px 11px;background:white;border:1px solid #d4e1e9;color:#2b5668;font-size:11px}.map-toolbar button:disabled{cursor:default}.map-toolbar output{font-size:11px;direction:ltr;min-width:36px;text-align:center}.map-toolbar label{display:flex;gap:5px;align-items:center;font-size:11px;cursor:pointer}.map-help{font-size:10px;color:#698297;margin:0;padding:0 22px 12px;line-height:1.8}.online{color:#16a65a}.map-panel:fullscreen{background:white;display:flex;flex-direction:column;border-radius:0;overflow:auto}.map-panel:fullscreen .map{flex:1;min-height:300px;height:auto}.map-panel:fullscreen .map-heading{padding-top:14px}.map-panel:fullscreen .gateway-controls{padding-block:4px}@media(max-width:600px){.map{height:520px}.map-toolbar{padding:10px}.map-toolbar button{padding:9px}.map-heading input{width:100%}.map-panel:fullscreen .map-heading p,.map-panel:fullscreen .legend,.map-panel:fullscreen .map-help{display:none}}
 .map .node-name{font-size:13px}.map .node-type{font-size:10px}
+@media(min-width:601px){.map{height:660px}}
 </style>
 <body>
 <!-- ExcelJS 4.4.0, MIT license: The MIT License (MIT)
@@ -51,9 +52,9 @@ SOFTWARE.
 <section class="map-panel" id="mapPanel"><div class="map-heading"><div><h2>خريطة بوابة واحدة</h2><p>اختر GNE لعرض العناصر المتصلة بها دون المرور ببوابة أخرى. قد يظهر العنصر المشترك في أكثر من فرع.</p></div><input id="search" placeholder="ابحث عن عنصر في الفرع…" aria-label="البحث عن عنصر في الفرع"></div>
 <div class="gateway-controls"><label>البحث عن بوابة GNE<input id="gneSearch" type="search" placeholder="مثال: A01S001" disabled></label><label>البوابة المعروضة<select id="gneSelect" disabled><option value="">اختر بوابة GNE…</option></select></label></div>
 <p id="viewSummary" class="view-summary" aria-live="polite">حمّل البيانات ثم اختر بوابة لعرض فرعها فقط.</p>
-<div class="map-toolbar" role="group" aria-label="أدوات الخريطة"><button id="zoomIn" disabled aria-label="تكبير الخريطة">＋</button><output id="zoomLabel" aria-live="polite">100%</output><button id="zoomOut" disabled aria-label="تصغير الخريطة">−</button><button id="fitMap" disabled>ملاءمة العرض</button><button id="centerMap" disabled>GNE · 100%</button><button id="resetLayout" disabled>ترتيب تلقائي</button><button id="fullscreen" disabled>ملء الشاشة</button><label><input id="extraLinks" type="checkbox" disabled>روابط إضافية (<span id="extraCount">0</span>)</label></div>
-<div class="legend"><span class="gne">● بوابة GNE</span><span class="online">● متصل</span><span class="affected">● متأثر</span><span class="failed">● متعطل</span><span>الروابط الإضافية تُعرض عند تفعيل الخيار وتدخل دائمًا في حساب الأعطال.</span></div>
-<p class="map-help">اسحب الخلفية لتحريك الخريطة، واسحب الأيقونة لترتيب العنصر. عجلة الفأرة للتكبير. انقر العنصر لمحاكاة تعطله.</p><div id="map" class="map"><p class="empty">اختر بوابة GNE لعرض الخريطة</p></div></section>
+<div class="map-toolbar" role="group" aria-label="أدوات الخريطة"><button id="zoomIn" disabled aria-label="تكبير الخريطة">＋</button><output id="zoomLabel" aria-live="polite">100%</output><button id="zoomOut" disabled aria-label="تصغير الخريطة">−</button><button id="fitMap" disabled>ملاءمة العرض</button><button id="centerMap" disabled>GNE · 100%</button><button id="resetLayout" disabled>ترتيب تلقائي</button><button id="fullscreen" disabled>ملء الشاشة</button><label><input id="extraLinks" type="checkbox" checked disabled>روابط إضافية (<span id="extraCount">0</span>)</label></div>
+<div class="legend"><span class="gne">● بوابة GNE</span><span class="online">● متصل</span><span class="affected">● متأثر</span><span class="failed">● متعطل</span><span>خط واحد مباشر لكل رابط · يمكنك إخفاء الروابط الإضافية؛ تدخل دائمًا في حساب الأعطال.</span></div>
+<p class="map-help">GNE في الوسط والفروع حولها. اسحب الخلفية لتحريك الخريطة، واسحب الأيقونة لترتيب العنصر. عجلة الفأرة للتكبير. انقر العنصر لمحاكاة تعطله.</p><div id="map" class="map"><p class="empty">اختر بوابة GNE لعرض الخريطة</p></div></section>
 <details id="report"><summary>تفاصيل العناصر ومراجعة الاستيراد</summary><p id="importReport"></p><div id="issues"></div><div id="nodeList"></div></details></div></section>
 <footer>أثر — أداة تخطيط وتحليل اتصال · المحاكاة مبنية على الروابط المستوردة، ولا تتصل بالمعدات.</footer></main>
 <script>/*! ExcelJS 19-10-2023 */
@@ -206,23 +207,84 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   if(typeof module!=='undefined')module.exports=api;else root.Network=api;
 })(globalThis);
 </script><script>(function(root){
-  // Allocate a separate horizontal span to each subtree, without recursive calls.
-  function layout(branch){
-    const nodes=[...branch.visited],children=new Map(nodes.map(n=>[n,[]]));
-    for(const [child,parent] of branch.parent)children.get(parent)?.push(child);
-    for(const list of children.values())list.sort();
-    const ordered=nodes.slice().sort((a,b)=>(branch.depth.get(b)||0)-(branch.depth.get(a)||0));
-    const spans=new Map();
-    for(const n of ordered){let span=0;for(const child of children.get(n))span+=spans.get(child);spans.set(n,Math.max(180,span));}
-    const points=new Map(),roots=nodes.filter(n=>!branch.parent.has(n));
-    let width=100,maxDepth=0;const queue=[];
-    for(const n of roots){queue.push({n,left:width-50});width+=spans.get(n);}
-    for(let i=0;i<queue.length;i++){
-      const {n,left}=queue[i],depth=branch.depth.get(n)||0;
-      points.set(n,{x:left+spans.get(n)/2,y:85+depth*150});maxDepth=Math.max(maxDepth,depth);
-      let nextLeft=left;for(const child of children.get(n)){queue.push({n:child,left:nextLeft});nextLeft+=spans.get(child);}
+  const tau=2*Math.PI;
+  function circular(angle){return ((angle%tau)+tau)%tau;}
+  // Open up crowded gaps using the spare angle elsewhere on the same ring.
+  // Keeping the circular order retains the subtree arrangement without forcing
+  // a sparse ring to an enormous radius because of a very narrow inherited sector.
+  function separate(nodes,angles,radius,gap){
+    if(nodes.length<2)return;
+    const sorted=nodes.map(name=>({name,angle:circular(angles.get(name))})).sort((a,b)=>a.angle-b.angle);
+    const minimum=2*Math.asin(gap/(2*radius));let largest=-1,cut=0,closest=tau;
+    for(let i=0;i<sorted.length;i++){
+      const next=i+1<sorted.length?sorted[i+1].angle:sorted[0].angle+tau,d=next-sorted[i].angle;
+      closest=Math.min(closest,d);if(d>largest){largest=d;cut=(i+1)%sorted.length;}
     }
-    return {points,width:Math.max(280,width),height:Math.max(210,180+maxDepth*150)};
+    if(closest>=minimum-1e-12)return;
+    const ordered=sorted.slice(cut).concat(sorted.slice(0,cut)),targets=[];
+    let turn=0,last=-Infinity;
+    for(const item of ordered){let target=item.angle+turn;if(target<last){turn+=tau;target+=tau;}targets.push(target);last=target;}
+    const slack=[];let total=0;
+    for(let i=0;i<targets.length;i++){const d=i+1<targets.length?targets[i+1]-targets[i]:targets[0]+tau-targets[i],s=Math.max(0,d-minimum);slack.push(s);total+=s;}
+    const remaining=Math.max(0,tau-minimum*nodes.length),positions=[0];
+    for(let i=0;i+1<targets.length;i++)positions.push(positions[i]+minimum+(total?slack[i]*remaining/total:0));
+    let offset=0;for(let i=0;i<targets.length;i++)offset+=targets[i]-positions[i];offset/=targets.length;
+    for(let i=0;i<ordered.length;i++)angles.set(ordered[i].name,offset+positions[i]);
+  }
+  // Each subtree occupies an angular sector. All traversals are iterative so a
+  // long microwave chain does not consume the JavaScript call stack.
+  function layout(branch){
+    const names=[...branch.visited];
+    if(!names.length)return {points:new Map(),width:280,height:280};
+    const children=new Map(names.map(n=>[n,[]]));
+    for(const [child,parent] of branch.parent)if(children.has(parent)&&children.has(child))children.get(parent).push(child);
+    for(const list of children.values())list.sort((a,b)=>String(a).localeCompare(String(b),'en'));
+    const roots=names.filter(n=>!branch.parent.has(n)).sort((a,b)=>String(a).localeCompare(String(b),'en'));
+    const ordered=names.slice().sort((a,b)=>(branch.depth.get(b)||0)-(branch.depth.get(a)||0));
+    const weight=new Map();
+    for(const name of ordered){let total=0;for(const child of children.get(name))total+=weight.get(child)||1;weight.set(name,Math.max(1,total));}
+    const angles=new Map(),levels=new Map(),queue=[];
+    const anchor=roots[0]??names[0];angles.set(anchor,-Math.PI/2);
+    const first=children.get(anchor).concat(roots.slice(1));
+    const step=2*Math.PI/Math.max(1,first.length),sector=Math.min(step,Math.PI*.85);
+    for(let i=0;i<first.length;i++)queue.push({name:first[i],depth:1,start:-Math.PI/2+i*step-sector/2,end:-Math.PI/2+i*step+sector/2});
+    for(let i=0;i<queue.length;i++){
+      const item=queue[i],angle=(item.start+item.end)/2;angles.set(item.name,angle);
+      if(!levels.has(item.depth))levels.set(item.depth,[]);levels.get(item.depth).push(item.name);
+      const list=children.get(item.name);let total=0;for(const child of list)total+=weight.get(child)||1;
+      let start=item.start;
+      for(const child of list){const end=start+(item.end-item.start)*(weight.get(child)||1)/total;queue.push({name:child,depth:item.depth+1,start,end});start=end;}
+    }
+    const originalAngles=new Map(angles),gap=210,radii=new Map();let previous=0;
+    for(const [depth,nodes] of levels){
+      for(const name of nodes){const parent=branch.parent.get(name);if(parent!=null&&angles.has(parent)){const delta=angles.get(parent)-originalAngles.get(parent);angles.set(name,originalAngles.get(name)+Math.atan2(Math.sin(delta),Math.cos(delta)));}}
+      let radius=Math.max(260,previous+220);
+      if(nodes.length>1){
+        const sorted=nodes.map(n=>((angles.get(n)%(2*Math.PI))+2*Math.PI)%(2*Math.PI)).sort((a,b)=>a-b);
+        let closest=2*Math.PI;
+        for(let i=0;i<sorted.length;i++)closest=Math.min(closest,i+1<sorted.length?sorted[i+1]-sorted[i]:sorted[0]+2*Math.PI-sorted[i]);
+        // Radius determines chord distance, not only arc distance.
+        const compactLimit=Math.max(radius,nodes.length*gap/(Math.PI*.8));
+        radius=Math.min(compactLimit,Math.max(radius,gap/(2*Math.sin(Math.max(closest,1e-10)/2))));
+        separate(nodes,angles,radius,gap);
+      }
+      radii.set(depth,radius);previous=radius;
+    }
+    const center=Math.max(140,previous+110),size=center*2,points=new Map([[anchor,{x:center,y:center}]]);
+    for(const [depth,nodes] of levels)for(const name of nodes){const angle=angles.get(name),r=radii.get(depth);points.set(name,{x:center+r*Math.cos(angle),y:center+r*Math.sin(angle)});}
+    return {points,width:Math.max(280,size),height:Math.max(280,size)};
+  }
+  const api={layout};if(typeof module!=='undefined')module.exports=api;else root.RadialLayout=api;
+})(globalThis);
+</script><script>(function(root){
+  const radial=typeof module!=='undefined'?require('./radial-layout.js'):root.RadialLayout;
+  const layout=branch=>radial.layout(branch);
+  // Each physical adjacency gets one direct segment, clipped to the two device icons.
+  function segment(p,q){
+    const dx=q.x-p.x,dy=q.y-p.y;
+    const inset=Math.min(.45,1/Math.max(Math.abs(dx)/33,Math.abs(dy)/37));
+    if(!Number.isFinite(inset))return {x1:p.x,y1:p.y,x2:q.x,y2:q.y};
+    return {x1:p.x+dx*inset,y1:p.y+dy*inset,x2:q.x-dx*inset,y2:q.y-dy*inset};
   }
   function el(tag,attrs={}){
     const node=document.createElementNS('http://www.w3.org/2000/svg',tag);
@@ -235,15 +297,16 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     render({key,branch,links,failed,affected,query,showExtra,onSelect}){
       const changed=this.key!==key;
       if(changed){this.points=layout(branch).points;this.key=key;}
-      const svg=el('svg',{width:'100%',height:'100%',role:'group','aria-label':`خريطة شجرية للبوابة ${key}`});
+      const svg=el('svg',{width:'100%',height:'100%',role:'group','aria-label':`خريطة نجمية للبوابة ${key}`});
       const layer=el('g',{'class':'topology-layer'}),edges=el('g',{'class':'topology-edges'}),nodes=el('g',{'class':'topology-nodes'});
       svg.append(layer);layer.append(edges,nodes);this.svg=svg;this.layer=layer;this.edges=[];this.nodeElements=new Map();
-      let extraCount=0;
+      let extraCount=0;const drawn=new Set();
       for(const [a,b] of links){
-        if(!this.points.has(a)||!this.points.has(b))continue;
+        if(a===b||!this.points.has(a)||!this.points.has(b))continue;
+        const identity=JSON.stringify([a,b].sort());if(drawn.has(identity))continue;drawn.add(identity);
         const tree=branch.parent.get(a)===b||branch.parent.get(b)===a;
         if(!tree)extraCount++;
-        const path=el('path',{'class':tree?'tree-link':'extra-link',fill:'none',stroke:a===failed||b===failed?'#f48a98':affected.has(a)||affected.has(b)?'#ffc068':tree?'#45ed8a':'#f6d77d','stroke-width':tree?2:1.5,'stroke-dasharray':tree?'':'6 5',display:tree||showExtra?'':'none'});
+        const path=el('line',{'data-source':a,'data-target':b,'class':tree?'tree-link':'extra-link',fill:'none',stroke:a===failed||b===failed?'#f48a98':affected.has(a)||affected.has(b)?'#ffc068':tree?'#45ed8a':'#f6d77d','stroke-width':tree?2:1.5,'stroke-dasharray':tree?'':'6 5',display:tree||showExtra?'':'none'});
         const title=el('title');title.textContent=`${a} ↔ ${b}${tree?'':' · رابط إضافي'}`;path.append(title);edges.append(path);
         const parent=branch.parent.get(a)===b?b:a,child=parent===a?b:a;
         this.edges.push({a:parent,b:child,path,tree});
@@ -267,14 +330,19 @@ https://github.com/nodeca/pako/blob/main/LICENSE
         nodes.append(g);this.nodeElements.set(n,g);
       }
       this.updateEdges();this.container.replaceChildren(svg);this.bindInteractions(svg);
-      if(changed)this.fit();else this.applyCamera();
+      if(changed)this.open();else this.applyCamera();
       return extraCount;
     }
     updateEdges(){
-      for(const {a,b,path,tree} of this.edges){const p=this.points.get(a),q=this.points.get(b);
-        if(tree){const middle=(p.y+31+q.y-49)/2;path.setAttribute('d',`M ${p.x} ${p.y+31} V ${middle} H ${q.x} V ${q.y-49}`);}
-        else{const bend=Math.max(65,Math.abs(p.x-q.x)*.18);path.setAttribute('d',`M ${p.x+29} ${p.y} C ${p.x+29+bend} ${p.y}, ${q.x+29+bend} ${q.y}, ${q.x+29} ${q.y}`);}
+      for(const {a,b,path} of this.edges){
+        const coordinates=segment(this.points.get(a),this.points.get(b));
+        for(const [name,value] of Object.entries(coordinates))path.setAttribute(name,value);
       }
+    }
+    open(){
+      if(!this.svg)return;
+      const p=this.points.get(this.key),k=1;
+      this.camera={k,x:this.container.clientWidth/2-p.x*k,y:this.container.clientHeight/2-p.y*k};this.applyCamera();
     }
     applyCamera(){if(!this.layer)return;const c=this.camera;this.layer.setAttribute('transform',`translate(${c.x} ${c.y}) scale(${c.k})`);this.onZoom?.(c.k);}
     fit(){
@@ -284,7 +352,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       const w=this.container.clientWidth,h=this.container.clientHeight,k=Math.min(1.35,(w-40)/(right-left),(h-40)/(bottom-top));
       this.camera={k,x:(w-(right-left)*k)/2-left*k,y:(h-(bottom-top)*k)/2-top*k};this.applyCamera();
     }
-    center(){if(!this.svg)return;const p=this.points.get(this.key);this.camera={k:1,x:this.container.clientWidth/2-p.x,y:85-p.y};this.applyCamera();}
+    center(){if(!this.svg)return;const p=this.points.get(this.key);this.camera={k:1,x:this.container.clientWidth/2-p.x,y:this.container.clientHeight/2-p.y};this.applyCamera();}
     zoom(factor,x=this.container.clientWidth/2,y=this.container.clientHeight/2){
       if(!this.svg)return;const c=this.camera,k=Math.max(.001,Math.min(4,c.k*factor)),ratio=k/c.k;
       this.camera={k,x:x-(x-c.x)*ratio,y:y-(y-c.y)*ratio};this.applyCamera();
@@ -308,7 +376,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       svg.addEventListener('wheel',e=>{e.preventDefault();const rect=this.container.getBoundingClientRect();this.zoom(e.deltaY<0?1.15:1/1.15,e.clientX-rect.left,e.clientY-rect.top);},{passive:false});
     }
   }
-  const api={layout,View};if(typeof module!=='undefined')module.exports=api;else root.Topology=api;
+  const api={layout,segment,View};if(typeof module!=='undefined')module.exports=api;else root.Topology=api;
 })(globalThis);
 </script><script>const $=id=>document.getElementById(id);
 let state=null;
@@ -373,7 +441,7 @@ function setData(links,gates,issues=[],message=''){
   const uniqueGates=[...new Set(gates)];
   if(!uniqueLinks.length||!uniqueGates.length)throw Error('لم نجد روابط وبوابات صالحة. النمط المطلوب مثل A12S345-C12X3456 وقائمة GNE مثل C12X3456.');
   state={adj:Network.graph(uniqueLinks,uniqueGates),links:uniqueLinks,gates:uniqueGates};
-  topologyView.clear();$('extraLinks').checked=false;
+  topologyView.clear();$('extraLinks').checked=true;
   $('gneSearch').value='';$('gneSearch').disabled=false;$('gneSelect').disabled=false;
   $('search').value='';$('gneSelect').value='';filterGateways();
   replaceItems($('failure'),(function*(){yield new Option('بدون عطل','');for(const n of [...state.adj.keys()].sort())yield new Option(n,n);})());
@@ -447,7 +515,7 @@ $('fullscreen').onclick=async()=>{
   try{if(document.fullscreenElement)await document.exitFullscreen();else await $('mapPanel').requestFullscreen();}
   catch{$('status').textContent='تعذر فتح ملء الشاشة. يمكنك تكبير نافذة المتصفح واستخدام أزرار الخريطة.';}
 };
-new ResizeObserver(()=>{if(topologyView.svg)topologyView.fit();}).observe($('map'));
+new ResizeObserver(()=>{if(topologyView.svg)topologyView.open();}).observe($('map'));
 document.addEventListener('fullscreenchange',()=>{$('fullscreen').textContent=document.fullscreenElement?'إنهاء ملء الشاشة':'ملء الشاشة';});
 </script>
 </body></html>

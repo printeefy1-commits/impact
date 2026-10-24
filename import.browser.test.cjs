@@ -86,13 +86,21 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     await page.selectOption('#gneSelect','A01S001');
     assert.equal(await page.locator('#map .tree-link').count(),3);
     assert.equal(await page.locator('#extraCount').textContent(),'1');
+    assert.notEqual(await page.locator('#map .extra-link').getAttribute('display'),'none');
+    await page.uncheck('#extraLinks');
     assert.equal(await page.locator('#map .extra-link').getAttribute('display'),'none');
     await page.check('#extraLinks');
     assert.notEqual(await page.locator('#map .extra-link').getAttribute('display'),'none');
     assert.equal(await page.locator('#map .node-type').allTextContents().then(a=>a.filter(t=>t==='GNE').length),1);
+    // Reciprocal/repeated physical records must not draw parallel edges.
+    await page.evaluate(()=>{state.links.push(['C01M001','A01S001'],['A01S001','C01M001']);draw();});
+    assert.equal(await page.locator('#map .topology-edges > line').count(),4);
+    assert.equal(await page.locator('#map .topology-edges > path').count(),0);
+    assert.equal(await page.locator('#zoomLabel').textContent(),'100%');
     const oldZoom=await page.locator('#zoomLabel').textContent();
     await page.click('#zoomIn');assert.notEqual(await page.locator('#zoomLabel').textContent(),oldZoom);
     await page.click('#centerMap');assert.equal(await page.locator('#zoomLabel').textContent(),'100%');
+    await page.locator('#map').scrollIntoViewIfNeeded();
     const root=page.locator('#map .network-node[data-node="A01S001"]');
     const initialPosition=await root.getAttribute('transform'),box=await root.locator('rect').first().boundingBox();
     await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();

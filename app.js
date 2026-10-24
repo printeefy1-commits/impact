@@ -61,7 +61,7 @@ function setData(links,gates,issues=[],message=''){
   const uniqueGates=[...new Set(gates)];
   if(!uniqueLinks.length||!uniqueGates.length)throw Error('لم نجد روابط وبوابات صالحة. النمط المطلوب مثل A12S345-C12X3456 وقائمة GNE مثل C12X3456.');
   state={adj:Network.graph(uniqueLinks,uniqueGates),links:uniqueLinks,gates:uniqueGates};
-  topologyView.clear();$('extraLinks').checked=false;
+  topologyView.clear();$('extraLinks').checked=true;
   $('gneSearch').value='';$('gneSearch').disabled=false;$('gneSelect').disabled=false;
   $('search').value='';$('gneSelect').value='';filterGateways();
   replaceItems($('failure'),(function*(){yield new Option('بدون عطل','');for(const n of [...state.adj.keys()].sort())yield new Option(n,n);})());
@@ -135,5 +135,5 @@ $('fullscreen').onclick=async()=>{
   try{if(document.fullscreenElement)await document.exitFullscreen();else await $('mapPanel').requestFullscreen();}
   catch{$('status').textContent='تعذر فتح ملء الشاشة. يمكنك تكبير نافذة المتصفح واستخدام أزرار الخريطة.';}
 };
-new ResizeObserver(()=>{if(topologyView.svg)topologyView.fit();}).observe($('map'));
+new ResizeObserver(()=>{if(topologyView.svg)topologyView.open();}).observe($('map'));
 document.addEventListener('fullscreenchange',()=>{$('fullscreen').textContent=document.fullscreenElement?'إنهاء ملء الشاشة':'ملء الشاشة';});
