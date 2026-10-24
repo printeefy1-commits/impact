@@ -1,13 +1,21 @@
 (function(root){
-  const identifier='[ACO][_-]*\\d[_-]*\\d[_-]*[SMXT][_-]*\\d{3,4}(?!\\d)';
+  const identifier='(?:O01[-_]+)?CA[-_]+BBM|[ACO][_-]*\\d[_-]*\\d[_-]*CA[_-]*\\d{2}(?!\\d)|[ACO][_-]*\\d[_-]*\\d[_-]*[SMXT][_-]*\\d{3,4}(?!\\d)';
+  // Explicit user-approved corrections; never infer a numbered CA name from a place name.
+  const aliases=new Map([['O01CA_AOULEF','O01CA03'],['A11CA-AIN-GUEZZAM','A11CA03']]);
+  function normalize(value){
+    let compact=String(value??'').toUpperCase().replace(/\s/g,'');
+    for(const [original,corrected] of aliases)compact=compact.split(original).join(corrected);
+    return compact;
+  }
+  function canonical(name){return /^(?:O01[-_]+)?CA[-_]+BBM$/.test(name)?'CA-BBM':name.replace(/[-_]/g,'');}
   // Preserve suffix boundaries: O31X400_6900 must not become O31X4006900.
   function extract(value){
-    const compact=String(value??'').toUpperCase().replace(/\s/g,'');
-    return (compact.match(new RegExp(identifier,'g'))||[]).map(s=>s.replace(/[-_]/g,''));
+    const compact=normalize(value);
+    return (compact.match(new RegExp(identifier,'g'))||[]).map(canonical);
   }
   function primaryName(value){
-    const compact=String(value??'').toUpperCase().replace(/\s/g,'');
-    return (compact.match(new RegExp('^'+identifier))?.[0]||'').replace(/[-_]/g,'');
+    const compact=normalize(value);
+    return canonical(compact.match(new RegExp('^(?:'+identifier+')'))?.[0]||'');
   }
   function parseCells(cells,count){
     const valid=[], invalid=[];

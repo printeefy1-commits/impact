@@ -36,6 +36,18 @@ test('T is accepted for primary GNE names, links, and both numeric lengths',()=>
  assert.deepEqual(N.parseCells([{value:'O48T084_IDU1-C12T3456_RTN'}],2).valid,[['O48T084','C12T3456']]);
  assert.deepEqual(N.parseGates([{value:'GNE Name',column:1,row:1},{value:'O48T084_IDU1',column:1,row:2}]).valid,[['O48T084']]);
 });
+test('CA site identifiers and the special CA-BBM gateway remain importable',()=>{
+ for(const name of ['O01CA03','A33CA03','A33CA02','A33CA01','A11CA03','A11CA02','A11CA01','CA-BBM'])assert.equal(N.primaryName(name),name);
+ assert.equal(N.primaryName('O01-CA-BBM'),'CA-BBM');
+ assert.equal(N.primaryName('O01CA_Aoulef'),'O01CA03');
+ assert.equal(N.primaryName('A11CA-Ain-Guezzam'),'A11CA03');
+ assert.equal(N.primaryName('A33CA03 description'),'A33CA03');
+ assert.equal(N.primaryName('A33CA003'),'');
+ assert.deepEqual(N.extract('CA-BBM-O01CA03'),['CA-BBM','O01CA03']);
+ assert.deepEqual(N.extract('A11CA03-O48T084'),['A11CA03','O48T084']);
+ assert.deepEqual(N.extract('A11CA-Ain-Guezzam-O01CA_Aoulef'),['A11CA03','O01CA03']);
+ assert.equal(N.primaryName('unrecognized A11CA03'),'');
+});
 test('reject malformed rows and self links',()=>{
  const r=N.parseCells([{value:'link'},{value:'A12S345-A12S345'},{value:'A12S345-C12X3456'}],2);
  assert.equal(r.valid.length,1);assert.equal(r.invalid.length,2);
