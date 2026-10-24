@@ -2,7 +2,6 @@ const $=id=>document.getElementById(id);
 let state=null;
 const topologyView=new Topology.View($('map'),k=>{$('zoomLabel').textContent=Math.round(k*100)+'%';});
 let cleanedFiles=null;
-let gneReview=null;
 function prepareDownloads(links,gates){
   cleanedFiles={
     links:[...new Set(links.map(pair=>pair.slice().sort().join('-')))],
@@ -10,7 +9,6 @@ function prepareDownloads(links,gates){
   };
   $('downloadLinks').disabled=!cleanedFiles.links.length;
   $('downloadGates').disabled=!cleanedFiles.gates.length;
-  $('exportSummary').textContent=`ملفات التنزيل: ${cleanedFiles.links.length} رابط فريد و${cleanedFiles.gates.length} بوابة فريدة. تُصدّر البيانات الصالحة فقط؛ راجع الخلايا المستبعدة. ملفاتك الأصلية لا تتغير.`;
 }
 function downloadCleaned(kind){
   const values=cleanedFiles?.[kind];if(!values?.length)return;
@@ -22,13 +20,6 @@ function downloadCleaned(kind){
 }
 $('downloadLinks').onclick=()=>downloadCleaned('links');
 $('downloadGates').onclick=()=>downloadCleaned('gates');
-$('downloadReview').onclick=()=>{
-  if(!gneReview)return;
-  const quote=value=>'"'+String(value).replace(/^(\s*[=+@-])/,'\'$1').replace(/"/g,'""')+'"';
-  const rows=[['الموقع في المصدر','الاسم الأصلي','الاسم المنظف','الحالة'],...gneReview];
-  const blob=new Blob(['\uFEFF',rows.map(row=>row.map(quote).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='gne-name-comparison.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
-};
 async function readCells(file,kind){
   if(!file)throw Error('اختر ملف الروابط وملف GNE أولًا.');
   if(file.size>10*1024*1024)throw Error('الحد الأقصى لكل ملف هو 10 ميغابايت.');
@@ -56,7 +47,7 @@ async function readCells(file,kind){
   }
   if(quoted)throw Error('يوجد حقل نصي غير مغلق بعلامة اقتباس في CSV.');push();return cells;
 }
-function setData(links,gates,issues=[],message=''){
+function setData(links,gates,ignoredCount=0,message=''){
   const uniqueLinks=[...new Map(links.map(pair=>[pair.slice().sort().join('|'),pair])).values()];
   const uniqueGates=[...new Set(gates)];
   if(!uniqueLinks.length||!uniqueGates.length)throw Error('لم نجد روابط وبوابات صالحة. النمط المطلوب مثل A12S345-C12X3456 وقائمة GNE مثل C12X3456.');
@@ -64,11 +55,7 @@ function setData(links,gates,issues=[],message=''){
   topologyView.clear();$('extraLinks').checked=true;
   $('gneSearch').value='';$('gneSearch').disabled=false;$('gneSelect').disabled=false;
   $('search').value='';$('gneSelect').value='';filterGateways();
-  replaceItems($('failure'),(function*(){yield new Option('بدون عطل','');for(const n of [...state.adj.keys()].sort())yield new Option(n,n);})());
-  const previewLimit=200;
-  $('importReport').textContent=`${uniqueLinks.length} رابط فريد، ${uniqueGates.length} بوابة. تم تجاهل ${issues.length} خلية غير مطابقة (تشمل العناوين). ${issues.length>previewLimit?`تُعرض أول ${previewLimit} خلية مستبعدة فقط؛ جميع الخلايا الصالحة تدخل في التحليل.`:''} ${message}`;
-  replaceItems($('issues'),issues.slice(0,previewLimit).map(issue=>{const p=document.createElement('p');p.textContent=issue;return p;}));
-  $('status').textContent=issues.length?'تم إنشاء الخريطة. راجع الخلايا المستبعدة أسفل الصفحة للتأكد من اكتمال البيانات.':'الخريطة جاهزة. اختر عنصرًا لمحاكاة تعطله.';
+  $('status').textContent='تم الاستيراد. اختر بوابة GNE لعرض خريطتها.'+(ignoredCount?` تم تجاهل ${ignoredCount} خلية غير مطابقة (بما فيها العناوين).`:'')+(message?' '+message:'');
   draw();
 }
 // A fragment avoids passing a file-sized array as function arguments.
@@ -86,15 +73,13 @@ function filterGateways(){
 }
 function draw(){
   if(!state)return;
-  const failed=$('failure').value,{adj,gates,links}=state;
-  const a=Network.analyze(adj,gates,failed),affected=new Set(a.affected),offline=new Set(a.offline);
-  $('nodesCount').textContent=adj.size;$('gatesCount').textContent=gates.length;$('impactCount').textContent=affected.size;$('offlineCount').textContent=offline.size;
+  const {adj,gates,links}=state,connected=Network.traverse(adj,gates);
+  $('nodesCount').textContent=adj.size;$('gatesCount').textContent=gates.length;$('offlineCount').textContent=adj.size-connected.visited.size;
   const selected=$('gneSelect').value,base=Network.branch(adj,gates,selected);
-  $('viewSummary').textContent=selected?`${selected} · ${base.visited.size} عنصر مع البوابة · ${[...base.visited].filter(n=>affected.has(n)).length} متأثر بالعطل في هذا الفرع. الإحصاءات العلوية وحساب الأعطال للشبكة كاملة.`:'اختر بوابة GNE من القائمة. يمكنك البحث باسمها لتصفية الخيارات. الإحصاءات العلوية للشبكة كاملة.';
+  $('viewSummary').textContent=selected?`${selected} · ${base.visited.size} عنصر مع البوابة · الإحصاءات العلوية للشبكة كاملة.`:'اختر بوابة GNE من القائمة. يمكنك البحث باسمها لتصفية الخيارات. الإحصاءات العلوية للشبكة كاملة.';
   const query=$('search').value.trim().toUpperCase();
-  function status(n){return n===failed?'متعطل':affected.has(n)?'متأثر بالعطل':offline.has(n)?'غير متصل أصلًا':gates.includes(n)?'بوابة GNE':'متصل';}
   if(selected){
-    const extra=topologyView.render({key:selected,branch:base,links,failed,affected,query,showExtra:$('extraLinks').checked,onSelect:n=>{$('failure').value=n;draw();}});
+    const extra=topologyView.render({key:selected,branch:base,links,query,showExtra:$('extraLinks').checked});
     $('extraCount').textContent=extra;
   }else{
     topologyView.clear();$('extraCount').textContent='0';
@@ -102,25 +87,18 @@ function draw(){
   }
   for(const id of ['zoomIn','zoomOut','fitMap','centerMap','resetLayout','extraLinks'])$(id).disabled=!selected;
   $('fullscreen').disabled=!selected||!document.fullscreenEnabled;
-  replaceItems($('nodeList'),(function*(){for(const n of [...base.visited].sort()){if(query&&!n.includes(query))continue;const row=document.createElement('div');row.className='node-row';const code=document.createElement('code');code.textContent=n;const text=document.createElement('span');text.textContent=status(n);row.append(code,text);yield row;}})());
-  if(failed)$('status').textContent=`محاكاة تعطل ${failed}: ${affected.size} عنصر يفقد الاتصال بسبب هذا العطل، باستثناء العنصر المتعطل نفسه. ${offline.size} عنصر غير متصل أصلًا.`;
+
 }
 $('load').onclick=async()=>{const button=$('load');button.disabled=true;
   cleanedFiles=null;$('downloadLinks').disabled=true;$('downloadGates').disabled=true;
-  gneReview=null;$('downloadReview').disabled=true;
-  $('exportSummary').textContent='لم تُجهّز ملفات تنزيل لهذا الاستيراد بعد.';
   try{
   const [l,g]=await Promise.all([readCells($('links').files[0],'links'),readCells($('gates').files[0],'gates')]);
   const pl=Network.parseLinks(l),pg=Network.parseGates(g);
   const confirmed=Network.applyConnections(pl.valid,pg.valid.flat());
   prepareDownloads(confirmed.links,pg.valid.flat());
-  gneReview=pg.review;$('downloadReview').disabled=false;
-  const issues=[...pl.invalid.map(x=>`ملف الروابط · ${x.location}: ${x.value}`),...pg.invalid.map(x=>`ملف GNE · ${x.location}: ${x.value}`)];
-  setData(confirmed.links,pg.valid.flat(),issues,`قراءة أسماء GNE من العمود ${pg.column} فقط. ${pl.mode==='endpoints'?'استخدم طرفا الرابط من عمودي Source NE Name وSink NE Name.':'استخدم عمود اسم الرابط.'} ${confirmed.added.length?'أُضيف الرابط A33T001 ↔ A33CA01 وفق تأكيد المستخدم؛ وهو مضمن في تنزيل الروابط المنظّفة.':''} تظهر البوابات غير الموجودة في الروابط منفردة.`);
+  const ignoredCount=pl.invalid.length+pg.invalid.length;
+  setData(confirmed.links,pg.valid.flat(),ignoredCount,confirmed.added.length?'أُضيف الرابط A33T001 ↔ A33CA01 وفق تأكيدك، وهو مضمن في ملف الروابط المنظّفة.':'');
 }catch(e){$('status').textContent='لم يتم الاستيراد: '+e.message;}finally{button.disabled=false;}};
-$('demo').onclick=()=>{gneReview=null;$('downloadReview').disabled=true;cleanedFiles=null;$('downloadLinks').disabled=true;$('downloadGates').disabled=true;$('exportSummary').textContent='هذا مثال تجريبي. ارفع ملفيك لتنزيل بياناتك بعد التنظيف.';setData([['A01S001','C01M001'],['C01M001','O01X001'],['C01M001','A02S002'],['A02S002','O02M002'],['C02X002','O02M002'],['A03X003','C03S003']],['A01S001','C02X002'],[],'بيانات تجريبية وليست بيانات ملفاتك.');};
-$('failure').onchange=()=>{draw();if(!$('failure').value)$('status').textContent='أُعيد الاتصال؛ لا توجد محاكاة عطل فعالة.';};
-$('reset').onclick=()=>{$('failure').value='';draw();$('status').textContent='أُعيد الاتصال؛ لا توجد محاكاة عطل فعالة.';};
 $('search').oninput=draw;
 $('gneSearch').oninput=()=>{filterGateways();draw();};
 $('gneSelect').onchange=()=>{$('search').value='';draw();$('map').scrollTop=0;$('map').scrollLeft=0;};

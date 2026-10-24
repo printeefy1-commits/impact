@@ -15,17 +15,19 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
     await page.goto(`http://127.0.0.1:${server.address().port}`);
     await page.context().setOffline(true);
-    await page.click('#demo');
+    assert.equal(await page.locator('#downloadReview, #exportSummary, #demo, #failure, #reset, #impactCount, #report, footer, a[download]').count(),0);
+    assert.doesNotMatch(await page.locator('body').innerText(),/محاكاة العطل|إعادة الاتصال|تفاصيل العناصر ومراجعة الاستيراد/);
+    await page.setInputFiles('#links',{name:'network.csv',mimeType:'text/csv',buffer:Buffer.from('link\nA01S001-C01M001\nC01M001-O01X001\nC01M001-A02S002\nA02S002-O02M002\nC02X002-O02M002\nA03X003-C03S003\n')});
+    await page.setInputFiles('#gates',{name:'gne.csv',mimeType:'text/csv',buffer:Buffer.from('GNE\nA01S001\nC02X002\n')});
+    await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
+    assert.equal(await page.locator('#offlineCount').textContent(),'2');
     assert.equal(await page.locator('#map svg').count(),0);
     await page.selectOption('#gneSelect','A01S001');
     const visibleNames=()=>page.locator('#map .node-name').allTextContents();
     assert.deepEqual((await visibleNames()).sort(),['A01S001','A02S002','C01M001','O01X001','O02M002'].sort());
-    await page.selectOption('#failure','C01M001');
-    assert.equal(await page.locator('#impactCount').textContent(),'1');
     await page.selectOption('#gneSelect','C02X002');
     assert.ok(!(await visibleNames()).includes('A01S001'));
     assert.ok((await visibleNames()).includes('C02X002'));
-    assert.equal(await page.locator('#failure').inputValue(),'C01M001');
     await page.fill('#gneSearch','not-found');
     assert.equal(await page.locator('#map svg').count(),0);
     assert.equal(await page.locator('#gneSelect option').count(),1);
@@ -44,10 +46,7 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     assert.equal(await page.locator('#map svg').count(),0);
     await page.selectOption('#gneSelect','A01S001');
     assert.equal((await visibleNames()).length,3);
-    assert.match(await page.locator('#importReport').textContent(),/150002/);
-    assert.equal(await page.locator('#issues p').count(),200);
-    await page.selectOption('#failure','C01M001');
-    assert.equal(await page.locator('#impactCount').textContent(),'1');
+    assert.match(await page.locator('#status').textContent(),/150002/);
     await page.evaluate(async()=>{
       for(const [id,rows] of [['links',[['link'],['A_12 X345 site north - C12SU3456 microwave'],['C12SU3456 duplicate-A12X345 note']]],['gates',[['GNE Name','Subnet'],[' C12SU3456 gateway (A12X345) description ','O12S345']]]]){
         const book=new ExcelJS.Workbook();book.addWorksheet('data').addRows(rows);
@@ -60,8 +59,6 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     assert.equal(await page.locator('#gatesCount').textContent(),'1');
     assert.equal(await page.locator('#gneSelect option[value="O12S345"]').count(),0);
     assert.equal(await page.locator('#gneSelect option[value="A12X345"]').count(),0);
-    await page.selectOption('#failure','C12SU3456');
-    assert.equal(await page.locator('#impactCount').textContent(),'1');
     const exported={};
     for(const [button,name,expected] of [
       ['downloadLinks','cleaned-links.csv','link\r\nA12X345-C12SU3456\r\n'],
@@ -106,7 +103,6 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();
     await page.mouse.move(box.x+box.width/2+35,box.y+box.height/2+20,{steps:5});await page.mouse.up();
     assert.notEqual(await root.getAttribute('transform'),initialPosition);
-    assert.equal(await page.locator('#failure').inputValue(),'');
     const cameraBefore=await page.evaluate(()=>({...topologyView.camera}));
     const canvas=await page.locator('#map').boundingBox();
     await page.mouse.move(canvas.x+8,canvas.y+100);await page.mouse.down();
@@ -115,13 +111,12 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     assert.ok(cameraAfter.x>cameraBefore.x&&cameraAfter.y>cameraBefore.y);
     await page.click('#resetLayout');
     assert.equal(await root.getAttribute('transform'),initialPosition);
-    // A node click still performs failure simulation exactly as documented.
-    await root.locator('rect').first().click();
-    assert.equal(await page.locator('#failure').inputValue(),'A01S001');
-    assert.equal(await page.locator('#impactCount').textContent(),'3');
+    // Nodes remain draggable graphics; clicking or pressing Enter no longer starts a fault.
+    const beforeClick={position:await root.getAttribute('transform'),color:await root.locator('rect').first().getAttribute('fill'),count:await page.locator('#nodesCount').textContent()};
+    await root.click();await root.press('Enter');
+    assert.equal(await root.getAttribute('role'),'img');
+    assert.deepEqual({position:await root.getAttribute('transform'),color:await root.locator('rect').first().getAttribute('fill'),count:await page.locator('#nodesCount').textContent()},beforeClick);
     assert.equal(await page.locator('#map .network-node').count(),4);
-    await page.click('#reset');
-    assert.equal(await page.locator('#impactCount').textContent(),'0');
     assert.deepEqual(errors,[]);
   }finally{
     if(browser)await browser.close();
