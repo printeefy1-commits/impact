@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>أثر | خريطة شبكة الميكروويف</title>
+<link rel="stylesheet" href="style.css">
+<body>
+<header><div class="brand">◉ أثر <small>MICROWAVE NETWORK</small></div><span class="badge">تحليل الاتصال والتأثير</span></header>
+<main><section class="intro"><p class="eyebrow">رؤية أوضح لشبكتك</p><h1>كل رابط واضح.<br><span>وكل تأثير محسوب.</span></h1><p>اربط ملف الروابط بقائمة البوابات، واستكشف اتصال العناصر بالشبكة قبل الأعطال وبعدها.</p></section>
+<section class="workspace"><aside>
+<h2>01 <span>بيانات الشبكة</span></h2>
+<label class="upload">ملف الروابط <small>كل رابط مثل A12S345-C12M3456</small><input id="links" type="file" accept=".csv,.txt,.xlsx"></label>
+<label class="upload">ملف بوابات GNE <small>اسم عنصر واحد مثل C12M3456</small><input id="gates" type="file" accept=".csv,.txt,.xlsx"></label>
+<p class="hint">Excel ‏(.xlsx) أو CSV أو نص. تُقرأ جميع الخلايا في الورقة الأولى. يمكن وجود عنوان في الصف الأول. تبقى ملفاتك داخل المتصفح.</p>
+<p class="hint">تُستخرج الأسماء المطابقة فقط، وتُزال المسافات والشرطات والنصوص الإضافية. مثال: A12S345_site → A12S345. تُرفض الخلية إذا احتوت أكثر من العدد المطلوب من الأسماء.</p>
+<button id="load" class="primary">تنظيف الملفات وإنشاء الخريطة ←</button>
+<div class="exports"><strong>تنزيل البيانات بعد التنظيف</strong><button id="downloadLinks" class="secondary" disabled>تنزيل الروابط المنظّفة CSV</button><button id="downloadGates" class="secondary" disabled>تنزيل بوابات GNE المنظّفة CSV</button><p id="exportSummary" class="hint">تتاح الملفات بعد الاستيراد. تُصدّر الأسماء الصالحة فقط دون تكرار؛ راجع الخلايا المستبعدة لضمان اكتمالها.</p></div>
+<button id="demo" class="secondary">استكشاف شبكة تجريبية</button>
+<a href="sample-links.csv" download>تنزيل مثال للروابط</a> · <a href="sample-gne.csv" download>مثال GNE</a>
+<hr><h2>02 <span>محاكاة العطل</span></h2><label>العنصر المتعطل<select id="failure"><option value="">بدون عطل</option></select></label><button id="reset" class="secondary">إعادة الاتصال</button>
+<p class="hint">يُعد العنصر متأثرًا إذا فقد كل مساراته إلى أي بوابة فعالة. قد تحافظ الروابط البديلة على الاتصال.</p>
+</aside><div class="content"><div id="status" role="status" aria-live="polite">ابدأ بتحميل الملفين أو استكشف المثال التجريبي.</div><div class="stats"><div><b id="nodesCount">0</b><span>عناصر الشبكة</span></div><div><b id="gatesCount">0</b><span>بوابات GNE</span></div><div><b id="impactCount">0</b><span>متأثر بالعطل</span></div><div><b id="offlineCount">0</b><span>غير متصل أصلًا</span></div></div>
+<section class="map-panel"><div class="map-heading"><div><h2>خريطة الاتصال</h2><p>الفروع مرتبة حسب أقرب GNE · الروابط ثنائية الاتجاه</p></div><input id="search" placeholder="ابحث عن عنصر…" aria-label="البحث عن عنصر"></div><div class="legend"><span class="gne">● بوابة</span><span class="online">● متصل</span><span class="affected">● متأثر</span><span class="failed">● متعطل</span><span>● غير متصل أصلًا</span></div><div id="map" class="map"><p class="empty">ستظهر فروع الشبكة هنا</p></div></section>
+<details id="report"><summary>تفاصيل العناصر ومراجعة الاستيراد</summary><p id="importReport"></p><div id="issues"></div><div id="nodeList"></div></details></div></section>
+<footer>أثر — أداة تخطيط وتحليل اتصال · المحاكاة مبنية على الروابط المستوردة، ولا تتصل بالمعدات.</footer></main>
+<script src="vendor/exceljs.min.js"></script><script src="network.js"></script><script src="app.js"></script>
+</body></html>
