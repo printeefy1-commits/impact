@@ -5,6 +5,9 @@
 <style>*{box-sizing:border-box}body{margin:0;background:#f4f6f9;color:#152b43;font-family:Tahoma,Arial,sans-serif;font-size:14px}header{height:78px;background:#fff;border-bottom:1px solid #e1e7ed;display:flex;justify-content:space-between;align-items:center;padding:0 5%}.brand{font-size:30px;font-weight:bold;color:#087e8b}.brand small{font-size:10px;letter-spacing:2px;margin-right:16px;color:#7b8a9b}.badge{background:#e7f5f3;border-radius:30px;padding:10px 18px;color:#187567}main{max-width:1500px;margin:auto;padding:38px 5%}.eyebrow{color:#088d90;font-weight:bold;font-size:12px}.intro h1{font-size:42px;line-height:1.5;margin:10px 0}.intro h1 span{color:#08868b}.intro>p:last-child{color:#738196;line-height:1.9;margin-bottom:30px}.workspace{display:grid;grid-template-columns:300px minmax(0,1fr);gap:24px}aside,.map-panel,details{background:#fff;border:1px solid #e2e8ef;border-radius:16px}aside{padding:24px;height:fit-content}h2{font-size:16px;margin:0 0 20px}aside h2{color:#0c9296}aside h2 span{color:#20354b;margin-right:8px}.upload{display:block;border:1px dashed #bdced8;padding:16px 12px;border-radius:10px;margin-bottom:14px;font-weight:bold;background:#fafcfd}small{display:block;font-weight:normal;font-size:11px;color:#78869a;margin:9px 0}input[type=file]{width:100%;font-size:11px;color:#53677a}.hint{font-size:11px;line-height:1.9;color:#7b8798}button{cursor:pointer;border:0;border-radius:8px;padding:13px;font-family:inherit;font-weight:bold}button:disabled{opacity:.5;cursor:wait}.primary{background:#07898e;color:white;width:100%;margin:8px 0}.secondary{background:#eef3f7;color:#375066;width:100%;margin:7px 0}a{font-size:10px;color:#087d85}hr{border:0;border-top:1px solid #e8edf2;margin:24px 0}select{width:100%;padding:12px;background:#f9fbfc;border:1px solid #dce4ed;border-radius:8px;margin-top:10px;font-family:inherit;direction:ltr}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}.stats>div{background:#fff;border:1px solid #e2e8ef;border-radius:12px;padding:19px}.stats b{display:block;font-size:28px;margin-bottom:8px}.stats span{color:#7c8b9c;font-size:11px}.stats>div:nth-child(3) b{color:#de8b32}.stats>div:nth-child(4) b{color:#8c98a5}#status{padding:13px 16px;background:#e7f3f4;border-radius:9px;line-height:1.8;font-size:12px}.map-heading{display:flex;justify-content:space-between;gap:15px;padding:22px 22px 8px}.map-heading h2{margin-bottom:8px}.map-heading p{color:#8390a0;font-size:10px}.map-heading input{width:180px;align-self:start;padding:10px;border:1px solid #dce4ed;border-radius:8px;font-family:inherit}.legend{padding:10px 22px;display:flex;flex-wrap:wrap;gap:16px;color:#94a0ad;font-size:10px}.gne{color:#087e8b}.online{color:#408ad1}.affected{color:#da932e}.failed{color:#dc5266}.map{height:480px;overflow:auto;direction:ltr;background-image:radial-gradient(#dfe6ed 1px,transparent 1px);background-size:20px 20px;border-radius:0 0 16px 16px}.empty{text-align:center;margin-top:160px;color:#9aa7b5}.map svg{display:block}.map text{font-family:Arial,sans-serif;font-size:11px}.map g{cursor:pointer}.map g:focus{outline:2px solid #087e8b}details{margin-top:18px;padding:18px;font-size:12px}summary{cursor:pointer}#importReport{line-height:1.9}#issues{max-height:140px;overflow:auto;color:#a34f43}#nodeList{max-height:260px;overflow:auto}.node-row{display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #edf1f5;gap:10px}.node-row code{direction:ltr}footer{padding:28px 0;color:#8d99a7;font-size:10px}#search{direction:ltr}@media(max-width:900px){.workspace{grid-template-columns:1fr}.intro h1{font-size:32px}.stats{gap:6px}.stats>div{padding:12px}.brand small{display:none}.map-heading{flex-wrap:wrap}main{padding:24px 4%}.badge{font-size:10px}}
 .workspace>*{min-width:0}@media(max-width:900px){.workspace{grid-template-columns:minmax(0,1fr)}}
 .gateway-controls{display:flex;gap:16px;padding:12px 22px;flex-wrap:wrap}.gateway-controls label{flex:1;min-width:180px;font-size:12px}.gateway-controls input{display:block;width:100%;padding:12px;margin-top:10px;border:1px solid #dce4ed;border-radius:8px;direction:ltr;font-family:inherit}.view-summary{padding:0 22px;color:#64788d;font-size:11px;line-height:1.9}.map-heading p{line-height:1.8;max-width:480px}
+/* Microwave topology: separate subtree lanes, device symbols, and a movable canvas. */
+.map{height:580px;position:relative;overflow:hidden;background-color:#4c788b;background-image:radial-gradient(#6b91a1 .7px,transparent .7px);background-size:24px 24px;touch-action:none;cursor:grab;user-select:none}.map:active{cursor:grabbing}.map svg{width:100%;height:100%}.map .empty{color:#e3f2f6;padding:20px;margin-top:180px}.map text{font-family:Arial,sans-serif;font-size:inherit}.map .network-node{cursor:grab;outline:none}.map .network-node:focus .node-label-bg{stroke:#fff17d;stroke-width:3px}.map .network-node:hover .node-label-bg{fill:#fff9cc}.topology-layer,.topology-nodes,.topology-edges{cursor:inherit!important}.tree-link,.extra-link{pointer-events:stroke}.map-toolbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;padding:12px 22px;background:#f3f7fa;border-block:1px solid #e0e8ef}.map-toolbar button{padding:9px 11px;background:white;border:1px solid #d4e1e9;color:#2b5668;font-size:11px}.map-toolbar button:disabled{cursor:default}.map-toolbar output{font-size:11px;direction:ltr;min-width:36px;text-align:center}.map-toolbar label{display:flex;gap:5px;align-items:center;font-size:11px;cursor:pointer}.map-help{font-size:10px;color:#698297;margin:0;padding:0 22px 12px;line-height:1.8}.online{color:#16a65a}.map-panel:fullscreen{background:white;display:flex;flex-direction:column;border-radius:0;overflow:auto}.map-panel:fullscreen .map{flex:1;min-height:300px;height:auto}.map-panel:fullscreen .map-heading{padding-top:14px}.map-panel:fullscreen .gateway-controls{padding-block:4px}@media(max-width:600px){.map{height:520px}.map-toolbar{padding:10px}.map-toolbar button{padding:9px}.map-heading input{width:100%}.map-panel:fullscreen .map-heading p,.map-panel:fullscreen .legend,.map-panel:fullscreen .map-help{display:none}}
+.map .node-name{font-size:13px}.map .node-type{font-size:10px}
 </style>
 <body>
 <!-- ExcelJS 4.4.0, MIT license: The MIT License (MIT)
@@ -45,10 +48,12 @@ SOFTWARE.
 <hr><h2>02 <span>محاكاة العطل</span></h2><label>العنصر المتعطل<select id="failure"><option value="">بدون عطل</option></select></label><button id="reset" class="secondary">إعادة الاتصال</button>
 <p class="hint">يُعد العنصر متأثرًا إذا فقد كل مساراته إلى أي بوابة فعالة. قد تحافظ الروابط البديلة على الاتصال.</p>
 </aside><div class="content"><div id="status" role="status" aria-live="polite">ابدأ بتحميل الملفين أو استكشف المثال التجريبي.</div><div class="stats"><div><b id="nodesCount">0</b><span>عناصر الشبكة</span></div><div><b id="gatesCount">0</b><span>بوابات GNE</span></div><div><b id="impactCount">0</b><span>متأثر بالعطل</span></div><div><b id="offlineCount">0</b><span>غير متصل أصلًا</span></div></div>
-<section class="map-panel"><div class="map-heading"><div><h2>خريطة بوابة واحدة</h2><p>اختر GNE لعرض العناصر المتصلة بها دون المرور ببوابة أخرى. قد يظهر العنصر المشترك في أكثر من فرع.</p></div><input id="search" placeholder="ابحث عن عنصر في الفرع…" aria-label="البحث عن عنصر في الفرع"></div>
+<section class="map-panel" id="mapPanel"><div class="map-heading"><div><h2>خريطة بوابة واحدة</h2><p>اختر GNE لعرض العناصر المتصلة بها دون المرور ببوابة أخرى. قد يظهر العنصر المشترك في أكثر من فرع.</p></div><input id="search" placeholder="ابحث عن عنصر في الفرع…" aria-label="البحث عن عنصر في الفرع"></div>
 <div class="gateway-controls"><label>البحث عن بوابة GNE<input id="gneSearch" type="search" placeholder="مثال: A01S001" disabled></label><label>البوابة المعروضة<select id="gneSelect" disabled><option value="">اختر بوابة GNE…</option></select></label></div>
 <p id="viewSummary" class="view-summary" aria-live="polite">حمّل البيانات ثم اختر بوابة لعرض فرعها فقط.</p>
-<div class="legend"><span class="gne">● بوابة</span><span class="online">● متصل</span><span class="affected">● متأثر</span><span class="failed">● متعطل</span><span>● غير متصل أصلًا</span></div><div id="map" class="map"><p class="empty">اختر بوابة GNE لعرض الخريطة</p></div></section>
+<div class="map-toolbar" role="group" aria-label="أدوات الخريطة"><button id="zoomIn" disabled aria-label="تكبير الخريطة">＋</button><output id="zoomLabel" aria-live="polite">100%</output><button id="zoomOut" disabled aria-label="تصغير الخريطة">−</button><button id="fitMap" disabled>ملاءمة العرض</button><button id="centerMap" disabled>GNE · 100%</button><button id="resetLayout" disabled>ترتيب تلقائي</button><button id="fullscreen" disabled>ملء الشاشة</button><label><input id="extraLinks" type="checkbox" disabled>روابط إضافية (<span id="extraCount">0</span>)</label></div>
+<div class="legend"><span class="gne">● بوابة GNE</span><span class="online">● متصل</span><span class="affected">● متأثر</span><span class="failed">● متعطل</span><span>الروابط الإضافية تُعرض عند تفعيل الخيار وتدخل دائمًا في حساب الأعطال.</span></div>
+<p class="map-help">اسحب الخلفية لتحريك الخريطة، واسحب الأيقونة لترتيب العنصر. عجلة الفأرة للتكبير. انقر العنصر لمحاكاة تعطله.</p><div id="map" class="map"><p class="empty">اختر بوابة GNE لعرض الخريطة</p></div></section>
 <details id="report"><summary>تفاصيل العناصر ومراجعة الاستيراد</summary><p id="importReport"></p><div id="issues"></div><div id="nodeList"></div></details></div></section>
 <footer>أثر — أداة تخطيط وتحليل اتصال · المحاكاة مبنية على الروابط المستوردة، ولا تتصل بالمعدات.</footer></main>
 <script>/*! ExcelJS 19-10-2023 */
@@ -142,8 +147,114 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   const api={extract,parseCells,graph,traverse,analyze,branch};
   if(typeof module!=='undefined')module.exports=api;else root.Network=api;
 })(globalThis);
+</script><script>(function(root){
+  // Allocate a separate horizontal span to each subtree, without recursive calls.
+  function layout(branch){
+    const nodes=[...branch.visited],children=new Map(nodes.map(n=>[n,[]]));
+    for(const [child,parent] of branch.parent)children.get(parent)?.push(child);
+    for(const list of children.values())list.sort();
+    const ordered=nodes.slice().sort((a,b)=>(branch.depth.get(b)||0)-(branch.depth.get(a)||0));
+    const spans=new Map();
+    for(const n of ordered){let span=0;for(const child of children.get(n))span+=spans.get(child);spans.set(n,Math.max(180,span));}
+    const points=new Map(),roots=nodes.filter(n=>!branch.parent.has(n));
+    let width=100,maxDepth=0;const queue=[];
+    for(const n of roots){queue.push({n,left:width-50});width+=spans.get(n);}
+    for(let i=0;i<queue.length;i++){
+      const {n,left}=queue[i],depth=branch.depth.get(n)||0;
+      points.set(n,{x:left+spans.get(n)/2,y:85+depth*150});maxDepth=Math.max(maxDepth,depth);
+      let nextLeft=left;for(const child of children.get(n)){queue.push({n:child,left:nextLeft});nextLeft+=spans.get(child);}
+    }
+    return {points,width:Math.max(280,width),height:Math.max(210,180+maxDepth*150)};
+  }
+  function el(tag,attrs={}){
+    const node=document.createElementNS('http://www.w3.org/2000/svg',tag);
+    for(const [key,value] of Object.entries(attrs))node.setAttribute(key,value);
+    return node;
+  }
+  class View{
+    constructor(container,onZoom){this.container=container;this.onZoom=onZoom;this.clear();}
+    clear(){this.key=null;this.svg=null;this.points=null;this.camera={x:0,y:0,k:1};this.onZoom?.(1);}
+    render({key,branch,links,failed,affected,query,showExtra,onSelect}){
+      const changed=this.key!==key;
+      if(changed){this.points=layout(branch).points;this.key=key;}
+      const svg=el('svg',{width:'100%',height:'100%',role:'group','aria-label':`خريطة شجرية للبوابة ${key}`});
+      const layer=el('g',{'class':'topology-layer'}),edges=el('g',{'class':'topology-edges'}),nodes=el('g',{'class':'topology-nodes'});
+      svg.append(layer);layer.append(edges,nodes);this.svg=svg;this.layer=layer;this.edges=[];this.nodeElements=new Map();
+      let extraCount=0;
+      for(const [a,b] of links){
+        if(!this.points.has(a)||!this.points.has(b))continue;
+        const tree=branch.parent.get(a)===b||branch.parent.get(b)===a;
+        if(!tree)extraCount++;
+        const path=el('path',{'class':tree?'tree-link':'extra-link',fill:'none',stroke:a===failed||b===failed?'#f48a98':affected.has(a)||affected.has(b)?'#ffc068':tree?'#45ed8a':'#f6d77d','stroke-width':tree?2:1.5,'stroke-dasharray':tree?'':'6 5',display:tree||showExtra?'':'none'});
+        const title=el('title');title.textContent=`${a} ↔ ${b}${tree?'':' · رابط إضافي'}`;path.append(title);edges.append(path);
+        const parent=branch.parent.get(a)===b?b:a,child=parent===a?b:a;
+        this.edges.push({a:parent,b:child,path,tree});
+      }
+      for(const [n,p] of this.points){
+        const gate=n===key,color=n===failed?'#e84b5d':affected.has(n)?'#e8a126':gate?'#087d91':'#16b860';
+        const status=n===failed?'متعطل':affected.has(n)?'متأثر بالعطل':gate?'بوابة GNE':'متصل';
+        const g=el('g',{'class':'network-node',transform:`translate(${p.x} ${p.y})`,tabindex:0,role:'button','aria-label':`${n}: ${status}. اسحب لتحريك العنصر أو انقر لمحاكاة تعطله.`,'data-node':n,opacity:query&&!n.includes(query)?'.2':'1'});
+        const title=el('title');title.textContent=`${n} · ${status}\nاسحب لترتيب الموقع، أو انقر لمحاكاة العطل`;g.append(title);
+        // Microwave dish and radio chassis, drawn as local SVG rather than an external image.
+        g.append(el('rect',{x:-29,y:-33,width:58,height:64,rx:4,fill:color,stroke:gate?'#b6f5ff':'#c6f2d7','stroke-width':gate?3:1.5}));
+        g.append(el('path',{d:'M-15 -22 Q-23 -1 8 0 Z M-14 -21 L7 -3 M-1 -13 L10 -23 M10 -23 L14 -19 M-4 0 L-4 6 M-12 6 H5',fill:'none',stroke:'white','stroke-width':2.2,'stroke-linecap':'round','stroke-linejoin':'round'}));
+        g.append(el('circle',{cx:12,cy:-24,r:3,fill:'none',stroke:'white','stroke-width':1.5}));
+        for(let i=0;i<3;i++)g.append(el('rect',{x:-20+i*15,y:12,width:10,height:13,rx:1,fill:'none',stroke:'white','stroke-width':1.5}));
+        g.append(el('rect',{x:gate?-44:-32,y:-48,width:gate?40:30,height:17,rx:4,fill:gate?'#ddfaff':'#e3ecef',stroke:'#fff','stroke-width':.5}));
+        const type=el('text',{'class':'node-type',x:gate?-24:-17,y:-36,'text-anchor':'middle',fill:gate?'#075f70':'#385c6b','font-size':10,'font-weight':'bold'});type.textContent=gate?'GNE':'NE';g.append(type);
+        g.append(el('rect',{'class':'node-label-bg',x:-75,y:39,width:150,height:26,rx:5,fill:'#f7fcff',stroke:query&&n.includes(query)?'#ffe778':'#c8dce5','stroke-width':query&&n.includes(query)?3:1}));
+        const label=el('text',{'class':'node-name',x:0,y:56,'text-anchor':'middle',fill:'#173e50','font-size':13,'font-weight':'bold'});label.textContent=n;g.append(label);
+        g.onclick=e=>{if(e.detail===0)onSelect(n);};
+        g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onSelect(n);}};
+        nodes.append(g);this.nodeElements.set(n,g);
+      }
+      this.updateEdges();this.container.replaceChildren(svg);this.bindInteractions(svg);
+      if(changed)this.fit();else this.applyCamera();
+      return extraCount;
+    }
+    updateEdges(){
+      for(const {a,b,path,tree} of this.edges){const p=this.points.get(a),q=this.points.get(b);
+        if(tree){const middle=(p.y+31+q.y-49)/2;path.setAttribute('d',`M ${p.x} ${p.y+31} V ${middle} H ${q.x} V ${q.y-49}`);}
+        else{const bend=Math.max(65,Math.abs(p.x-q.x)*.18);path.setAttribute('d',`M ${p.x+29} ${p.y} C ${p.x+29+bend} ${p.y}, ${q.x+29+bend} ${q.y}, ${q.x+29} ${q.y}`);}
+      }
+    }
+    applyCamera(){if(!this.layer)return;const c=this.camera;this.layer.setAttribute('transform',`translate(${c.x} ${c.y}) scale(${c.k})`);this.onZoom?.(c.k);}
+    fit(){
+      if(!this.svg)return;
+      let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;
+      for(const p of this.points.values()){left=Math.min(left,p.x-90);right=Math.max(right,p.x+90);top=Math.min(top,p.y-65);bottom=Math.max(bottom,p.y+85);}
+      const w=this.container.clientWidth,h=this.container.clientHeight,k=Math.min(1.35,(w-40)/(right-left),(h-40)/(bottom-top));
+      this.camera={k,x:(w-(right-left)*k)/2-left*k,y:(h-(bottom-top)*k)/2-top*k};this.applyCamera();
+    }
+    center(){if(!this.svg)return;const p=this.points.get(this.key);this.camera={k:1,x:this.container.clientWidth/2-p.x,y:85-p.y};this.applyCamera();}
+    zoom(factor,x=this.container.clientWidth/2,y=this.container.clientHeight/2){
+      if(!this.svg)return;const c=this.camera,k=Math.max(.001,Math.min(4,c.k*factor)),ratio=k/c.k;
+      this.camera={k,x:x-(x-c.x)*ratio,y:y-(y-c.y)*ratio};this.applyCamera();
+    }
+    bindInteractions(svg){
+      let drag=null;this.moved=false;
+      svg.onpointerdown=e=>{
+        if(e.button!==0)return;const n=e.target.closest('.network-node')?.getAttribute('data-node');
+        const p=n?this.points.get(n):this.camera;drag={n,startX:e.clientX,startY:e.clientY,x:p.x,y:p.y};this.moved=false;
+        svg.setPointerCapture(e.pointerId);e.preventDefault();
+      };
+      svg.onpointermove=e=>{
+        if(!drag)return;const dx=e.clientX-drag.startX,dy=e.clientY-drag.startY;
+        if(Math.hypot(dx,dy)>4)this.moved=true;if(!this.moved)return;
+        if(drag.n){const p={x:drag.x+dx/this.camera.k,y:drag.y+dy/this.camera.k};this.points.set(drag.n,p);this.nodeElements.get(drag.n).setAttribute('transform',`translate(${p.x} ${p.y})`);this.updateEdges();}
+        else{this.camera.x=drag.x+dx;this.camera.y=drag.y+dy;this.applyCamera();}
+      };
+      // Pointer capture directs the click to the SVG; explicitly select a node on a tap.
+      svg.onpointerup=e=>{if(!drag)return;const n=drag.n;drag=null;if(svg.hasPointerCapture(e.pointerId))svg.releasePointerCapture(e.pointerId);if(n&&!this.moved)this.nodeElements.get(n)?.dispatchEvent(new MouseEvent('click',{bubbles:false}));};
+      svg.onpointercancel=()=>{drag=null;this.moved=true;};
+      svg.addEventListener('wheel',e=>{e.preventDefault();const rect=this.container.getBoundingClientRect();this.zoom(e.deltaY<0?1.15:1/1.15,e.clientX-rect.left,e.clientY-rect.top);},{passive:false});
+    }
+  }
+  const api={layout,View};if(typeof module!=='undefined')module.exports=api;else root.Topology=api;
+})(globalThis);
 </script><script>const $=id=>document.getElementById(id);
 let state=null;
+const topologyView=new Topology.View($('map'),k=>{$('zoomLabel').textContent=Math.round(k*100)+'%';});
 let cleanedFiles=null;
 function prepareDownloads(links,gates){
   cleanedFiles={
@@ -190,6 +301,7 @@ function setData(links,gates,issues=[],message=''){
   const uniqueGates=[...new Set(gates)];
   if(!uniqueLinks.length||!uniqueGates.length)throw Error('لم نجد روابط وبوابات صالحة. النمط المطلوب مثل A12S345-C12X3456 وقائمة GNE مثل C12X3456.');
   state={adj:Network.graph(uniqueLinks,uniqueGates),links:uniqueLinks,gates:uniqueGates};
+  topologyView.clear();$('extraLinks').checked=false;
   $('gneSearch').value='';$('gneSearch').disabled=false;$('gneSelect').disabled=false;
   $('search').value='';$('gneSelect').value='';filterGateways();
   replaceItems($('failure'),(function*(){yield new Option('بدون عطل','');for(const n of [...state.adj.keys()].sort())yield new Option(n,n);})());
@@ -205,7 +317,6 @@ function replaceItems(container,items){
   for(const item of items)fragment.appendChild(item);
   container.replaceChildren(fragment);
 }
-function svgEl(tag,attrs={}){const el=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));return el;}
 function filterGateways(){
   if(!state)return;
   const query=$('gneSearch').value.trim().toUpperCase(),previous=$('gneSelect').value;
@@ -220,30 +331,17 @@ function draw(){
   $('nodesCount').textContent=adj.size;$('gatesCount').textContent=gates.length;$('impactCount').textContent=affected.size;$('offlineCount').textContent=offline.size;
   const selected=$('gneSelect').value,base=Network.branch(adj,gates,selected);
   $('viewSummary').textContent=selected?`${selected} · ${base.visited.size} عنصر مع البوابة · ${[...base.visited].filter(n=>affected.has(n)).length} متأثر بالعطل في هذا الفرع. الإحصاءات العلوية وحساب الأعطال للشبكة كاملة.`:'اختر بوابة GNE من القائمة. يمكنك البحث باسمها لتصفية الخيارات. الإحصاءات العلوية للشبكة كاملة.';
-  const groups=selected?[{title:selected,nodes:[...base.visited]}]:[];
-  const positions=new Map();let y=50,maxDepth=0;
-  for(const group of groups){const levels=new Map();for(const n of group.nodes){const d=base.depth.get(n)||0;maxDepth=Math.max(maxDepth,d);if(!levels.has(d))levels.set(d,[]);levels.get(d).push(n);}
-    let rows=0;for(const nodes of levels.values())rows=Math.max(rows,nodes.length);
-    group.y=y;for(const [d,ns] of levels)ns.sort().forEach((n,i)=>positions.set(n,{x:110+d*190,y:y+45+i*68}));
-    y+=rows*68+65;
-  }
-  const svg=svgEl('svg',{width:Math.max(730,220+maxDepth*190),height:Math.max(450,y),role:'img','aria-label':'خريطة عناصر الشبكة وروابطها'});
-  for(const g of groups){const t=svgEl('text',{x:30,y:g.y,fill:'#71849a'});t.textContent=g.title;svg.append(t);}
-  for(const [u,v] of links){const p=positions.get(u),q=positions.get(v),tree=base.parent.get(u)===v||base.parent.get(v)===u;
-    if(!p||!q)continue;
-    svg.append(svgEl('line',{x1:p.x,y1:p.y,x2:q.x,y2:q.y,stroke:u===failed||v===failed?'#e8a7b0':tree?'#b4c9db':'#adb6c6','stroke-width':tree?2:1,'stroke-dasharray':tree?'':'5 5'}));
-  }
   const query=$('search').value.trim().toUpperCase();
   function status(n){return n===failed?'متعطل':affected.has(n)?'متأثر بالعطل':offline.has(n)?'غير متصل أصلًا':gates.includes(n)?'بوابة GNE':'متصل';}
-  for(const [n,p] of positions){const color=n===failed?'#dc5266':affected.has(n)?'#df9b37':offline.has(n)?'#98a3af':gates.includes(n)?'#07898e':'#4a91d0';
-    const g=svgEl('g',{tabindex:0,role:'button','aria-label':`${n}: ${status(n)}، محاكاة العطل`,opacity:query&&!n.includes(query)?'.22':'1'});
-    const title=svgEl('title');title.textContent=`${n} — ${status(n)}`;g.append(title);
-    g.append(svgEl('rect',{x:p.x-68,y:p.y-20,width:136,height:40,rx:10,fill:'white',stroke:color,'stroke-width':n===failed||query&&n.includes(query)?3:1.5}));
-    const t=svgEl('text',{x:p.x,y:p.y+4,'text-anchor':'middle',fill:color,'font-weight':'bold'});t.textContent=n;g.append(t);
-    const choose=()=>{$('failure').value=n;draw();};g.onclick=choose;g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose();}};svg.append(g);
+  if(selected){
+    const extra=topologyView.render({key:selected,branch:base,links,failed,affected,query,showExtra:$('extraLinks').checked,onSelect:n=>{$('failure').value=n;draw();}});
+    $('extraCount').textContent=extra;
+  }else{
+    topologyView.clear();$('extraCount').textContent='0';
+    const empty=document.createElement('p');empty.className='empty';empty.textContent='اختر بوابة GNE لعرض الخريطة';$('map').replaceChildren(empty);
   }
-  if(selected)$('map').replaceChildren(svg);
-  else{const empty=document.createElement('p');empty.className='empty';empty.textContent='اختر بوابة GNE لعرض الخريطة';$('map').replaceChildren(empty);}
+  for(const id of ['zoomIn','zoomOut','fitMap','centerMap','resetLayout','extraLinks'])$(id).disabled=!selected;
+  $('fullscreen').disabled=!selected||!document.fullscreenEnabled;
   replaceItems($('nodeList'),(function*(){for(const n of [...base.visited].sort()){if(query&&!n.includes(query))continue;const row=document.createElement('div');row.className='node-row';const code=document.createElement('code');code.textContent=n;const text=document.createElement('span');text.textContent=status(n);row.append(code,text);yield row;}})());
   if(failed)$('status').textContent=`محاكاة تعطل ${failed}: ${affected.size} عنصر يفقد الاتصال بسبب هذا العطل، باستثناء العنصر المتعطل نفسه. ${offline.size} عنصر غير متصل أصلًا.`;
 }
@@ -263,5 +361,18 @@ $('reset').onclick=()=>{$('failure').value='';draw();$('status').textContent='أ
 $('search').oninput=draw;
 $('gneSearch').oninput=()=>{filterGateways();draw();};
 $('gneSelect').onchange=()=>{$('search').value='';draw();$('map').scrollTop=0;$('map').scrollLeft=0;};
+
+$('zoomIn').onclick=()=>topologyView.zoom(1.25);
+$('zoomOut').onclick=()=>topologyView.zoom(1/1.25);
+$('fitMap').onclick=()=>topologyView.fit();
+$('centerMap').onclick=()=>topologyView.center();
+$('resetLayout').onclick=()=>{topologyView.clear();draw();};
+$('extraLinks').onchange=draw;
+$('fullscreen').onclick=async()=>{
+  try{if(document.fullscreenElement)await document.exitFullscreen();else await $('mapPanel').requestFullscreen();}
+  catch{$('status').textContent='تعذر فتح ملء الشاشة. يمكنك تكبير نافذة المتصفح واستخدام أزرار الخريطة.';}
+};
+new ResizeObserver(()=>{if(topologyView.svg)topologyView.fit();}).observe($('map'));
+document.addEventListener('fullscreenchange',()=>{$('fullscreen').textContent=document.fullscreenElement?'إنهاء ملء الشاشة':'ملء الشاشة';});
 </script>
 </body></html>

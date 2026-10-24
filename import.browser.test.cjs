@@ -18,7 +18,7 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     await page.click('#demo');
     assert.equal(await page.locator('#map svg').count(),0);
     await page.selectOption('#gneSelect','A01S001');
-    const visibleNames=()=>page.locator('#map g text').allTextContents();
+    const visibleNames=()=>page.locator('#map .node-name').allTextContents();
     assert.deepEqual((await visibleNames()).sort(),['A01S001','A02S002','C01M001','O01X001','O02M002'].sort());
     await page.selectOption('#failure','C01M001');
     assert.equal(await page.locator('#impactCount').textContent(),'1');
@@ -75,6 +75,42 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     await page.setInputFiles('#gates',{name:'cleaned-gne.csv',mimeType:'text/csv',buffer:exported.downloadGates});
     await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
     assert.equal(await page.locator('#nodesCount').textContent(),'2');
+    // A diamond has one real additional edge beyond its displayed spanning tree.
+    await page.evaluate(()=>setData([
+      ['A01S001','C01M001'],['A01S001','C02M002'],
+      ['C01M001','O01X001'],['C02M002','O01X001']
+    ],['A01S001']));
+    await page.selectOption('#gneSelect','A01S001');
+    assert.equal(await page.locator('#map .tree-link').count(),3);
+    assert.equal(await page.locator('#extraCount').textContent(),'1');
+    assert.equal(await page.locator('#map .extra-link').getAttribute('display'),'none');
+    await page.check('#extraLinks');
+    assert.notEqual(await page.locator('#map .extra-link').getAttribute('display'),'none');
+    assert.equal(await page.locator('#map .node-type').allTextContents().then(a=>a.filter(t=>t==='GNE').length),1);
+    const oldZoom=await page.locator('#zoomLabel').textContent();
+    await page.click('#zoomIn');assert.notEqual(await page.locator('#zoomLabel').textContent(),oldZoom);
+    await page.click('#centerMap');assert.equal(await page.locator('#zoomLabel').textContent(),'100%');
+    const root=page.locator('#map .network-node[data-node="A01S001"]');
+    const initialPosition=await root.getAttribute('transform'),box=await root.locator('rect').first().boundingBox();
+    await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();
+    await page.mouse.move(box.x+box.width/2+35,box.y+box.height/2+20,{steps:5});await page.mouse.up();
+    assert.notEqual(await root.getAttribute('transform'),initialPosition);
+    assert.equal(await page.locator('#failure').inputValue(),'');
+    const cameraBefore=await page.evaluate(()=>({...topologyView.camera}));
+    const canvas=await page.locator('#map').boundingBox();
+    await page.mouse.move(canvas.x+8,canvas.y+100);await page.mouse.down();
+    await page.mouse.move(canvas.x+38,canvas.y+125,{steps:5});await page.mouse.up();
+    const cameraAfter=await page.evaluate(()=>({...topologyView.camera}));
+    assert.ok(cameraAfter.x>cameraBefore.x&&cameraAfter.y>cameraBefore.y);
+    await page.click('#resetLayout');
+    assert.equal(await root.getAttribute('transform'),initialPosition);
+    // A node click still performs failure simulation exactly as documented.
+    await root.locator('rect').first().click();
+    assert.equal(await page.locator('#failure').inputValue(),'A01S001');
+    assert.equal(await page.locator('#impactCount').textContent(),'3');
+    assert.equal(await page.locator('#map .network-node').count(),4);
+    await page.click('#reset');
+    assert.equal(await page.locator('#impactCount').textContent(),'0');
     assert.deepEqual(errors,[]);
   }finally{
     if(browser)await browser.close();

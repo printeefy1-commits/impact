@@ -7,7 +7,7 @@ root = Path(__file__).resolve().parent
 html = (root / 'index.html').read_text()
 html = html.replace('<link rel="stylesheet" href="style.css">',
                     '<style>' + (root / 'style.css').read_text() + '</style>')
-for name in ('vendor/exceljs.min.js', 'network.js', 'app.js'):
+for name in ('vendor/exceljs.min.js', 'network.js', 'topology.js', 'app.js'):
     code = re.sub(r'</script', r'<\\/script', (root / name).read_text(), flags=re.I)
     html = html.replace(f'<script src="{name}"></script>', f'<script>{code}</script>')
 for name in ('sample-links.csv', 'sample-gne.csv'):
