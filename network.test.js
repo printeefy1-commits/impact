@@ -48,6 +48,23 @@ test('approved corrections are applied consistently on every subsequent upload',
  const expected=['CA-BBM','O01CA03','A33CA03','A33CA02','A33CA01','A11CA03','A11CA02','A11CA01','A33CA04'];
  for(let upload=0;upload<2;upload++)assert.deepEqual(N.parseGates(cells).valid.flat(),expected);
 });
+test('link title variants resolve to approved GNE identities',()=>{
+ assert.deepEqual(N.extract('A11X013-CA AT Ain Guezzam-HW'),['A11X013','A11CA03']);
+ assert.deepEqual(N.extract('CA_AT_BBM-O01X026'),['CA-BBM','O01X026']);
+ assert.deepEqual(N.extract('A33CABorj alhaoues-A33X015'),['A33CA04','A33X015']);
+ assert.deepEqual(N.extract('O01CA_Timimoune-O01T033-SDB-18G'),['O01CA02','O01T033']);
+ assert.equal(N.primaryName('O01CA_Timimoune ___ FO AT to O01X127'),'O01CA02');
+});
+test('MLR imports source and sink identities, excludes other columns and keeps unknown names unresolved',()=>{
+ const result=N.parseLinks([
+  {row:1,column:1,value:'Link Name'},{row:1,column:3,value:'Source NE Name'},{row:1,column:8,value:'Sink NE Name'},
+  {row:2,column:1,value:'an ambiguous title'},{row:2,column:3,value:'A11X013'},{row:2,column:8,value:'A11CA-Ain-Guezzam'},
+  {row:2,column:6,value:'O12S345-C12X345'},
+  {row:3,column:3,value:'O01T033'},{row:3,column:8,value:'unapproved site name'}
+ ]);
+ assert.equal(result.mode,'endpoints');assert.deepEqual(result.valid,[['A11X013','A11CA03']]);assert.equal(result.invalid.length,1);
+ assert.deepEqual(N.parseLinks([{row:1,column:1,value:'Link Name'},{row:2,column:1,value:'CA_AT_BBM-O01X026'},{row:2,column:2,value:'A12S345-O12M345'}]).valid,[['CA-BBM','O01X026']]);
+});
 test('CA site identifiers and the special CA-BBM gateway remain importable',()=>{
  for(const name of ['O01CA03','A33CA03','A33CA02','A33CA01','A11CA03','A11CA02','A11CA01','CA-BBM'])assert.equal(N.primaryName(name),name);
  assert.equal(N.primaryName('O01-CA-BBM'),'CA-BBM');

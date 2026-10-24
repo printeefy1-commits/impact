@@ -39,7 +39,7 @@ SOFTWARE.
 <h2>01 <span>بيانات الشبكة</span></h2>
 <label class="upload">ملف الروابط <small>كل رابط مثل A12S345-C12M3456</small><input id="links" type="file" accept=".csv,.txt,.xlsx"></label>
 <label class="upload">ملف بوابات GNE <small>عمود GNE Name أو GNE؛ وإلا يُستخدم العمود الأول</small><input id="gates" type="file" accept=".csv,.txt,.xlsx"></label>
-<p class="hint">Excel ‏(.xlsx) أو CSV أو نص. تُقرأ جميع الخلايا في الورقة الأولى. يمكن وجود عنوان في الصف الأول. تبقى ملفاتك داخل المتصفح.</p>
+<p class="hint">Excel ‏(.xlsx) أو CSV أو نص. تُقرأ الورقة الأولى فقط. في MLR تُستخدم أعمدة Source NE Name وSink NE Name إن وُجدت، وإلا عمود اسم الرابط. يمكن وجود عنوان في الصف الأول. تبقى ملفاتك داخل المتصفح.</p>
 <p class="hint">الحروف المقبولة في موضع نوع العنصر: S وM وX وT وSU. تُقبل أيضًا أسماء مثل A11CA03 والبوابة CA-BBM. في GNE يُحتفظ بالاسم الأساسي في بداية الخلية ويُحذف الوصف بعده، حتى لو احتوى أسماء أخرى. مثال: O01S478 Adrar (O01X005) → O01S478. في الروابط يجب وجود اسمين مطابقين فقط.</p>
 <button id="load" class="primary">تنظيف الملفات وإنشاء الخريطة ←</button>
 <div class="exports"><strong>تنزيل البيانات بعد التنظيف</strong><button id="downloadLinks" class="secondary" disabled>تنزيل الروابط المنظّفة CSV</button><button id="downloadGates" class="secondary" disabled>تنزيل بوابات GNE المنظّفة CSV</button><button id="downloadReview" class="secondary" disabled>تنزيل مقارنة أسماء GNE مع الأصل CSV</button><p id="exportSummary" class="hint">تتاح الملفات بعد الاستيراد. تُصدّر الأسماء الصالحة فقط دون تكرار؛ راجع الخلايا المستبعدة لضمان اكتمالها.</p></div>
@@ -103,7 +103,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 //# sourceMappingURL=exceljs.min.js.map</script><script>(function(root){
   const identifier='(?:O01[-_]+)?CA[-_]+BBM|[ACO][_-]*\\d[_-]*\\d[_-]*CA[_-]*\\d{2}(?!\\d)|[ACO][_-]*\\d[_-]*\\d[_-]*(?:SU|[SMXT])[_-]*\\d{3,4}(?!\\d)';
   // Explicit user-approved corrections; never infer a numbered CA name from a place name.
-  const aliases=new Map([['O01CA_AOULEF','O01CA03'],['A11CA-AIN-GUEZZAM','A11CA03'],['A33CABORDJALHAOUAS','A33CA04']]);
+  const aliases=new Map([['O01CA_AOULEF','O01CA03'],['A11CA-AIN-GUEZZAM','A11CA03'],['A33CABORDJALHAOUAS','A33CA04'],['CAATAINGUEZZAM','A11CA03'],['CA_AT_BBM','CA-BBM'],['A33CABORJALHAOUES','A33CA04'],['O01CA_TIMIMOUNE','O01CA02']]);
   function normalize(value){
     let compact=String(value??'').toUpperCase().replace(/\s/g,'');
     for(const [original,corrected] of aliases)compact=compact.split(original).join(corrected);
@@ -146,6 +146,26 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     result.column=column;
     return result;
   }
+  function parseLinks(cells){
+    const key=c=>String(c.value??'').trim().toLowerCase().replace(/[\s_-]/g,'');
+    const source=cells.find(c=>key(c)==='sourcenename'),sink=cells.find(c=>key(c)==='sinknename');
+    if(source&&sink){
+      const rows=new Map(),valid=[],invalid=[];
+      for(const cell of cells){
+        if(cell.row<=Math.max(source.row,sink.row)||![source.column,sink.column].includes(cell.column))continue;
+        if(!rows.has(cell.row))rows.set(cell.row,{});
+        rows.get(cell.row)[cell.column===source.column?'source':'sink']=cell;
+      }
+      for(const [row,pair] of rows){
+        const a=primaryName(pair.source?.value),b=primaryName(pair.sink?.value);
+        if(a&&b&&a!==b)valid.push([a,b]);
+        else invalid.push({location:`صف ${row}`,value:`${pair.source?.value??''} ↔ ${pair.sink?.value??''}`});
+      }
+      return {valid,invalid,mode:'endpoints'};
+    }
+    const header=cells.find(c=>['link','linkname','اسمالرابط'].includes(key(c))),column=header?.column??cells.find(c=>c.column!=null)?.column??1;
+    return {...parseCells(cells.filter(c=>(c.column??1)===column),2),mode:'name'};
+  }
   function graph(links,gates){
     const adjacency=new Map();const add=n=>{if(!adjacency.has(n))adjacency.set(n,new Set());};
     for(const [a,b] of links){add(a);add(b);adjacency.get(a).add(b);adjacency.get(b).add(a);}
@@ -173,7 +193,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     }
     return {visited,parent,depth};
   }
-  const api={extract,primaryName,parseCells,parseGates,graph,traverse,analyze,branch};
+  const api={extract,primaryName,parseCells,parseGates,parseLinks,graph,traverse,analyze,branch};
   if(typeof module!=='undefined')module.exports=api;else root.Network=api;
 })(globalThis);
 </script><script>(function(root){
@@ -312,14 +332,20 @@ $('downloadReview').onclick=()=>{
   const blob=new Blob(['\uFEFF',rows.map(row=>row.map(quote).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='gne-name-comparison.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
 };
-async function readCells(file){
+async function readCells(file,kind){
   if(!file)throw Error('اختر ملف الروابط وملف GNE أولًا.');
   if(file.size>10*1024*1024)throw Error('الحد الأقصى لكل ملف هو 10 ميغابايت.');
   if(/\.xlsx$/i.test(file.name)){
     if(!window.ExcelJS)throw Error('تعذر تحميل قارئ Excel. أعد تحميل الصفحة أو استخدم CSV.');
     const book=new ExcelJS.Workbook();await book.xlsx.load(await file.arrayBuffer());
     const sheet=book.worksheets[0];if(!sheet)throw Error('ملف Excel لا يحتوي ورقة بيانات.');
-    const cells=[];sheet.eachRow(row=>row.eachCell(cell=>cells.push({value:cell.text,location:cell.address,row:cell.row,column:cell.col})));return cells;
+    const headings=new Map();sheet.getRow(1).eachCell(cell=>headings.set(cell.text.trim().toLowerCase().replace(/[\s_-]/g,''),cell.col));
+    let columns=null;
+    if(kind==='links'&&headings.has('sourcenename')&&headings.has('sinknename'))columns=[headings.get('sourcenename'),headings.get('sinknename')];
+    else if(kind==='links'&&(headings.has('linkname')||headings.has('link')))columns=[headings.get('linkname')||headings.get('link')];
+    else if(kind==='gates')for(const key of ['gnename','gne','gatewayname','gateway'])if(headings.has(key)){columns=[headings.get(key)];break;}
+    const cells=[];const add=cell=>cells.push({value:cell.text,location:cell.address,row:cell.row,column:cell.col});
+    sheet.eachRow(row=>{if(columns)for(const column of columns)add(row.getCell(column));else row.eachCell(add);});return cells;
   }
   if(!/\.(csv|txt)$/i.test(file.name))throw Error('استخدم CSV أو TXT أو Excel بصيغة xlsx.');
   // CSV parser supports quoted fields, separators, BOM, and embedded newlines.
@@ -387,12 +413,12 @@ $('load').onclick=async()=>{const button=$('load');button.disabled=true;
   gneReview=null;$('downloadReview').disabled=true;
   $('exportSummary').textContent='لم تُجهّز ملفات تنزيل لهذا الاستيراد بعد.';
   try{
-  const [l,g]=await Promise.all([readCells($('links').files[0]),readCells($('gates').files[0])]);
-  const pl=Network.parseCells(l,2),pg=Network.parseGates(g);
+  const [l,g]=await Promise.all([readCells($('links').files[0],'links'),readCells($('gates').files[0],'gates')]);
+  const pl=Network.parseLinks(l),pg=Network.parseGates(g);
   prepareDownloads(pl.valid,pg.valid.flat());
   gneReview=pg.review;$('downloadReview').disabled=false;
   const issues=[...pl.invalid.map(x=>`ملف الروابط · ${x.location}: ${x.value}`),...pg.invalid.map(x=>`ملف GNE · ${x.location}: ${x.value}`)];
-  setData(pl.valid,pg.valid.flat(),issues,`قراءة أسماء GNE من العمود ${pg.column} فقط، والاحتفاظ بالاسم الأساسي قبل الوصف. تظهر البوابات غير الموجودة في الروابط منفردة.`);
+  setData(pl.valid,pg.valid.flat(),issues,`قراءة أسماء GNE من العمود ${pg.column} فقط. ${pl.mode==='endpoints'?'استخدم طرفا الرابط من عمودي Source NE Name وSink NE Name.':'استخدم عمود اسم الرابط.'} تظهر البوابات غير الموجودة في الروابط منفردة.`);
 }catch(e){$('status').textContent='لم يتم الاستيراد: '+e.message;}finally{button.disabled=false;}};
 $('demo').onclick=()=>{gneReview=null;$('downloadReview').disabled=true;cleanedFiles=null;$('downloadLinks').disabled=true;$('downloadGates').disabled=true;$('exportSummary').textContent='هذا مثال تجريبي. ارفع ملفيك لتنزيل بياناتك بعد التنظيف.';setData([['A01S001','C01M001'],['C01M001','O01X001'],['C01M001','A02S002'],['A02S002','O02M002'],['C02X002','O02M002'],['A03X003','C03S003']],['A01S001','C02X002'],[],'بيانات تجريبية وليست بيانات ملفاتك.');};
 $('failure').onchange=()=>{draw();if(!$('failure').value)$('status').textContent='أُعيد الاتصال؛ لا توجد محاكاة عطل فعالة.';};

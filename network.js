@@ -1,7 +1,7 @@
 (function(root){
   const identifier='(?:O01[-_]+)?CA[-_]+BBM|[ACO][_-]*\\d[_-]*\\d[_-]*CA[_-]*\\d{2}(?!\\d)|[ACO][_-]*\\d[_-]*\\d[_-]*(?:SU|[SMXT])[_-]*\\d{3,4}(?!\\d)';
   // Explicit user-approved corrections; never infer a numbered CA name from a place name.
-  const aliases=new Map([['O01CA_AOULEF','O01CA03'],['A11CA-AIN-GUEZZAM','A11CA03'],['A33CABORDJALHAOUAS','A33CA04']]);
+  const aliases=new Map([['O01CA_AOULEF','O01CA03'],['A11CA-AIN-GUEZZAM','A11CA03'],['A33CABORDJALHAOUAS','A33CA04'],['CAATAINGUEZZAM','A11CA03'],['CA_AT_BBM','CA-BBM'],['A33CABORJALHAOUES','A33CA04'],['O01CA_TIMIMOUNE','O01CA02']]);
   function normalize(value){
     let compact=String(value??'').toUpperCase().replace(/\s/g,'');
     for(const [original,corrected] of aliases)compact=compact.split(original).join(corrected);
@@ -44,6 +44,26 @@
     result.column=column;
     return result;
   }
+  function parseLinks(cells){
+    const key=c=>String(c.value??'').trim().toLowerCase().replace(/[\s_-]/g,'');
+    const source=cells.find(c=>key(c)==='sourcenename'),sink=cells.find(c=>key(c)==='sinknename');
+    if(source&&sink){
+      const rows=new Map(),valid=[],invalid=[];
+      for(const cell of cells){
+        if(cell.row<=Math.max(source.row,sink.row)||![source.column,sink.column].includes(cell.column))continue;
+        if(!rows.has(cell.row))rows.set(cell.row,{});
+        rows.get(cell.row)[cell.column===source.column?'source':'sink']=cell;
+      }
+      for(const [row,pair] of rows){
+        const a=primaryName(pair.source?.value),b=primaryName(pair.sink?.value);
+        if(a&&b&&a!==b)valid.push([a,b]);
+        else invalid.push({location:`صف ${row}`,value:`${pair.source?.value??''} ↔ ${pair.sink?.value??''}`});
+      }
+      return {valid,invalid,mode:'endpoints'};
+    }
+    const header=cells.find(c=>['link','linkname','اسمالرابط'].includes(key(c))),column=header?.column??cells.find(c=>c.column!=null)?.column??1;
+    return {...parseCells(cells.filter(c=>(c.column??1)===column),2),mode:'name'};
+  }
   function graph(links,gates){
     const adjacency=new Map();const add=n=>{if(!adjacency.has(n))adjacency.set(n,new Set());};
     for(const [a,b] of links){add(a);add(b);adjacency.get(a).add(b);adjacency.get(b).add(a);}
@@ -71,6 +91,6 @@
     }
     return {visited,parent,depth};
   }
-  const api={extract,primaryName,parseCells,parseGates,graph,traverse,analyze,branch};
+  const api={extract,primaryName,parseCells,parseGates,parseLinks,graph,traverse,analyze,branch};
   if(typeof module!=='undefined')module.exports=api;else root.Network=api;
 })(globalThis);
