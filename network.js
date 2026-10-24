@@ -1,19 +1,40 @@
 (function(root){
-  // Extract identifiers from descriptive cell text, ignoring separators and whitespace.
+  const identifier='[ACO][_-]*\\d[_-]*\\d[_-]*[SMX][_-]*\\d{3,4}(?!\\d)';
+  // Preserve suffix boundaries: O31X400_6900 must not become O31X4006900.
   function extract(value){
-    const compact=String(value??'').toUpperCase().replace(/[-_\s]/g,'');
-    // Do not truncate a longer numeric identifier into a valid-looking shorter one.
-    return compact.match(/[ACO]\d{2}[SMX]\d{3,4}(?!\d)/g)||[];
+    const compact=String(value??'').toUpperCase().replace(/\s/g,'');
+    return (compact.match(new RegExp(identifier,'g'))||[]).map(s=>s.replace(/[-_]/g,''));
+  }
+  function primaryName(value){
+    const compact=String(value??'').toUpperCase().replace(/\s/g,'');
+    return (compact.match(new RegExp('^'+identifier))?.[0]||'').replace(/[-_]/g,'');
   }
   function parseCells(cells,count){
     const valid=[], invalid=[];
     for(const cell of cells){
       const raw=String(cell.value??'').trim(); if(!raw)continue;
-      const ids=extract(raw);
+      const primary=count===1?primaryName(raw):'';
+      const ids=count===1?(primary?[primary]:[]):extract(raw);
       if(ids.length===count && (count!==2||ids[0]!==ids[1]))valid.push(ids);
       else invalid.push({location:cell.location,value:raw});
     }
     return {valid,invalid};
+  }
+  function parseGates(cells){
+    const headers=new Set(['gne','gnename','gateway','gatewayname','اسمالبوابة','البوابة']);
+    const header=cells.find(c=>headers.has(String(c.value??'').trim().toLowerCase().replace(/[\s_-]/g,'')));
+    const column=header?.column??cells.find(c=>c.column!=null)?.column??1;
+    const selected=cells.filter(c=>(c.column??1)===column&&(!header||c.row==null||c.row>=header.row));
+    const result=parseCells(selected,1),seen=new Set();
+    result.review=[];
+    for(const cell of selected){
+      const raw=String(cell.value??'').trim();if(!raw)continue;
+      const name=primaryName(raw),status=!name?'غير مطابق':seen.has(name)?'مكرر بعد التنظيف':'مقبول';
+      if(name)seen.add(name);
+      result.review.push([cell.location||'',raw,name,status]);
+    }
+    result.column=column;
+    return result;
   }
   function graph(links,gates){
     const adjacency=new Map();const add=n=>{if(!adjacency.has(n))adjacency.set(n,new Set());};
@@ -42,6 +63,6 @@
     }
     return {visited,parent,depth};
   }
-  const api={extract,parseCells,graph,traverse,analyze,branch};
+  const api={extract,primaryName,parseCells,parseGates,graph,traverse,analyze,branch};
   if(typeof module!=='undefined')module.exports=api;else root.Network=api;
 })(globalThis);

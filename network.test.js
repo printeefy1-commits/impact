@@ -13,6 +13,23 @@ test('extract identifiers while discarding descriptive prefixes, suffixes and wh
  const r=N.parseCells([{value:'A12S345 text-C12M3456 text-O12X345 text'}],2);
  assert.equal(r.valid.length,0);assert.equal(r.invalid.length,1);
 });
+test('GNE keeps the primary name and rejects unsupported primary types instead of using annotations',()=>{
+ assert.equal(N.primaryName('A12X345 Main site (C12M3456)_IDU1'),'A12X345');
+ assert.equal(N.primaryName('A12T345 (C12M3456)'), '');
+ assert.equal(N.primaryName('A12X345_6900'),'A12X345');
+ assert.equal(N.primaryName('A12X34567'),'');
+ assert.deepEqual(N.extract('A12X345_6900-C12M3456 IDU1'),['A12X345','C12M3456']);
+});
+test('GNE table reads the name column only, never subnet names',()=>{
+ const result=N.parseGates([
+  {value:'Subnet',row:1,column:1},{value:'GNE Name',row:1,column:2},
+  {value:'O12S345',row:2,column:1},{value:'A12X345 Primary (C12M3456)',row:2,column:2},
+  {value:'O12S345',row:3,column:1},{value:'A12X345_IDU2',row:3,column:2},
+  {value:'C12M3456',row:4,column:1},{value:'A12T345 (C12M3456)',row:4,column:2}
+ ]);
+ assert.equal(result.column,2);assert.deepEqual(result.valid,[['A12X345'],['A12X345']]);
+ assert.equal(result.review[2][3],'مكرر بعد التنظيف');assert.equal(result.review[3][2],'');
+});
 test('reject malformed rows and self links',()=>{
  const r=N.parseCells([{value:'link'},{value:'A12S345-A12S345'},{value:'A12S345-C12X3456'}],2);
  assert.equal(r.valid.length,1);assert.equal(r.invalid.length,2);

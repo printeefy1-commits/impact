@@ -49,7 +49,7 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     await page.selectOption('#failure','C01M001');
     assert.equal(await page.locator('#impactCount').textContent(),'1');
     await page.evaluate(async()=>{
-      for(const [id,rows] of [['links',[['link'],['A_12 X345 site north - C12M3456 microwave'],['C12M3456 duplicate-A12X345 note']]],['gates',[['GNE'],[' C12M3456 gateway description ']]]]){
+      for(const [id,rows] of [['links',[['link'],['A_12 X345 site north - C12M3456 microwave'],['C12M3456 duplicate-A12X345 note']]],['gates',[['GNE Name','Subnet'],[' C12M3456 gateway (A12X345) description ','O12S345']]]]){
         const book=new ExcelJS.Workbook();book.addWorksheet('data').addRows(rows);
         const transfer=new DataTransfer();transfer.items.add(new File([await book.xlsx.writeBuffer()],id+'.xlsx'));
         document.getElementById(id).files=transfer.files;
@@ -57,6 +57,9 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     });
     await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
     assert.equal(await page.locator('#nodesCount').textContent(),'2');
+    assert.equal(await page.locator('#gatesCount').textContent(),'1');
+    assert.equal(await page.locator('#gneSelect option[value="O12S345"]').count(),0);
+    assert.equal(await page.locator('#gneSelect option[value="A12X345"]').count(),0);
     await page.selectOption('#failure','C12M3456');
     assert.equal(await page.locator('#impactCount').textContent(),'1');
     const exported={};

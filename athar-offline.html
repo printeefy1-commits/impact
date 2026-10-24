@@ -38,11 +38,11 @@ SOFTWARE.
 <section class="workspace"><aside>
 <h2>01 <span>بيانات الشبكة</span></h2>
 <label class="upload">ملف الروابط <small>كل رابط مثل A12S345-C12M3456</small><input id="links" type="file" accept=".csv,.txt,.xlsx"></label>
-<label class="upload">ملف بوابات GNE <small>اسم عنصر واحد مثل C12M3456</small><input id="gates" type="file" accept=".csv,.txt,.xlsx"></label>
+<label class="upload">ملف بوابات GNE <small>عمود GNE Name أو GNE؛ وإلا يُستخدم العمود الأول</small><input id="gates" type="file" accept=".csv,.txt,.xlsx"></label>
 <p class="hint">Excel ‏(.xlsx) أو CSV أو نص. تُقرأ جميع الخلايا في الورقة الأولى. يمكن وجود عنوان في الصف الأول. تبقى ملفاتك داخل المتصفح.</p>
-<p class="hint">تُستخرج الأسماء المطابقة فقط، وتُزال المسافات والشرطات والنصوص الإضافية. مثال: A12S345_site → A12S345. تُرفض الخلية إذا احتوت أكثر من العدد المطلوب من الأسماء.</p>
+<p class="hint">في GNE يُحتفظ بالاسم الأساسي في بداية الخلية ويُحذف الوصف بعده، حتى لو احتوى أسماء أخرى. مثال: O01S478 Adrar (O01X005) → O01S478. في الروابط يجب وجود اسمين مطابقين فقط.</p>
 <button id="load" class="primary">تنظيف الملفات وإنشاء الخريطة ←</button>
-<div class="exports"><strong>تنزيل البيانات بعد التنظيف</strong><button id="downloadLinks" class="secondary" disabled>تنزيل الروابط المنظّفة CSV</button><button id="downloadGates" class="secondary" disabled>تنزيل بوابات GNE المنظّفة CSV</button><p id="exportSummary" class="hint">تتاح الملفات بعد الاستيراد. تُصدّر الأسماء الصالحة فقط دون تكرار؛ راجع الخلايا المستبعدة لضمان اكتمالها.</p></div>
+<div class="exports"><strong>تنزيل البيانات بعد التنظيف</strong><button id="downloadLinks" class="secondary" disabled>تنزيل الروابط المنظّفة CSV</button><button id="downloadGates" class="secondary" disabled>تنزيل بوابات GNE المنظّفة CSV</button><button id="downloadReview" class="secondary" disabled>تنزيل مقارنة أسماء GNE مع الأصل CSV</button><p id="exportSummary" class="hint">تتاح الملفات بعد الاستيراد. تُصدّر الأسماء الصالحة فقط دون تكرار؛ راجع الخلايا المستبعدة لضمان اكتمالها.</p></div>
 <button id="demo" class="secondary">استكشاف شبكة تجريبية</button>
 <a href="data:text/csv;base64,bGluawpBMDFTMDAxLUMwMU0wMDEKQzAxTTAwMS1PMDFYMDAxCkMwMU0wMDEtQTAyUzAwMgpBMDJTMDAyLU8wMk0wMDIKQzAyWDAwMi1PMDJNMDAyCkEwM1gwMDMtQzAzUzAwMwo=" download="sample-links.csv">تنزيل مثال للروابط</a> · <a href="data:text/csv;base64,R05FCkEwMVMwMDEKQzAyWDAwMgo=" download="sample-gne.csv">مثال GNE</a>
 <hr><h2>02 <span>محاكاة العطل</span></h2><label>العنصر المتعطل<select id="failure"><option value="">بدون عطل</option></select></label><button id="reset" class="secondary">إعادة الاتصال</button>
@@ -101,21 +101,42 @@ https://github.com/nodeca/pako/blob/main/LICENSE
  * @copyright Louis-Dominique Dubeau
  */function n(e){return e>=65&&e<=90||95===e||e>=97&&e<=122||e>=192&&e<=214||e>=216&&e<=246||e>=248&&e<=767||e>=880&&e<=893||e>=895&&e<=8191||e>=8204&&e<=8205||e>=8304&&e<=8591||e>=11264&&e<=12271||e>=12289&&e<=55295||e>=63744&&e<=64975||e>=65008&&e<=65533||e>=65536&&e<=983039}Object.defineProperty(r,"__esModule",{value:!0}),r.NC_NAME_START_CHAR="A-Z_a-z\xc0-\xd6\xd8-\xf6\xf8-\u02ff\u0370-\u037d\u037f-\u1fff\u200c-\u200d\u2070-\u218f\u2c00-\u2fef\u3001-\ud7ff\uf900-\ufdcf\ufdf0-\ufffd\ud800\udc00-\udb7f\udfff",r.NC_NAME_CHAR="-"+r.NC_NAME_START_CHAR+".0-9\xb7\u0300-\u036f\u203f-\u2040",r.NC_NAME_START_CHAR_RE=new RegExp("^["+r.NC_NAME_START_CHAR+"]$","u"),r.NC_NAME_CHAR_RE=new RegExp("^["+r.NC_NAME_CHAR+"]$","u"),r.NC_NAME_RE=new RegExp("^["+r.NC_NAME_START_CHAR+"]["+r.NC_NAME_CHAR+"]*$","u"),r.isNCNameStartChar=n,r.isNCNameChar=function(e){return n(e)||45===e||46===e||e>=48&&e<=57||183===e||e>=768&&e<=879||e>=8255&&e<=8256}},{}]},{},[15])(15)}));
 //# sourceMappingURL=exceljs.min.js.map</script><script>(function(root){
-  // Extract identifiers from descriptive cell text, ignoring separators and whitespace.
+  const identifier='[ACO][_-]*\\d[_-]*\\d[_-]*[SMX][_-]*\\d{3,4}(?!\\d)';
+  // Preserve suffix boundaries: O31X400_6900 must not become O31X4006900.
   function extract(value){
-    const compact=String(value??'').toUpperCase().replace(/[-_\s]/g,'');
-    // Do not truncate a longer numeric identifier into a valid-looking shorter one.
-    return compact.match(/[ACO]\d{2}[SMX]\d{3,4}(?!\d)/g)||[];
+    const compact=String(value??'').toUpperCase().replace(/\s/g,'');
+    return (compact.match(new RegExp(identifier,'g'))||[]).map(s=>s.replace(/[-_]/g,''));
+  }
+  function primaryName(value){
+    const compact=String(value??'').toUpperCase().replace(/\s/g,'');
+    return (compact.match(new RegExp('^'+identifier))?.[0]||'').replace(/[-_]/g,'');
   }
   function parseCells(cells,count){
     const valid=[], invalid=[];
     for(const cell of cells){
       const raw=String(cell.value??'').trim(); if(!raw)continue;
-      const ids=extract(raw);
+      const primary=count===1?primaryName(raw):'';
+      const ids=count===1?(primary?[primary]:[]):extract(raw);
       if(ids.length===count && (count!==2||ids[0]!==ids[1]))valid.push(ids);
       else invalid.push({location:cell.location,value:raw});
     }
     return {valid,invalid};
+  }
+  function parseGates(cells){
+    const headers=new Set(['gne','gnename','gateway','gatewayname','اسمالبوابة','البوابة']);
+    const header=cells.find(c=>headers.has(String(c.value??'').trim().toLowerCase().replace(/[\s_-]/g,'')));
+    const column=header?.column??cells.find(c=>c.column!=null)?.column??1;
+    const selected=cells.filter(c=>(c.column??1)===column&&(!header||c.row==null||c.row>=header.row));
+    const result=parseCells(selected,1),seen=new Set();
+    result.review=[];
+    for(const cell of selected){
+      const raw=String(cell.value??'').trim();if(!raw)continue;
+      const name=primaryName(raw),status=!name?'غير مطابق':seen.has(name)?'مكرر بعد التنظيف':'مقبول';
+      if(name)seen.add(name);
+      result.review.push([cell.location||'',raw,name,status]);
+    }
+    result.column=column;
+    return result;
   }
   function graph(links,gates){
     const adjacency=new Map();const add=n=>{if(!adjacency.has(n))adjacency.set(n,new Set());};
@@ -144,7 +165,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     }
     return {visited,parent,depth};
   }
-  const api={extract,parseCells,graph,traverse,analyze,branch};
+  const api={extract,primaryName,parseCells,parseGates,graph,traverse,analyze,branch};
   if(typeof module!=='undefined')module.exports=api;else root.Network=api;
 })(globalThis);
 </script><script>(function(root){
@@ -256,6 +277,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 let state=null;
 const topologyView=new Topology.View($('map'),k=>{$('zoomLabel').textContent=Math.round(k*100)+'%';});
 let cleanedFiles=null;
+let gneReview=null;
 function prepareDownloads(links,gates){
   cleanedFiles={
     links:[...new Set(links.map(pair=>pair.slice().sort().join('-')))],
@@ -275,6 +297,13 @@ function downloadCleaned(kind){
 }
 $('downloadLinks').onclick=()=>downloadCleaned('links');
 $('downloadGates').onclick=()=>downloadCleaned('gates');
+$('downloadReview').onclick=()=>{
+  if(!gneReview)return;
+  const quote=value=>'"'+String(value).replace(/^(\s*[=+@-])/,'\'$1').replace(/"/g,'""')+'"';
+  const rows=[['الموقع في المصدر','الاسم الأصلي','الاسم المنظف','الحالة'],...gneReview];
+  const blob=new Blob(['\uFEFF',rows.map(row=>row.map(quote).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='gne-name-comparison.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+};
 async function readCells(file){
   if(!file)throw Error('اختر ملف الروابط وملف GNE أولًا.');
   if(file.size>10*1024*1024)throw Error('الحد الأقصى لكل ملف هو 10 ميغابايت.');
@@ -282,13 +311,13 @@ async function readCells(file){
     if(!window.ExcelJS)throw Error('تعذر تحميل قارئ Excel. أعد تحميل الصفحة أو استخدم CSV.');
     const book=new ExcelJS.Workbook();await book.xlsx.load(await file.arrayBuffer());
     const sheet=book.worksheets[0];if(!sheet)throw Error('ملف Excel لا يحتوي ورقة بيانات.');
-    const cells=[];sheet.eachRow(row=>row.eachCell(cell=>cells.push({value:cell.text,location:cell.address})));return cells;
+    const cells=[];sheet.eachRow(row=>row.eachCell(cell=>cells.push({value:cell.text,location:cell.address,row:cell.row,column:cell.col})));return cells;
   }
   if(!/\.(csv|txt)$/i.test(file.name))throw Error('استخدم CSV أو TXT أو Excel بصيغة xlsx.');
   // CSV parser supports quoted fields, separators, BOM, and embedded newlines.
   const text=(await file.text()).replace(/^\uFEFF/,'');const cells=[];
   let value='',quoted=false,row=1,col=1;
-  const push=()=>{cells.push({value,location:`صف ${row}، عمود ${col}`});value='';};
+  const push=()=>{cells.push({value,location:`صف ${row}، عمود ${col}`,row,column:col});value='';};
   for(let i=0;i<text.length;i++){const c=text[i];
     if(c==='"'){if(quoted&&text[i+1]==='"'){value+='"';i++;}else quoted=!quoted;}
     else if(!quoted&&/[,;\t\n\r]/.test(c)){push();if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;row++;col=1;}else col++;}
@@ -347,15 +376,17 @@ function draw(){
 }
 $('load').onclick=async()=>{const button=$('load');button.disabled=true;
   cleanedFiles=null;$('downloadLinks').disabled=true;$('downloadGates').disabled=true;
+  gneReview=null;$('downloadReview').disabled=true;
   $('exportSummary').textContent='لم تُجهّز ملفات تنزيل لهذا الاستيراد بعد.';
   try{
   const [l,g]=await Promise.all([readCells($('links').files[0]),readCells($('gates').files[0])]);
-  const pl=Network.parseCells(l,2),pg=Network.parseCells(g,1);
+  const pl=Network.parseCells(l,2),pg=Network.parseGates(g);
   prepareDownloads(pl.valid,pg.valid.flat());
+  gneReview=pg.review;$('downloadReview').disabled=false;
   const issues=[...pl.invalid.map(x=>`ملف الروابط · ${x.location}: ${x.value}`),...pg.invalid.map(x=>`ملف GNE · ${x.location}: ${x.value}`)];
-  setData(pl.valid,pg.valid.flat(),issues,'تظهر البوابات غير الموجودة في الروابط منفردة.');
+  setData(pl.valid,pg.valid.flat(),issues,`قراءة أسماء GNE من العمود ${pg.column} فقط، والاحتفاظ بالاسم الأساسي قبل الوصف. تظهر البوابات غير الموجودة في الروابط منفردة.`);
 }catch(e){$('status').textContent='لم يتم الاستيراد: '+e.message;}finally{button.disabled=false;}};
-$('demo').onclick=()=>{cleanedFiles=null;$('downloadLinks').disabled=true;$('downloadGates').disabled=true;$('exportSummary').textContent='هذا مثال تجريبي. ارفع ملفيك لتنزيل بياناتك بعد التنظيف.';setData([['A01S001','C01M001'],['C01M001','O01X001'],['C01M001','A02S002'],['A02S002','O02M002'],['C02X002','O02M002'],['A03X003','C03S003']],['A01S001','C02X002'],[],'بيانات تجريبية وليست بيانات ملفاتك.');};
+$('demo').onclick=()=>{gneReview=null;$('downloadReview').disabled=true;cleanedFiles=null;$('downloadLinks').disabled=true;$('downloadGates').disabled=true;$('exportSummary').textContent='هذا مثال تجريبي. ارفع ملفيك لتنزيل بياناتك بعد التنظيف.';setData([['A01S001','C01M001'],['C01M001','O01X001'],['C01M001','A02S002'],['A02S002','O02M002'],['C02X002','O02M002'],['A03X003','C03S003']],['A01S001','C02X002'],[],'بيانات تجريبية وليست بيانات ملفاتك.');};
 $('failure').onchange=()=>{draw();if(!$('failure').value)$('status').textContent='أُعيد الاتصال؛ لا توجد محاكاة عطل فعالة.';};
 $('reset').onclick=()=>{$('failure').value='';draw();$('status').textContent='أُعيد الاتصال؛ لا توجد محاكاة عطل فعالة.';};
 $('search').oninput=draw;

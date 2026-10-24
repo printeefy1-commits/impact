@@ -9,11 +9,11 @@
 <section class="workspace"><aside>
 <h2>01 <span>بيانات الشبكة</span></h2>
 <label class="upload">ملف الروابط <small>كل رابط مثل A12S345-C12M3456</small><input id="links" type="file" accept=".csv,.txt,.xlsx"></label>
-<label class="upload">ملف بوابات GNE <small>اسم عنصر واحد مثل C12M3456</small><input id="gates" type="file" accept=".csv,.txt,.xlsx"></label>
+<label class="upload">ملف بوابات GNE <small>عمود GNE Name أو GNE؛ وإلا يُستخدم العمود الأول</small><input id="gates" type="file" accept=".csv,.txt,.xlsx"></label>
 <p class="hint">Excel ‏(.xlsx) أو CSV أو نص. تُقرأ جميع الخلايا في الورقة الأولى. يمكن وجود عنوان في الصف الأول. تبقى ملفاتك داخل المتصفح.</p>
-<p class="hint">تُستخرج الأسماء المطابقة فقط، وتُزال المسافات والشرطات والنصوص الإضافية. مثال: A12S345_site → A12S345. تُرفض الخلية إذا احتوت أكثر من العدد المطلوب من الأسماء.</p>
+<p class="hint">في GNE يُحتفظ بالاسم الأساسي في بداية الخلية ويُحذف الوصف بعده، حتى لو احتوى أسماء أخرى. مثال: O01S478 Adrar (O01X005) → O01S478. في الروابط يجب وجود اسمين مطابقين فقط.</p>
 <button id="load" class="primary">تنظيف الملفات وإنشاء الخريطة ←</button>
-<div class="exports"><strong>تنزيل البيانات بعد التنظيف</strong><button id="downloadLinks" class="secondary" disabled>تنزيل الروابط المنظّفة CSV</button><button id="downloadGates" class="secondary" disabled>تنزيل بوابات GNE المنظّفة CSV</button><p id="exportSummary" class="hint">تتاح الملفات بعد الاستيراد. تُصدّر الأسماء الصالحة فقط دون تكرار؛ راجع الخلايا المستبعدة لضمان اكتمالها.</p></div>
+<div class="exports"><strong>تنزيل البيانات بعد التنظيف</strong><button id="downloadLinks" class="secondary" disabled>تنزيل الروابط المنظّفة CSV</button><button id="downloadGates" class="secondary" disabled>تنزيل بوابات GNE المنظّفة CSV</button><button id="downloadReview" class="secondary" disabled>تنزيل مقارنة أسماء GNE مع الأصل CSV</button><p id="exportSummary" class="hint">تتاح الملفات بعد الاستيراد. تُصدّر الأسماء الصالحة فقط دون تكرار؛ راجع الخلايا المستبعدة لضمان اكتمالها.</p></div>
 <button id="demo" class="secondary">استكشاف شبكة تجريبية</button>
 <a href="sample-links.csv" download>تنزيل مثال للروابط</a> · <a href="sample-gne.csv" download>مثال GNE</a>
 <hr><h2>02 <span>محاكاة العطل</span></h2><label>العنصر المتعطل<select id="failure"><option value="">بدون عطل</option></select></label><button id="reset" class="secondary">إعادة الاتصال</button>
