@@ -1,7 +1,7 @@
 (function(root){
   const identifier='(?:O01[-_]+)?CA[-_]+BBM|[ACO][_-]*\\d[_-]*\\d[_-]*CA[_-]*\\d{2}(?!\\d)|[ACO][_-]*\\d[_-]*\\d[_-]*[SMXT][_-]*\\d{3,4}(?!\\d)';
   // Explicit user-approved corrections; never infer a numbered CA name from a place name.
-  const aliases=new Map([['O01CA_AOULEF','O01CA03'],['A11CA-AIN-GUEZZAM','A11CA03']]);
+  const aliases=new Map([['O01CA_AOULEF','O01CA03'],['A11CA-AIN-GUEZZAM','A11CA03'],['A33CABORDJALHAOUAS','A33CA04']]);
   function normalize(value){
     let compact=String(value??'').toUpperCase().replace(/\s/g,'');
     for(const [original,corrected] of aliases)compact=compact.split(original).join(corrected);

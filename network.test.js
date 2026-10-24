@@ -41,6 +41,8 @@ test('CA site identifiers and the special CA-BBM gateway remain importable',()=>
  assert.equal(N.primaryName('O01-CA-BBM'),'CA-BBM');
  assert.equal(N.primaryName('O01CA_Aoulef'),'O01CA03');
  assert.equal(N.primaryName('A11CA-Ain-Guezzam'),'A11CA03');
+ assert.equal(N.primaryName('A33CABordj alhaouas'),'A33CA04');
+ assert.deepEqual(N.extract('A33CABordj alhaouas-A33CA01'),['A33CA04','A33CA01']);
  assert.equal(N.primaryName('A33CA03 description'),'A33CA03');
  assert.equal(N.primaryName('A33CA003'),'');
  assert.deepEqual(N.extract('CA-BBM-O01CA03'),['CA-BBM','O01CA03']);
