@@ -80,7 +80,7 @@
   }
   function traverse(adj,gates,failed=''){
     const visited=new Set(),parent=new Map(),depth=new Map(),owner=new Map(),queue=[];
-    for(const gate of gates){if(gate===failed)continue;visited.add(gate);queue.push(gate);depth.set(gate,0);owner.set(gate,gate);}
+    for(const gate of gates){if(gate===failed||visited.has(gate))continue;visited.add(gate);queue.push(gate);depth.set(gate,0);owner.set(gate,gate);}
     for(let i=0;i<queue.length;i++){const a=queue[i];for(const b of adj.get(a)||[]){if(b===failed||visited.has(b))continue;visited.add(b);parent.set(b,a);depth.set(b,depth.get(a)+1);owner.set(b,owner.get(a));queue.push(b);}}
     return {visited,parent,depth,owner};
   }
@@ -90,28 +90,27 @@
     const offline=[...adj.keys()].filter(n=>!baseline.visited.has(n));
     return {baseline,current,affected,offline};
   }
+  // One multi-source BFS assigns every NE to exactly one GNE. FIFO root order
+  // breaks equal-hop ties using the first occurrence in the uploaded GNE file.
   function branch(adj,gates,selected){
     const visited=new Set(),parent=new Map(),depth=new Map();
     if(!gates.includes(selected))return {visited,parent,depth};
-    const boundaries=new Set(gates),queue=[selected];visited.add(selected);depth.set(selected,0);
-    for(let i=0;i<queue.length;i++)for(const next of adj.get(queue[i])||[]){
-      if(visited.has(next)||boundaries.has(next))continue;
-      visited.add(next);parent.set(next,queue[i]);depth.set(next,depth.get(queue[i])+1);queue.push(next);
+    const assigned=traverse(adj,gates);
+    for(const node of assigned.visited)if(assigned.owner.get(node)===selected){
+      visited.add(node);depth.set(node,assigned.depth.get(node));
+      if(assigned.parent.has(node))parent.set(node,assigned.parent.get(node));
     }
     return {visited,parent,depth};
   }
-  function impactRoot(adj,gates,site,preferred=''){
-    if(gates.includes(site))return site;
-    if(gates.includes(preferred)&&branch(adj,gates,preferred).visited.has(site))return preferred;
+  function impactRoot(adj,gates,site){
     return traverse(adj,gates).owner.get(site)||'';
   }
-  function impact(adj,gates,site,preferred=''){
+  function impact(adj,gates,site){
     if(!adj.has(site))return [];
-    const root=impactRoot(adj,gates,site,preferred),tree=branch(adj,gates,root),children=new Map();
-    for(const [child,parent] of tree.parent){if(!children.has(parent))children.set(parent,[]);children.get(parent).push(child);}
-    const carried=[site];
-    for(let i=0;i<carried.length;i++)for(const child of children.get(carried[i])||[])carried.push(child);
-    return [site,...carried.slice(1).sort()];
+    // A gateway impact is its uniquely assigned domain. For an NE, retained
+    // alternate physical routes keep sites out of the outage impact list.
+    const impacted=gates.includes(site)?[...branch(adj,gates,site).visited]:analyze(adj,gates,site).affected;
+    return [site,...impacted.filter(n=>n!==site).sort()];
   }
   const api={impactRoot,impact,extract,primaryName,parseCells,parseGates,parseLinks,applyConnections,graph,traverse,analyze,branch};
   if(typeof module!=='undefined')module.exports=api;else root.Network=api;

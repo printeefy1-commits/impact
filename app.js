@@ -123,9 +123,9 @@ function calculateImpact(){
   if(!state){$('impactSummary').textContent='استورد الملفين أولًا.';return;}
   const site=Network.primaryName($('impactSite').value);
   if(!site||!state.adj.has(site)){$('impactSummary').textContent='الموقع غير موجود في البيانات المستوردة.';return;}
-  const gateway=Network.impactRoot(state.adj,state.gates,site,$('gneSelect').value);
-  const result=Network.impact(state.adj,state.gates,site,gateway);
+  const gateway=Network.impactRoot(state.adj,state.gates,site);
+  const result=Network.impact(state.adj,state.gates,site);
   $('impactResult').value=result.join('\n');
-  $('impactSummary').textContent=`${site} — Impact: ${result.length} موقعًا، شاملًا الموقع نفسه. ${gateway?'حسب فرع GNE: '+gateway:'لا يوجد مسار إلى GNE لتحديد العناصر التابعة.'}`;
+  $('impactSummary').textContent=`${site} — Impact: ${result.length} موقعًا، شاملًا الموقع نفسه. ${gateway?'البوابة المعيّنة: '+gateway:'لا يوجد مسار إلى GNE لتحديد العناصر التابعة.'}`;
 }
 $('impactForm').onsubmit=e=>{e.preventDefault();calculateImpact();};

@@ -46,9 +46,9 @@ SOFTWARE.
 <p class="hint">الحروف المقبولة في موضع نوع العنصر: S وM وX وT وB وSU. تُوحّد TSU إلى SU تلقائيًا. تُقبل أيضًا أسماء مثل A11CA03 والبوابة CA-BBM. في GNE يُحتفظ بالاسم الأساسي في بداية الخلية ويُحذف الوصف بعده، حتى لو احتوى أسماء أخرى. مثال: O01S478 Adrar (O01X005) → O01S478. في الروابط يجب وجود اسمين مطابقين فقط.</p>
 <button id="load" class="primary">تنظيف الملفات وإنشاء الخريطة ←</button>
 <div class="exports"><strong>تنزيل البيانات بعد التنظيف</strong><button id="downloadLinks" class="secondary" disabled>تنزيل الروابط المنظّفة CSV</button><button id="downloadGates" class="secondary" disabled>تنزيل بوابات GNE المنظّفة CSV</button></div>
-<section class="impact-panel"><h2>حساب Impact</h2><form id="impactForm"><label for="impactSite">اسم الموقع NE أو GNE</label><input id="impactSite" placeholder="مثال: O46X158" autocomplete="off" disabled><button id="calculateImpact" class="primary" disabled>عرض Impact</button></form><p class="hint">يشمل الموقع نفسه وكل العناصر التابعة له في شجرة الفرع المعروض، حتى مع وجود مسار بديل. إذا لم تُحدَّد بوابة، يُستخدم فرع أقرب GNE.</p><p id="impactSummary" role="status" aria-live="polite">استورد الملفين أولًا.</p><label for="impactResult">المواقع المتأثرة — يمكن نسخ الأسماء</label><textarea id="impactResult" readonly rows="9" dir="ltr"></textarea></section>
+<section class="impact-panel"><h2>حساب Impact</h2><form id="impactForm"><label for="impactSite">اسم الموقع NE أو GNE</label><input id="impactSite" placeholder="مثال: O46X158" autocomplete="off" disabled><button id="calculateImpact" class="primary" disabled>عرض Impact</button></form><p class="hint">يشمل NE نفسه ومن يفقد الاتصال بسببه؛ المسار البديل يمنع التأثر. عند إدخال GNE تشمل النتيجة البوابة وكل عناصرها المعيّنة. الأقل قفزات أولًا، ثم ترتيب ملف GNE عند التعادل.</p><p id="impactSummary" role="status" aria-live="polite">استورد الملفين أولًا.</p><label for="impactResult">المواقع المتأثرة — يمكن نسخ الأسماء</label><textarea id="impactResult" readonly rows="9" dir="ltr"></textarea></section>
 </aside><div class="content"><div id="status" role="status" aria-live="polite">ابدأ بتحميل ملف الروابط وملف GNE.</div><div class="stats"><div><b id="nodesCount">0</b><span>عناصر الشبكة</span></div><div><b id="gatesCount">0</b><span>بوابات GNE</span></div><div><b id="offlineCount">0</b><span>غير متصل أصلًا</span></div></div>
-<section class="map-panel" id="mapPanel"><div class="map-heading"><div><h2>خريطة بوابة واحدة</h2><p>اختر GNE لعرض العناصر المتصلة بها دون المرور ببوابة أخرى. قد يظهر العنصر المشترك في أكثر من فرع.</p></div><input id="search" placeholder="ابحث عن عنصر في الفرع…" aria-label="البحث عن عنصر في الفرع"></div>
+<section class="map-panel" id="mapPanel"><div class="map-heading"><div><h2>خريطة بوابة واحدة</h2><p>كل NE يتبع GNE واحدة: الأقل قفزات، وعند التعادل الأولى في ملف GNE. يظهر العنصر في خريطة بوابته فقط.</p></div><input id="search" placeholder="ابحث عن عنصر في الفرع…" aria-label="البحث عن عنصر في الفرع"></div>
 <div class="gateway-controls"><label>البحث عن بوابة GNE<input id="gneSearch" type="search" placeholder="مثال: A01S001" disabled></label><label>البوابة المعروضة<select id="gneSelect" disabled><option value="">اختر بوابة GNE…</option></select></label></div>
 <p id="viewSummary" class="view-summary" aria-live="polite">حمّل البيانات ثم اختر بوابة لعرض فرعها فقط.</p>
 <div class="map-toolbar" role="group" aria-label="أدوات الخريطة"><button id="zoomIn" disabled aria-label="تكبير الخريطة">＋</button><output id="zoomLabel" aria-live="polite">100%</output><button id="zoomOut" disabled aria-label="تصغير الخريطة">−</button><button id="fitMap" disabled>ملاءمة العرض</button><button id="centerMap" disabled>GNE · 100%</button><button id="resetLayout" disabled>ترتيب تلقائي</button><button id="fullscreen" disabled>ملء الشاشة</button><label><input id="extraLinks" type="checkbox" checked disabled>روابط إضافية (<span id="extraCount">0</span>)</label></div>
@@ -182,7 +182,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   }
   function traverse(adj,gates,failed=''){
     const visited=new Set(),parent=new Map(),depth=new Map(),owner=new Map(),queue=[];
-    for(const gate of gates){if(gate===failed)continue;visited.add(gate);queue.push(gate);depth.set(gate,0);owner.set(gate,gate);}
+    for(const gate of gates){if(gate===failed||visited.has(gate))continue;visited.add(gate);queue.push(gate);depth.set(gate,0);owner.set(gate,gate);}
     for(let i=0;i<queue.length;i++){const a=queue[i];for(const b of adj.get(a)||[]){if(b===failed||visited.has(b))continue;visited.add(b);parent.set(b,a);depth.set(b,depth.get(a)+1);owner.set(b,owner.get(a));queue.push(b);}}
     return {visited,parent,depth,owner};
   }
@@ -192,28 +192,27 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     const offline=[...adj.keys()].filter(n=>!baseline.visited.has(n));
     return {baseline,current,affected,offline};
   }
+  // One multi-source BFS assigns every NE to exactly one GNE. FIFO root order
+  // breaks equal-hop ties using the first occurrence in the uploaded GNE file.
   function branch(adj,gates,selected){
     const visited=new Set(),parent=new Map(),depth=new Map();
     if(!gates.includes(selected))return {visited,parent,depth};
-    const boundaries=new Set(gates),queue=[selected];visited.add(selected);depth.set(selected,0);
-    for(let i=0;i<queue.length;i++)for(const next of adj.get(queue[i])||[]){
-      if(visited.has(next)||boundaries.has(next))continue;
-      visited.add(next);parent.set(next,queue[i]);depth.set(next,depth.get(queue[i])+1);queue.push(next);
+    const assigned=traverse(adj,gates);
+    for(const node of assigned.visited)if(assigned.owner.get(node)===selected){
+      visited.add(node);depth.set(node,assigned.depth.get(node));
+      if(assigned.parent.has(node))parent.set(node,assigned.parent.get(node));
     }
     return {visited,parent,depth};
   }
-  function impactRoot(adj,gates,site,preferred=''){
-    if(gates.includes(site))return site;
-    if(gates.includes(preferred)&&branch(adj,gates,preferred).visited.has(site))return preferred;
+  function impactRoot(adj,gates,site){
     return traverse(adj,gates).owner.get(site)||'';
   }
-  function impact(adj,gates,site,preferred=''){
+  function impact(adj,gates,site){
     if(!adj.has(site))return [];
-    const root=impactRoot(adj,gates,site,preferred),tree=branch(adj,gates,root),children=new Map();
-    for(const [child,parent] of tree.parent){if(!children.has(parent))children.set(parent,[]);children.get(parent).push(child);}
-    const carried=[site];
-    for(let i=0;i<carried.length;i++)for(const child of children.get(carried[i])||[])carried.push(child);
-    return [site,...carried.slice(1).sort()];
+    // A gateway impact is its uniquely assigned domain. For an NE, retained
+    // alternate physical routes keep sites out of the outage impact list.
+    const impacted=gates.includes(site)?[...branch(adj,gates,site).visited]:analyze(adj,gates,site).affected;
+    return [site,...impacted.filter(n=>n!==site).sort()];
   }
   const api={impactRoot,impact,extract,primaryName,parseCells,parseGates,parseLinks,applyConnections,graph,traverse,analyze,branch};
   if(typeof module!=='undefined')module.exports=api;else root.Network=api;
@@ -518,10 +517,10 @@ function calculateImpact(){
   if(!state){$('impactSummary').textContent='استورد الملفين أولًا.';return;}
   const site=Network.primaryName($('impactSite').value);
   if(!site||!state.adj.has(site)){$('impactSummary').textContent='الموقع غير موجود في البيانات المستوردة.';return;}
-  const gateway=Network.impactRoot(state.adj,state.gates,site,$('gneSelect').value);
-  const result=Network.impact(state.adj,state.gates,site,gateway);
+  const gateway=Network.impactRoot(state.adj,state.gates,site);
+  const result=Network.impact(state.adj,state.gates,site);
   $('impactResult').value=result.join('\n');
-  $('impactSummary').textContent=`${site} — Impact: ${result.length} موقعًا، شاملًا الموقع نفسه. ${gateway?'حسب فرع GNE: '+gateway:'لا يوجد مسار إلى GNE لتحديد العناصر التابعة.'}`;
+  $('impactSummary').textContent=`${site} — Impact: ${result.length} موقعًا، شاملًا الموقع نفسه. ${gateway?'البوابة المعيّنة: '+gateway:'لا يوجد مسار إلى GNE لتحديد العناصر التابعة.'}`;
 }
 $('impactForm').onsubmit=e=>{e.preventDefault();calculateImpact();};
 </script>

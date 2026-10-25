@@ -24,7 +24,7 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     assert.equal(await page.locator('#map svg').count(),0);
     await page.selectOption('#gneSelect','A01S001');
     const visibleNames=()=>page.locator('#map .node-name').allTextContents();
-    assert.deepEqual((await visibleNames()).sort(),['A01S001','A02S002','C01M001','O01X001','O02M002'].sort());
+    assert.deepEqual((await visibleNames()).sort(),['A01S001','A02S002','C01M001','O01X001'].sort());
     await page.selectOption('#gneSelect','C02X002');
     assert.ok(!(await visibleNames()).includes('A01S001'));
     assert.ok((await visibleNames()).includes('C02X002'));
@@ -34,7 +34,7 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     await page.fill('#gneSearch','a01');
     assert.equal(await page.locator('#gneSelect option').count(),2);
     await page.selectOption('#gneSelect','A01S001');
-    assert.equal((await visibleNames()).length,5);
+    assert.equal((await visibleNames()).length,4);
     await page.setViewportSize({width:390,height:844});
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
     // The former replaceChildren(...issues) throws RangeError with this input.
@@ -120,17 +120,26 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     await page.fill('#impactSite','A01S001');await page.click('#calculateImpact');
     assert.deepEqual((await page.locator('#impactResult').inputValue()).split('\n'),['A01S001','C01M001','C02M002','O01X001']);
     await page.fill('#impactSite','C01M001');await page.press('#impactSite','Enter');
-    assert.equal(await page.locator('#impactResult').inputValue(),'C01M001\nO01X001');
+    assert.equal(await page.locator('#impactResult').inputValue(),'C01M001');
     await page.fill('#impactSite','O99X999');await page.click('#calculateImpact');
     assert.equal(await page.locator('#impactResult').inputValue(),'');
     assert.match(await page.locator('#impactSummary').textContent(),/غير موجود/);
     await page.evaluate(()=>setData([['A01S001','C01M001'],['C01M001','O01X001'],['O01X001','A02S002'],['C01M001','C02M002']],['A01S001','A02S002']));
     await page.selectOption('#gneSelect','A01S001');
     await page.fill('#impactSite','C01M001');await page.click('#calculateImpact');
-    assert.equal(await page.locator('#impactResult').inputValue(),'C01M001\nC02M002\nO01X001');
+    assert.equal(await page.locator('#impactResult').inputValue(),'C01M001\nC02M002');
     await page.selectOption('#gneSelect','A02S002');
     assert.equal(await page.locator('#impactResult').inputValue(),'C01M001\nC02M002');
-    assert.match(await page.locator('#impactSummary').textContent(),/A02S002/);
+    assert.match(await page.locator('#impactSummary').textContent(),/A01S001/);
+    assert.ok(!(await visibleNames()).includes('C01M001'));
+    // File order wins equal-hop ties even though the dropdown is sorted by name.
+    await page.setInputFiles('#links',{name:'equal.csv',mimeType:'text/csv',buffer:Buffer.from('link\nA01S001-C01M001\nA02S002-C01M001\nC01M001-O01X001\n')});
+    await page.setInputFiles('#gates',{name:'ordered-gne.csv',mimeType:'text/csv',buffer:Buffer.from('GNE\nA02S002\nA01S001\n')});
+    await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
+    await page.selectOption('#gneSelect','A01S001');assert.deepEqual(await visibleNames(),['A01S001']);
+    await page.selectOption('#gneSelect','A02S002');assert.deepEqual((await visibleNames()).sort(),['A02S002','C01M001','O01X001'].sort());
+    await page.fill('#impactSite','A02S002');await page.click('#calculateImpact');
+    assert.deepEqual((await page.locator('#impactResult').inputValue()).split('\n'),['A02S002','C01M001','O01X001']);
     assert.deepEqual(errors,[]);
   }finally{
     if(browser)await browser.close();

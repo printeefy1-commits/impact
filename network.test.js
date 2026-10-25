@@ -131,34 +131,29 @@ test('redundant path and multiple gateways maintain connectivity',()=>{
  assert.deepEqual(N.analyze(cycle,['A01S001'],'C01M001').affected,[]);
  assert.equal(N.analyze(cycle,['A01S001'],'A01S001').affected.length,3);
 });
-test('selected gateway branch stops at other gateways, excludes disconnected nodes, and handles shared paths',()=>{
- const adj=N.graph([['A01S001','C01M001'],['C01M001','O01X001'],['O01X001','A02S002'],['A02S002','C02M002'],['A03S003','C03M003']],['A01S001','A02S002','O04X004']);
- const gates=['A01S001','A02S002','O04X004'];
- assert.deepEqual([...N.branch(adj,gates,'A01S001').visited],['A01S001','C01M001','O01X001']);
- assert.deepEqual([...N.branch(adj,gates,'O04X004').visited],['O04X004']);
- assert.equal(N.branch(adj,gates,'').visited.size,0);
- const other=N.branch(adj,gates,'A02S002');
- assert.ok(other.visited.has('O01X001'));assert.ok(other.visited.has('C02M002'));
- assert.ok(!other.visited.has('A01S001'));assert.ok(!other.visited.has('A03S003'));
- // The other gateway still supplies alternate connectivity during a failure.
- assert.deepEqual(N.analyze(adj,gates,'C01M001').affected,[]);
+test('each NE belongs only to the nearest GNE and file order resolves ties',()=>{
+ const links=[['G2','B'],['B','A'],['A','G1'],['A','C']],gates=['G1','G2','G3'],adj=N.graph(links,gates);
+ const first=N.branch(adj,gates,'G1'),second=N.branch(adj,gates,'G2');
+ assert.deepEqual([...first.visited].sort(),['G1','A','C'].sort());
+ assert.deepEqual([...second.visited].sort(),['G2','B'].sort());
+ for(const n of first.visited)assert.ok(!second.visited.has(n));
+ assert.equal(N.impactRoot(adj,gates,'A','G2'),'G1');
+ const equal=N.graph([['G2','X'],['G1','X'],['X','Y']],['G1','G2']);
+ assert.equal(N.traverse(equal,['G1','G2']).owner.get('X'),'G1');
+ assert.equal(N.traverse(equal,['G2','G1']).owner.get('X'),'G2');
+ assert.equal(N.traverse(equal,['G2','G1']).owner.get('Y'),'G2');
+ assert.equal(N.branch(equal,['G1','G2'],'G2').visited.size,1);
+ const same=N.traverse(equal,['G1','G1','G2']);assert.equal(same.owner.get('X'),'G1');
+ for(const [child,parent] of same.parent){assert.equal(same.owner.get(child),same.owner.get(parent));assert.equal(same.depth.get(child),same.depth.get(parent)+1);}
 });
-test('impact includes failed site, downstream NE, and all GNE branch sites',()=>{
- const links=[['G','N1'],['N1','N2'],['N2','N3']];const adj=N.graph(links,['G']);
+test('impact includes self, honors alternate NE routes and unique GNE membership',()=>{
+ const links=[['G','N1'],['N1','N2'],['N2','N3']],adj=N.graph(links,['G']);
  assert.deepEqual(N.impact(adj,['G'],'N1'),['N1','N2','N3']);
  assert.deepEqual(N.impact(adj,['G'],'G'),['G','N1','N2','N3']);
  assert.deepEqual(N.impact(adj,['G'],'N3'),['N3']);
  assert.deepEqual(N.impact(adj,['G'],'unknown'),[]);
  const redundant=N.graph([...links,['N3','G2']],['G','G2']);
- assert.deepEqual(N.impact(redundant,['G','G2'],'N1'),['N1','N2','N3']);
- assert.deepEqual(N.impact(redundant,['G','G2'],'G'),['G','N1','N2','N3']);
-});
-
-test('carried impact follows displayed GNE tree even when sites retain alternate routes',()=>{
- const gates=['G1','G2','G3'],adj=N.graph([['G1','A'],['A','B'],['B','G2'],['A','C']],gates);
- assert.deepEqual(N.impact(adj,gates,'A','G1'),['A','B','C']);
- assert.deepEqual(N.impact(adj,gates,'A','G2'),['A','C']);
- assert.deepEqual(N.impact(adj,gates,'A','G3'),['A','B','C']);
- assert.equal(N.impactRoot(adj,gates,'A','G2'),'G2');
- assert.deepEqual(N.analyze(adj,gates,'A').affected,['C']);
+ assert.deepEqual(N.impact(redundant,['G','G2'],'N1'),['N1']);
+ assert.deepEqual(N.impact(redundant,['G','G2'],'G'),['G','N1','N2']);
+ assert.deepEqual(N.impact(redundant,['G','G2'],'G2'),['G2','N3']);
 });
