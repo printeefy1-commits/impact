@@ -19,7 +19,7 @@
     render({key,branch,links,failed='',affected=new Set(),query,showExtra,onSelect}){
       const changed=this.key!==key;
       if(changed){this.points=layout(branch).points;this.key=key;}
-      const svg=el('svg',{width:'100%',height:'100%',role:'group','aria-label':`خريطة نجمية للبوابة ${key}`});
+      const svg=el('svg',{width:'100%',height:'100%',role:'group','aria-label':`Radial topology for gateway ${key}`});
       const layer=el('g',{'class':'topology-layer'}),edges=el('g',{'class':'topology-edges'}),nodes=el('g',{'class':'topology-nodes'});
       svg.append(layer);layer.append(edges,nodes);this.svg=svg;this.layer=layer;this.edges=[];this.nodeElements=new Map();
       let extraCount=0;const drawn=new Set();
@@ -29,16 +29,16 @@
         const tree=branch.parent.get(a)===b||branch.parent.get(b)===a;
         if(!tree)extraCount++;
         const path=el('line',{'data-source':a,'data-target':b,'class':tree?'tree-link':'extra-link',fill:'none',stroke:a===failed||b===failed?'#f48a98':affected.has(a)||affected.has(b)?'#ffc068':tree?'#45ed8a':'#f6d77d','stroke-width':tree?2:1.5,'stroke-dasharray':tree?'':'6 5',display:tree||showExtra?'':'none'});
-        const title=el('title');title.textContent=`${a} ↔ ${b}${tree?'':' · رابط إضافي'}`;path.append(title);edges.append(path);
+        const title=el('title');title.textContent=`${a} ↔ ${b}${tree?'':' · Additional link'}`;path.append(title);edges.append(path);
         const parent=branch.parent.get(a)===b?b:a,child=parent===a?b:a;
         this.edges.push({a:parent,b:child,path,tree});
       }
       for(const [n,p] of this.points){
         const gate=n===key,color=n===failed?'#e84b5d':affected.has(n)?'#e8a126':gate?'#087d91':'#16b860';
-        const status=n===failed?'متعطل':affected.has(n)?'متأثر بالعطل':gate?'بوابة GNE':'متصل';
+        const status=n===failed?'Down':affected.has(n)?'Impacted':gate?'GNE gateway':'Connected';
         const selectable=typeof onSelect==='function';
-        const g=el('g',{'class':'network-node',transform:`translate(${p.x} ${p.y})`,tabindex:0,role:selectable?'button':'img','aria-label':`${n}: ${status}. اسحب لتحريك العنصر.`,'data-node':n,opacity:query&&!n.includes(query)?'.2':'1'});
-        const title=el('title');title.textContent=`${n} · ${status}\nاسحب لترتيب الموقع`;g.append(title);
+        const g=el('g',{'class':'network-node',transform:`translate(${p.x} ${p.y})`,tabindex:0,role:selectable?'button':'img','aria-label':`${n}: ${status}. Drag to move this site.`,'data-node':n,opacity:'1'});
+        const title=el('title');title.textContent=`${n} · ${status}\nDrag to arrange this site`;g.append(title);
         // Microwave dish and radio chassis, drawn as local SVG rather than an external image.
         g.append(el('rect',{x:-29,y:-33,width:58,height:64,rx:4,fill:color,stroke:gate?'#b6f5ff':'#c6f2d7','stroke-width':gate?3:1.5}));
         g.append(el('path',{d:'M-15 -22 Q-23 -1 8 0 Z M-14 -21 L7 -3 M-1 -13 L10 -23 M10 -23 L14 -19 M-4 0 L-4 6 M-12 6 H5',fill:'none',stroke:'white','stroke-width':2.2,'stroke-linecap':'round','stroke-linejoin':'round'}));
@@ -46,7 +46,7 @@
         for(let i=0;i<3;i++)g.append(el('rect',{x:-20+i*15,y:12,width:10,height:13,rx:1,fill:'none',stroke:'white','stroke-width':1.5}));
         g.append(el('rect',{x:gate?-44:-32,y:-48,width:gate?40:30,height:17,rx:4,fill:gate?'#ddfaff':'#e3ecef',stroke:'#fff','stroke-width':.5}));
         const type=el('text',{'class':'node-type',x:gate?-24:-17,y:-36,'text-anchor':'middle',fill:gate?'#075f70':'#385c6b','font-size':10,'font-weight':'bold'});type.textContent=gate?'GNE':'NE';g.append(type);
-        g.append(el('rect',{'class':'node-label-bg',x:-75,y:39,width:150,height:26,rx:5,fill:'#f7fcff',stroke:query&&n.includes(query)?'#ffe778':'#c8dce5','stroke-width':query&&n.includes(query)?3:1}));
+        g.append(el('rect',{'class':'node-label-bg',x:-75,y:39,width:150,height:26,rx:5,fill:'#f7fcff',stroke:query&&n===query?'#ffe778':'#c8dce5','stroke-width':query&&n===query?3:1}));
         const label=el('text',{'class':'node-name',x:0,y:56,'text-anchor':'middle',fill:'#173e50','font-size':13,'font-weight':'bold'});label.textContent=n;g.append(label);
         if(selectable){
           g.onclick=e=>{if(e.detail===0)onSelect(n);};
@@ -76,6 +76,10 @@
       for(const p of this.points.values()){left=Math.min(left,p.x-90);right=Math.max(right,p.x+90);top=Math.min(top,p.y-65);bottom=Math.max(bottom,p.y+85);}
       const w=this.container.clientWidth,h=this.container.clientHeight,k=Math.min(1.35,(w-40)/(right-left),(h-40)/(bottom-top));
       this.camera={k,x:(w-(right-left)*k)/2-left*k,y:(h-(bottom-top)*k)/2-top*k};this.applyCamera();
+    }
+    focus(site){
+      const p=this.points?.get(site);if(!this.svg||!p)return;
+      const k=Math.max(1,this.camera.k);this.camera={k,x:this.container.clientWidth/2-p.x*k,y:this.container.clientHeight/2-p.y*k};this.applyCamera();
     }
     center(){if(!this.svg)return;const p=this.points.get(this.key);this.camera={k:1,x:this.container.clientWidth/2-p.x,y:this.container.clientHeight/2-p.y};this.applyCamera();}
     zoom(factor,x=this.container.clientWidth/2,y=this.container.clientHeight/2){

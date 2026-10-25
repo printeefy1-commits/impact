@@ -1,40 +1,49 @@
-# أثر — خريطة شبكة الميكروويف
+# Athar MW
 
-واجهة عربية محلية بـ HTML/CSS/JavaScript، بدون خادم تطبيق أو رفع الملفات إلى خدمة خارجية.
+An offline microwave network explorer with a global site finder, radial topology maps, and a fixed-GNE impact calculator. The interface is in English. No files are uploaded to an external service.
 
-## التشغيل
+## Run
 
-من مجلد المشروع شغّل `python -m http.server 8000` وافتح الصفحة من المتصفح، أو افتح `index.html` مباشرة.
+Open **athar-offline.html** in Chrome or Edge. It contains the interface, icons, and Excel reader in one file. Alternatively, open `index.html` alongside its supporting files, or run `python -m http.server 8000` from this folder.
 
-ارفع ملف الروابط وملف GNE ثم اضغط «إنشاء الخريطة». تدعم الواجهة CSV وTXT وXLSX، وتقرأ الورقة الأولى فقط. في ملفات MLR التي تحتوي عمودي Source NE Name وSink NE Name، تُستخدم أسماء الطرفين مباشرةً بدل تخمينها من عنوان الرابط. وإلا يُستخدم عمود Link Name أو Link أو العمود الأول، مع رابط كامل في كل خلية. يُتوقع اسم بوابة في خلية واحدة؛ تظهر رسالة بعدد الخلايا غير المطابقة بعد الاستيراد. ملفات XLS القديمة غير مدعومة.
+## Import network data
 
-النمط المقبول: `[ACO]` ثم رقمان ثم `S` أو `M` أو `X` أو `T` أو `B` أو `SU` ثم 3 أو 4 أرقام. يُزال الفراغ والشرطة والشرطة السفلية وتوحّد حالة الحروف، وتستخرج الأسماء المطابقة من النص الوصفي. مثال: `A_12-S345 site north-C12X3456 microwave` يصبح `A12S345-C12X3456`. لا يتم اختصار اسم ينتهي بأكثر من 4 أرقام. تقبل خلية الرابط اسمين فقط. في GNE يُستخدم عمود GNE Name أو GNE أو Gateway Name إن وُجد، وإلا العمود الأول؛ لا تُعامل أسماء Subnet كأنها بوابات. يؤخذ الاسم المطابق في بداية الخلية فقط ويُحذف الوصف بعده، حتى لو احتوى رمز عنصر آخر. يُستبعد الاسم الأساسي غير المطابق بدل استبداله باسم من الوصف. تبقى حدود اللواحق محفوظة، مثل A12X345_6900 → A12X345. تدمج الروابط والبوابات المكررة، وترفض الروابط إلى العنصر نفسه. تُحوَّل TSU إلى SU في أسماء العناصر والروابط والبوابات. تحفظ حدود اللواحق الرقمية المفصولة بمسافة، مثل A16X1801 6900 → A16X1801، بدل دمج أرقام الطراز في اسم العنصر. تُقبل أيضًا صيغة CA مثل A11CA03، والاسم الخاص CA-BBM مع الحفاظ على شرطته. تُحفظ تصحيحات الأسماء المعتمدة ضمن قواعد التطبيق وتُطبق تلقائيًا عند كل استيراد مستقبلي لقائمة GNE أو ملف الروابط، لضمان تطابق الأطراف، ولا يُخمن رقم CA من وصف الموقع.
+Upload a links file and a GNE file, then choose **Build network map**. Supported formats are XLSX, CSV, and TXT, up to 10 MB per file. Only the first Excel worksheet is read; legacy XLS is not supported.
 
-بعد الاستيراد، استخدم زري تنزيل الروابط المنظفة وبوابات GNE المنظفة. ينتج ملفا CSV بترميز UTF-8 وعمود واحد، يحتويان البيانات الصالحة الفريدة المستخدمة في الخريطة دون الأوصاف. لا تتغير الملفات الأصلية. تحتوي التنزيلات البيانات الصالحة الفريدة فقط؛ يمكن إعادة استيراد ملفي التنزيل.
+- In MLR tables, `Source NE Name` and `Sink NE Name` are authoritative. Otherwise the importer uses `Link Name`, `Link`, or the first column; each link cell should contain two site identifiers.
+- For gateways, the importer uses `GNE Name`, `GNE`, `Gateway Name`, or the first column. It keeps the primary identifier at the beginning of the cell and discards descriptions and annotated secondary names.
+- Identifiers start with A, C, or O, followed by two digits, then S, M, X, T, B, or SU, followed by three or four digits. CA identifiers such as `A11CA03` and the special gateway `CA-BBM` are also supported. TSU is normalized to SU.
+- All user-approved name corrections are applied automatically, including `O46WX158 → O46X158` and `O46WX159 → O46X159`. Numeric model suffixes remain separate: `A16X1801 6900 → A16X1801`.
+- The confirmed `A33T001 ↔ A33CA01` connection is added only when that site and gateway are present and the connection is missing. The import message identifies the addition.
 
-العلاقات ثنائية الاتجاه. يوزع العرض الفروع حول البوابة المختارة في تخطيط نجمي، مع إبقاء الروابط الإضافية داخل الفرع بخط متقطع. تُحسب العناصر غير المتصلة من مساراتها إلى البوابات في البيانات المستوردة؛ لا يمثل العرض حالة المعدات الفعلية أو سعة الروابط أو اتجاه المرور. البيانات لا تُحفظ بعد إعادة تحميل الصفحة.
+The two cleaned CSV downloads contain valid, unique links and gateways. Original files remain unchanged. The import message reports skipped non-matching cells, including headers.
 
-بعد الاستيراد، ابحث عن اسم GNE أو اختره من القائمة لعرض خريطته وحدها. لا تظهر خريطة قبل اختيار بوابة. يُعيّن كل NE إلى بوابة واحدة ذات أقل عدد من القفزات، وعند التعادل تفوز أول بوابة حسب ترتيب ظهورها في ملف GNE بعد التنظيف وإزالة التكرار. يظهر كل عنصر في خريطة بوابته فقط. لا يؤثر ترتيب العرض الأبجدي لقائمة الاختيار على أولوية الملف. تبقى الروابط إلى البوابات الأخرى محفوظة للحساب ولا تكرر العناصر في الخرائط. يمكن إظهار الروابط الإضافية ضمن الفرع بخط متقطع من شريط الأدوات. الإحصاءات العلوية تخص الشبكة كاملة.
+## Gateway ownership and topology
 
-## قراءة الخريطة وترتيبها
+Every NE is assigned to exactly one GNE using the fewest physical hops. Equal-hop ties are resolved by the GNE's first appearance in the uploaded gateway file after normalization and deduplication. Alphabetical sorting in the dropdown does not change this priority. A site appears only in its assigned gateway's map.
 
-الخريطة نجمية؛ GNE في الوسط وتتوزع الفروع حولها، مع خط مستقيم واحد لكل رابط بين عنصرين. تدمج الروابط المكررة أو العكسية حتى لا تظهر خطوط متوازية لنفس الزوج. أيقونات الطبق ووحدة الراديو مرسومة بصيغة SVG محلية بأسلوب قريب من أنظمة إدارة شبكات الميكروويف، وليست صورًا مقتطعة من NCE أو تعريفًا لطراز الجهاز. تميز علامة GNE البوابة، الأخضر يميز عناصر NE والأزرق يميز بوابة GNE.
+Type a complete NE or GNE name into **Find any site across the network** to automatically open its assigned map, highlight its icon, and center it. Suggestions include all imported sites. Saved name corrections are supported in searches too. Unknown or unconnected sites show an explanatory message instead of an unrelated map. You can also select or filter gateways manually.
 
-تظهر الروابط الإضافية في البداية بخط مستقيم متقطع؛ يمكنك إخفاؤها من «روابط إضافية». جميع الروابط تدخل في حساب الاتصال بالبوابات. اسحب الخلفية للتحريك، واسحب أيقونة العنصر لترتيبه يدويًا، أو استخدم عجلة الفأرة وأزرار التكبير. عند فتح الخريطة تتمركز البوابة وتبقى الأيقونات بحجمها الطبيعي (تكبير 100%). قد تمتد الفروع الكبيرة خارج النافذة؛ «ملاءمة العرض» تعرض الفرع كاملًا، و«GNE · 100%» تعيد حجم الأيقونات الطبيعي وتركز على البوابة. تتوفر إعادة الترتيب التلقائي وملء الشاشة. يمكن سحب الأيقونات لترتيبها، والنقر عليها لا يغير حالة الشبكة. يحتفظ العرض بالمواضع أثناء البحث، وتُعاد تهيئتها عند تغيير البوابة أو إعادة الاستيراد. لا تُحفظ المواضع بعد إغلاق الصفحة.
+Maps use a radial arrangement with a single straight line per unique undirected link. Drag the background to pan, use the wheel or buttons to zoom, and drag icons to rearrange sites. Maps open at 100% icon size; **Fit map** shows the whole branch. Extra links can be hidden. Auto arrange restores the layout. Full screen is available where supported. Local SVG dish, radio, gateway, and tower icons require no external resources.
 
-## التحقق
+## Impact calculation
 
-`node --test network.test.js topology.test.js radial-layout.test.js`
+Enter an NE or GNE and choose **Calculate impact**, or press Enter. Ownership is fixed before the outage: a site cannot switch to another GNE or use another gateway's domain to bypass the failure. Backup routes within the same assigned domain remain usable.
 
-بناء نسخة HTML المستقلة: `python build_offline.py`.
+An NE's impact includes the site itself and its assigned-domain sites that lose their route to the assigned gateway. A GNE's impact includes itself and its entire assigned domain. Changing the displayed map does not change the result.
 
-اختبار الاستيراد داخل Chromium (يتطلب Playwright وChromium): `node --test import.browser.test.cjs`. يغطي ملف CSV فيه 150 ألف خلية غير مطابقة، واستيراد Excel والتنزيل وإعادة الاستيراد واختيار البوابات وأدوات الخريطة. تستخدم الواجهة جميع الخلايا الصالحة وتعرض عدد الخلايا غير المطابقة.
+The copyable output contains only comma-separated identifiers, with no extra spaces or line breaks, for example:
 
-قارئ Excel المحلي: ExcelJS 4.4.0 في `vendor/` (MIT). لا يحتاج التشغيل إلى اتصال بالإنترنت.
+`O46X158,O46X001,O46X117,O46X157,O46X165,O46X209`
 
-الرابط المؤكد يدويًا A33T001 ↔ A33CA01 يُضاف تلقائيًا عند استيراد بيانات تحتوي A33T001 وبوابة A33CA01، إن لم يكن موجودًا بالفعل. تظهر إضافة الرابط في رسالة الاستيراد، ويدخل الرابط في الحساب والخريطة وملف الروابط المنظفة القابل للتنزيل. لا تضاف عناصر هذا الفرع إلى شبكات أخرى لا تحتويه.
+The entered site is listed first; other names are sorted. Use **Copy list** or select the text manually. The count includes the entered site. Calculations describe imported topology, not live equipment state. Data and manual node positions are not retained after reloading the page.
 
-تُطبق أيضًا التصحيحات الصريحة O46WX158 → O46X158 وO46WX159 → O46X159 على أسماء GNE وعناوين الروابط وأطرافها عند كل استيراد. لا تُعمم إزالة W على أسماء أخرى.
+## Development checks
 
-## حساب Impact
-أدخل اسم NE أو GNE واضغط الزر أو Enter. تُثبّت تبعية كل موقع لبوابته قبل العطل. تشمل نتيجة NE الموقع نفسه ومن يفقد الاتصال ببوابته المعيّنة عند تعطله. لا يُسمح بالتحويل إلى بوابة أخرى أو استخدام مواقع نطاق آخر للالتفاف. تُحتسب المسارات البديلة الموجودة داخل نطاق البوابة نفسها فقط. تشمل نتيجة GNE البوابة وكل عناصر نطاقها المعيّن بقاعدة أقل عدد من القفزات وأولوية ترتيب الملف عند التعادل. لا يغيّر اختيار خريطة أخرى تبعية الموقع أو نتيجة Impact. يظهر اسم بوابته المعيّنة فوق النتيجة.
+- Build the standalone file: `python build_offline.py`
+- Graph and layout tests: `node --test network.test.js topology.test.js radial-layout.test.js`
+- Browser workflow tests: `node --test import.browser.test.cjs` (requires Playwright and Chromium; set `CHROMIUM_PATH` if needed).
+
+Browser checks cover CSV/XLSX import, a 150,000-cell rejection report, cleaned exports and re-import, ownership ties, global site search, map interactions, and comma-separated impact results.
+
+ExcelJS 4.4.0 is bundled in `vendor/` under the MIT license. System fonts and local icons keep the application independent of network access.

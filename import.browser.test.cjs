@@ -16,7 +16,9 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     await page.goto(`http://127.0.0.1:${server.address().port}`);
     await page.context().setOffline(true);
     assert.equal(await page.locator('#downloadReview, #exportSummary, #demo, #failure, #reset, #impactCount, #report, footer, a[download]').count(),0);
-    assert.doesNotMatch(await page.locator('body').innerText(),/محاكاة العطل|إعادة الاتصال|تفاصيل العناصر ومراجعة الاستيراد/);
+    assert.equal(await page.locator('html').getAttribute('lang'),'en');
+    assert.equal(await page.locator('html').getAttribute('dir'),'ltr');
+    assert.doesNotMatch(await page.locator('body').innerText(),/[\u0600-\u06ff]/);
     await page.setInputFiles('#links',{name:'network.csv',mimeType:'text/csv',buffer:Buffer.from('link\nA01S001-C01M001\nC01M001-O01X001\nC01M001-A02S002\nA02S002-O02M002\nC02X002-O02M002\nA03X003-C03S003\n')});
     await page.setInputFiles('#gates',{name:'gne.csv',mimeType:'text/csv',buffer:Buffer.from('GNE\nA01S001\nC02X002\n')});
     await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
@@ -28,6 +30,20 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     await page.selectOption('#gneSelect','C02X002');
     assert.ok(!(await visibleNames()).includes('A01S001'));
     assert.ok((await visibleNames()).includes('C02X002'));
+    await page.fill('#search','O01X001');
+    assert.equal(await page.locator('#gneSelect').inputValue(),'A01S001');
+    assert.ok((await visibleNames()).includes('O01X001'));
+    assert.match(await page.locator('#searchStatus').textContent(),/O01X001 → A01S001/);
+    await page.fill('#search','O02M002');
+    assert.equal(await page.locator('#gneSelect').inputValue(),'C02X002');
+    assert.ok((await visibleNames()).includes('O02M002'));
+    await page.fill('#search','A03X003');
+    assert.equal(await page.locator('#map svg').count(),0);
+    assert.match(await page.locator('#searchStatus').textContent(),/no route/);
+    await page.fill('#search','O99X999');
+    assert.equal(await page.locator('#map svg').count(),0);
+    assert.match(await page.locator('#searchStatus').textContent(),/No match/);
+
     await page.fill('#gneSearch','not-found');
     assert.equal(await page.locator('#map svg').count(),0);
     assert.equal(await page.locator('#gneSelect option').count(),1);
@@ -118,18 +134,18 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     assert.deepEqual({position:await root.getAttribute('transform'),color:await root.locator('rect').first().getAttribute('fill'),count:await page.locator('#nodesCount').textContent()},beforeClick);
     assert.equal(await page.locator('#map .network-node').count(),4);
     await page.fill('#impactSite','A01S001');await page.click('#calculateImpact');
-    assert.deepEqual((await page.locator('#impactResult').inputValue()).split('\n'),['A01S001','C01M001','C02M002','O01X001']);
+    assert.deepEqual((await page.locator('#impactResult').inputValue()).split(','),['A01S001','C01M001','C02M002','O01X001']);
     await page.fill('#impactSite','C01M001');await page.press('#impactSite','Enter');
     assert.equal(await page.locator('#impactResult').inputValue(),'C01M001');
     await page.fill('#impactSite','O99X999');await page.click('#calculateImpact');
     assert.equal(await page.locator('#impactResult').inputValue(),'');
-    assert.match(await page.locator('#impactSummary').textContent(),/غير موجود/);
+    assert.match(await page.locator('#impactSummary').textContent(),/not found/);
     await page.evaluate(()=>setData([['A01S001','C01M001'],['C01M001','O01X001'],['O01X001','A02S002'],['C01M001','C02M002']],['A01S001','A02S002']));
     await page.selectOption('#gneSelect','A01S001');
     await page.fill('#impactSite','C01M001');await page.click('#calculateImpact');
-    assert.equal(await page.locator('#impactResult').inputValue(),'C01M001\nC02M002');
+    assert.equal(await page.locator('#impactResult').inputValue(),'C01M001,C02M002');
     await page.selectOption('#gneSelect','A02S002');
-    assert.equal(await page.locator('#impactResult').inputValue(),'C01M001\nC02M002');
+    assert.equal(await page.locator('#impactResult').inputValue(),'C01M001,C02M002');
     assert.match(await page.locator('#impactSummary').textContent(),/A01S001/);
     assert.ok(!(await visibleNames()).includes('C01M001'));
     // File order wins equal-hop ties even though the dropdown is sorted by name.
@@ -139,13 +155,14 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     await page.selectOption('#gneSelect','A01S001');assert.deepEqual(await visibleNames(),['A01S001']);
     await page.selectOption('#gneSelect','A02S002');assert.deepEqual((await visibleNames()).sort(),['A02S002','C01M001','O01X001'].sort());
     await page.fill('#impactSite','A02S002');await page.click('#calculateImpact');
-    assert.deepEqual((await page.locator('#impactResult').inputValue()).split('\n'),['A02S002','C01M001','O01X001']);
+    assert.deepEqual((await page.locator('#impactResult').inputValue()).split(','),['A02S002','C01M001','O01X001']);
     await page.evaluate(()=>setData([['A01S001','C01M001'],['C01M001','O01X001'],['O01X001','C02M002'],['C02M002','A02S002']],['A01S001','A02S002']));
     await page.selectOption('#gneSelect','A01S001');
     await page.fill('#impactSite','C01M001');await page.click('#calculateImpact');
-    assert.equal(await page.locator('#impactResult').inputValue(),'C01M001\nO01X001');
+    assert.equal(await page.locator('#impactResult').inputValue(),'C01M001,O01X001');
     await page.selectOption('#gneSelect','A02S002');
-    assert.equal(await page.locator('#impactResult').inputValue(),'C01M001\nO01X001');
+    assert.equal(await page.locator('#impactResult').inputValue(),'C01M001,O01X001');
+    assert.doesNotMatch(await page.locator('body').innerText(),/[\u0600-\u06ff]/);
     assert.deepEqual(errors,[]);
   }finally{
     if(browser)await browser.close();
