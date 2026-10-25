@@ -100,11 +100,19 @@
     }
     return {visited,parent,depth};
   }
-  function impact(adj,gates,site){
-    if(!adj.has(site))return [];
-    const impacted=gates.includes(site)?[...branch(adj,gates,site).visited]:[site,...analyze(adj,gates,site).affected];
-    return [site,...impacted.filter(n=>n!==site).sort()];
+  function impactRoot(adj,gates,site,preferred=''){
+    if(gates.includes(site))return site;
+    if(gates.includes(preferred)&&branch(adj,gates,preferred).visited.has(site))return preferred;
+    return traverse(adj,gates).owner.get(site)||'';
   }
-  const api={impact,extract,primaryName,parseCells,parseGates,parseLinks,applyConnections,graph,traverse,analyze,branch};
+  function impact(adj,gates,site,preferred=''){
+    if(!adj.has(site))return [];
+    const root=impactRoot(adj,gates,site,preferred),tree=branch(adj,gates,root),children=new Map();
+    for(const [child,parent] of tree.parent){if(!children.has(parent))children.set(parent,[]);children.get(parent).push(child);}
+    const carried=[site];
+    for(let i=0;i<carried.length;i++)for(const child of children.get(carried[i])||[])carried.push(child);
+    return [site,...carried.slice(1).sort()];
+  }
+  const api={impactRoot,impact,extract,primaryName,parseCells,parseGates,parseLinks,applyConnections,graph,traverse,analyze,branch};
   if(typeof module!=='undefined')module.exports=api;else root.Network=api;
 })(globalThis);

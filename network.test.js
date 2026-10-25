@@ -150,6 +150,15 @@ test('impact includes failed site, downstream NE, and all GNE branch sites',()=>
  assert.deepEqual(N.impact(adj,['G'],'N3'),['N3']);
  assert.deepEqual(N.impact(adj,['G'],'unknown'),[]);
  const redundant=N.graph([...links,['N3','G2']],['G','G2']);
- assert.deepEqual(N.impact(redundant,['G','G2'],'N1'),['N1']);
+ assert.deepEqual(N.impact(redundant,['G','G2'],'N1'),['N1','N2','N3']);
  assert.deepEqual(N.impact(redundant,['G','G2'],'G'),['G','N1','N2','N3']);
+});
+
+test('carried impact follows displayed GNE tree even when sites retain alternate routes',()=>{
+ const gates=['G1','G2','G3'],adj=N.graph([['G1','A'],['A','B'],['B','G2'],['A','C']],gates);
+ assert.deepEqual(N.impact(adj,gates,'A','G1'),['A','B','C']);
+ assert.deepEqual(N.impact(adj,gates,'A','G2'),['A','C']);
+ assert.deepEqual(N.impact(adj,gates,'A','G3'),['A','B','C']);
+ assert.equal(N.impactRoot(adj,gates,'A','G2'),'G2');
+ assert.deepEqual(N.analyze(adj,gates,'A').affected,['C']);
 });

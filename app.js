@@ -101,8 +101,8 @@ $('load').onclick=async()=>{const button=$('load');button.disabled=true;
   setData(confirmed.links,pg.valid.flat(),ignoredCount,confirmed.added.length?'أُضيف الرابط A33T001 ↔ A33CA01 وفق تأكيدك، وهو مضمن في ملف الروابط المنظّفة.':'');
 }catch(e){$('status').textContent='لم يتم الاستيراد: '+e.message;}finally{button.disabled=false;}};
 $('search').oninput=draw;
-$('gneSearch').oninput=()=>{filterGateways();draw();};
-$('gneSelect').onchange=()=>{$('search').value='';draw();$('map').scrollTop=0;$('map').scrollLeft=0;};
+$('gneSearch').oninput=()=>{filterGateways();draw();if($('impactResult').value)calculateImpact();};
+$('gneSelect').onchange=()=>{$('search').value='';draw();$('map').scrollTop=0;$('map').scrollLeft=0;if($('impactResult').value)calculateImpact();};
 
 $('zoomIn').onclick=()=>topologyView.zoom(1.25);
 $('zoomOut').onclick=()=>topologyView.zoom(1/1.25);
@@ -118,12 +118,14 @@ new ResizeObserver(()=>{if(topologyView.svg)topologyView.open();}).observe($('ma
 document.addEventListener('fullscreenchange',()=>{$('fullscreen').textContent=document.fullscreenElement?'إنهاء ملء الشاشة':'ملء الشاشة';});
 
 $('impactSite').oninput=()=>{$('impactResult').value='';$('impactSummary').textContent='اضغط عرض Impact لحساب النتيجة.';};
-$('impactForm').onsubmit=e=>{
-  e.preventDefault();$('impactResult').value='';
+function calculateImpact(){
+  $('impactResult').value='';
   if(!state){$('impactSummary').textContent='استورد الملفين أولًا.';return;}
   const site=Network.primaryName($('impactSite').value);
   if(!site||!state.adj.has(site)){$('impactSummary').textContent='الموقع غير موجود في البيانات المستوردة.';return;}
-  const result=Network.impact(state.adj,state.gates,site);
+  const gateway=Network.impactRoot(state.adj,state.gates,site,$('gneSelect').value);
+  const result=Network.impact(state.adj,state.gates,site,gateway);
   $('impactResult').value=result.join('\n');
-  $('impactSummary').textContent=`${site} — Impact: ${result.length} موقعًا، شاملًا الموقع نفسه.`;
-};
+  $('impactSummary').textContent=`${site} — Impact: ${result.length} موقعًا، شاملًا الموقع نفسه. ${gateway?'حسب فرع GNE: '+gateway:'لا يوجد مسار إلى GNE لتحديد العناصر التابعة.'}`;
+}
+$('impactForm').onsubmit=e=>{e.preventDefault();calculateImpact();};
