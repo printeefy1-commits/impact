@@ -100,6 +100,11 @@
     }
     return {visited,parent,depth};
   }
-  const api={extract,primaryName,parseCells,parseGates,parseLinks,applyConnections,graph,traverse,analyze,branch};
+  function impact(adj,gates,site){
+    if(!adj.has(site))return [];
+    const impacted=gates.includes(site)?[...branch(adj,gates,site).visited]:[site,...analyze(adj,gates,site).affected];
+    return [site,...impacted.filter(n=>n!==site).sort()];
+  }
+  const api={impact,extract,primaryName,parseCells,parseGates,parseLinks,applyConnections,graph,traverse,analyze,branch};
   if(typeof module!=='undefined')module.exports=api;else root.Network=api;
 })(globalThis);

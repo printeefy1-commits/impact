@@ -117,6 +117,13 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     assert.equal(await root.getAttribute('role'),'img');
     assert.deepEqual({position:await root.getAttribute('transform'),color:await root.locator('rect').first().getAttribute('fill'),count:await page.locator('#nodesCount').textContent()},beforeClick);
     assert.equal(await page.locator('#map .network-node').count(),4);
+    await page.fill('#impactSite','A01S001');await page.click('#calculateImpact');
+    assert.deepEqual((await page.locator('#impactResult').inputValue()).split('\n'),['A01S001','C01M001','C02M002','O01X001']);
+    await page.fill('#impactSite','C01M001');await page.press('#impactSite','Enter');
+    assert.equal(await page.locator('#impactResult').inputValue(),'C01M001');
+    await page.fill('#impactSite','O99X999');await page.click('#calculateImpact');
+    assert.equal(await page.locator('#impactResult').inputValue(),'');
+    assert.match(await page.locator('#impactSummary').textContent(),/غير موجود/);
     assert.deepEqual(errors,[]);
   }finally{
     if(browser)await browser.close();

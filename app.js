@@ -53,6 +53,7 @@ function setData(links,gates,ignoredCount=0,message=''){
   if(!uniqueLinks.length||!uniqueGates.length)throw Error('لم نجد روابط وبوابات صالحة. النمط المطلوب مثل A12S345-C12X3456 وقائمة GNE مثل C12X3456.');
   state={adj:Network.graph(uniqueLinks,uniqueGates),links:uniqueLinks,gates:uniqueGates};
   topologyView.clear();$('extraLinks').checked=true;
+  $('impactSite').disabled=false;$('calculateImpact').disabled=false;$('impactResult').value='';$('impactSummary').textContent='أدخل اسم الموقع لحساب Impact.';
   $('gneSearch').value='';$('gneSearch').disabled=false;$('gneSelect').disabled=false;
   $('search').value='';$('gneSelect').value='';filterGateways();
   $('status').textContent='تم الاستيراد. اختر بوابة GNE لعرض خريطتها.'+(ignoredCount?` تم تجاهل ${ignoredCount} خلية غير مطابقة (بما فيها العناوين).`:'')+(message?' '+message:'');
@@ -115,3 +116,14 @@ $('fullscreen').onclick=async()=>{
 };
 new ResizeObserver(()=>{if(topologyView.svg)topologyView.open();}).observe($('map'));
 document.addEventListener('fullscreenchange',()=>{$('fullscreen').textContent=document.fullscreenElement?'إنهاء ملء الشاشة':'ملء الشاشة';});
+
+$('impactSite').oninput=()=>{$('impactResult').value='';$('impactSummary').textContent='اضغط عرض Impact لحساب النتيجة.';};
+$('impactForm').onsubmit=e=>{
+  e.preventDefault();$('impactResult').value='';
+  if(!state){$('impactSummary').textContent='استورد الملفين أولًا.';return;}
+  const site=Network.primaryName($('impactSite').value);
+  if(!site||!state.adj.has(site)){$('impactSummary').textContent='الموقع غير موجود في البيانات المستوردة.';return;}
+  const result=Network.impact(state.adj,state.gates,site);
+  $('impactResult').value=result.join('\n');
+  $('impactSummary').textContent=`${site} — Impact: ${result.length} موقعًا، شاملًا الموقع نفسه.`;
+};

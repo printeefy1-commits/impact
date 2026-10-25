@@ -143,3 +143,13 @@ test('selected gateway branch stops at other gateways, excludes disconnected nod
  // The other gateway still supplies alternate connectivity during a failure.
  assert.deepEqual(N.analyze(adj,gates,'C01M001').affected,[]);
 });
+test('impact includes failed site, downstream NE, and all GNE branch sites',()=>{
+ const links=[['G','N1'],['N1','N2'],['N2','N3']];const adj=N.graph(links,['G']);
+ assert.deepEqual(N.impact(adj,['G'],'N1'),['N1','N2','N3']);
+ assert.deepEqual(N.impact(adj,['G'],'G'),['G','N1','N2','N3']);
+ assert.deepEqual(N.impact(adj,['G'],'N3'),['N3']);
+ assert.deepEqual(N.impact(adj,['G'],'unknown'),[]);
+ const redundant=N.graph([...links,['N3','G2']],['G','G2']);
+ assert.deepEqual(N.impact(redundant,['G','G2'],'N1'),['N1']);
+ assert.deepEqual(N.impact(redundant,['G','G2'],'G'),['G','N1','N2','N3']);
+});
