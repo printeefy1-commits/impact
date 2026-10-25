@@ -107,10 +107,18 @@
   }
   function impact(adj,gates,site){
     if(!adj.has(site))return [];
-    // A gateway impact is its uniquely assigned domain. For an NE, retained
-    // alternate physical routes keep sites out of the outage impact list.
-    const impacted=gates.includes(site)?[...branch(adj,gates,site).visited]:analyze(adj,gates,site).affected;
-    return [site,...impacted.filter(n=>n!==site).sort()];
+    // Freeze pre-failure ownership. Routes through another GNE's domain cannot
+    // rescue a site; alternate routes inside its own domain remain usable.
+    const assigned=traverse(adj,gates),root=assigned.owner.get(site);
+    if(!root)return [site];
+    const reachable=new Set(),queue=[];
+    if(site!==root){reachable.add(root);queue.push(root);}
+    for(let i=0;i<queue.length;i++)for(const next of adj.get(queue[i])||[]){
+      if(next===site||assigned.owner.get(next)!==root||reachable.has(next))continue;
+      reachable.add(next);queue.push(next);
+    }
+    const impacted=[...assigned.owner].filter(([node,owner])=>owner===root&&!reachable.has(node)&&node!==site).map(([node])=>node);
+    return [site,...impacted.sort()];
   }
   const api={impactRoot,impact,extract,primaryName,parseCells,parseGates,parseLinks,applyConnections,graph,traverse,analyze,branch};
   if(typeof module!=='undefined')module.exports=api;else root.Network=api;

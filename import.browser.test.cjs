@@ -140,6 +140,12 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     await page.selectOption('#gneSelect','A02S002');assert.deepEqual((await visibleNames()).sort(),['A02S002','C01M001','O01X001'].sort());
     await page.fill('#impactSite','A02S002');await page.click('#calculateImpact');
     assert.deepEqual((await page.locator('#impactResult').inputValue()).split('\n'),['A02S002','C01M001','O01X001']);
+    await page.evaluate(()=>setData([['A01S001','C01M001'],['C01M001','O01X001'],['O01X001','C02M002'],['C02M002','A02S002']],['A01S001','A02S002']));
+    await page.selectOption('#gneSelect','A01S001');
+    await page.fill('#impactSite','C01M001');await page.click('#calculateImpact');
+    assert.equal(await page.locator('#impactResult').inputValue(),'C01M001\nO01X001');
+    await page.selectOption('#gneSelect','A02S002');
+    assert.equal(await page.locator('#impactResult').inputValue(),'C01M001\nO01X001');
     assert.deepEqual(errors,[]);
   }finally{
     if(browser)await browser.close();

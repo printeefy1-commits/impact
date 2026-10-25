@@ -153,7 +153,16 @@ test('impact includes self, honors alternate NE routes and unique GNE membership
  assert.deepEqual(N.impact(adj,['G'],'N3'),['N3']);
  assert.deepEqual(N.impact(adj,['G'],'unknown'),[]);
  const redundant=N.graph([...links,['N3','G2']],['G','G2']);
- assert.deepEqual(N.impact(redundant,['G','G2'],'N1'),['N1']);
+ assert.deepEqual(N.impact(redundant,['G','G2'],'N1'),['N1','N2']);
  assert.deepEqual(N.impact(redundant,['G','G2'],'G'),['G','N1','N2']);
  assert.deepEqual(N.impact(redundant,['G','G2'],'G2'),['G2','N3']);
+});
+test('impact cannot switch equal-hop ownership to another gateway after a failure',()=>{
+ const gates=['G1','G2'],adj=N.graph([['G1','U'],['U','X'],['X','V'],['V','G2']],gates);
+ assert.equal(N.impactRoot(adj,gates,'X'),'G1');
+ assert.deepEqual(N.impact(adj,gates,'U'),['U','X']);
+ assert.equal(N.impactRoot(adj,gates,'X'),'G1');
+ assert.deepEqual(N.impact(adj,['G2','G1'],'U'),['U']);
+ const internal=N.graph([['G1','U'],['U','X'],['X','V'],['V','G1']],['G1']);
+ assert.deepEqual(N.impact(internal,['G1'],'U'),['U']);
 });
