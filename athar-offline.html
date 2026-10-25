@@ -105,32 +105,76 @@ https://github.com/nodeca/pako/blob/main/LICENSE
  */function n(e){return e>=65&&e<=90||95===e||e>=97&&e<=122||e>=192&&e<=214||e>=216&&e<=246||e>=248&&e<=767||e>=880&&e<=893||e>=895&&e<=8191||e>=8204&&e<=8205||e>=8304&&e<=8591||e>=11264&&e<=12271||e>=12289&&e<=55295||e>=63744&&e<=64975||e>=65008&&e<=65533||e>=65536&&e<=983039}Object.defineProperty(r,"__esModule",{value:!0}),r.NC_NAME_START_CHAR="A-Z_a-z\xc0-\xd6\xd8-\xf6\xf8-\u02ff\u0370-\u037d\u037f-\u1fff\u200c-\u200d\u2070-\u218f\u2c00-\u2fef\u3001-\ud7ff\uf900-\ufdcf\ufdf0-\ufffd\ud800\udc00-\udb7f\udfff",r.NC_NAME_CHAR="-"+r.NC_NAME_START_CHAR+".0-9\xb7\u0300-\u036f\u203f-\u2040",r.NC_NAME_START_CHAR_RE=new RegExp("^["+r.NC_NAME_START_CHAR+"]$","u"),r.NC_NAME_CHAR_RE=new RegExp("^["+r.NC_NAME_CHAR+"]$","u"),r.NC_NAME_RE=new RegExp("^["+r.NC_NAME_START_CHAR+"]["+r.NC_NAME_CHAR+"]*$","u"),r.isNCNameStartChar=n,r.isNCNameChar=function(e){return n(e)||45===e||46===e||e>=48&&e<=57||183===e||e>=768&&e<=879||e>=8255&&e<=8256}},{}]},{},[15])(15)}));
 //# sourceMappingURL=exceljs.min.js.map</script><script>(function(root){
   const separator='[_\\s-]*',prefix='[ACO]'+separator+'\\d'+separator+'\\d'+separator;
-  const identifier='(?:O01[_\\s-]+)?CA[_\\s-]+BBM|'+prefix+'CA'+separator+'\\d{2}(?!\\d)|'+prefix+'(?:SU|[SMXTB])'+separator+'\\d{3,4}(?!\\d)';
+  const identifier='(?:O01[_\\s-]+)?CA[_\\s-]+BBM|'+prefix+'CA'+separator+'\\d{2}(?!\\d)|'+prefix+'(?:WX|SM|SU|[SMXTBWR])'+separator+'\\d{3,4}(?!\\d)';
   // Explicit user-approved corrections; never infer a numbered CA name from a place name.
-  const aliases=new Map([['O01CA_AOULEF','O01CA03'],['A11CA-AIN-GUEZZAM','A11CA03'],['A33CABORDJALHAOUAS','A33CA04'],['CAATAINGUEZZAM','A11CA03'],['CA_AT_BBM','CA-BBM'],['A33CABORJALHAOUES','A33CA04'],['O01CA_TIMIMOUNE','O01CA02'],['O46WX158','O46X158'],['O46WX159','O46X159']]);
+  const aliases=new Map([['O01CA_AOULEF','O01CA03'],['A11CA-AIN-GUEZZAM','A11CA03'],['A33CABORDJALHAOUAS','A33CA04'],['CAATAINGUEZZAM','A11CA03'],['CA_AT_BBM','CA-BBM'],['A33CABORJALHAOUES','A33CA04'],['O01CA_TIMIMOUNE','O01CA02'],['O46WX158','O46X158'],['O46WX159','O46X159'],['O38X090','O38R050']]);
   const aliasPatterns=[...aliases].map(([original,corrected])=>[new RegExp(original.split('').map(c=>c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('\\s*')+(/\d$/.test(original)?'(?!\\d)':''),'g'),corrected]);
   function normalize(value){
     let compact=String(value??'').trim().toUpperCase().replace(/T\s*S\s*U(?=[_\s-]*\d)/g,'SU');
     for(const [pattern,corrected] of aliasPatterns)compact=compact.replace(pattern,corrected);
+    compact=compact
+      .replace(/^A16[_\s-]*SCE1[_\s-]*HYDRA[_\s-]*A16X1577/,'A16X1577')
+      .replace(/^ERMA[_\s-]*BARAKI[_\s-]*A16M1230/,'A16M1230')
+      .replace(/^CDS[_\s-]*EL[_\s-]*BIAR[_\s-]*A16T120\s*\(A16M632\)/,'A16M632')
+      .replace(/^EL[_\s-]*KENDI[_\s-]*RAHMANIA[_\s-]*015/,'A16SCE1-ELKENDIRAHMANIA015')
+      .replace(/^(?:(?:E[_\s-]*BAND|EB(?:AND)?\d*|TO)[_\s-]+)+/,'')
+      .replace(/^5A16/,'A16').replace(/^04/,'C04').replace(/^0/,'O').replace(/^16/,'A16')
+      .replace(/^09X170/i,'A09X170').replace(/^O9X170/,'A09X170')
+      .replace(/^22X163/,'O22X163').replace(/^O4X106/,'C04X106').replace(/^A6S496/,'A06S496')
+      .replace(/^AAAX030/,'A44X030').replace(/^A16XT1999/,'A16X1999')
+      .replace(new RegExp('^('+prefix+')(?:SEC1|SE0?1|SC[_\\s-]*E01)'),(_,region)=>canonical(region)+'SCE1');
     return compact;
   }
   function canonical(name){const compact=name.replace(/[-_\s]/g,'');return ['CABBM','O01CABBM'].includes(compact)?'CA-BBM':compact;}
+  const headings=new Set(['gne','gnename','gateway','gatewayname','link','linkname','sourcenename','sinknename','البوابة','اسمالبوابة','اسمالرابط']);
+  function specialName(value){
+    if(!value||headings.has(value.toLowerCase().replace(/[\s_-]/g,'')))return '';
+    // Equipment suffixes identify radios, not separate sites. Keep unknown site
+    // names rather than guessing a standard identifier from their descriptions.
+    let name=value.normalize('NFC').trim();
+    let previous;
+    do{previous=name;name=name.replace(/[_\s-]+(?:NE(?:[_\s-]*(?:\d+|ODU[_\s-]*\d+))?|(?:E[_\s-]*BAND|EB(?:AND)?)\d*(?:[_\s-]*[HV]\d*)?|IDU[_\s-]*\d+|[HV]\d*)[_\s-]*$/,'').trim();}while(name!==previous);
+    name=name.replace(/\([^)]*\).*$/,'').trim();
+    const special=name.match(/^([ACO][_\s-]*\d[_\s-]*\d)[_\s-]*(S[_\s-]*C[_\s-]*E?[_\s-]*\d+|S[_\s-]*E[_\s-]*C?[_\s-]*\d+)[_\s-]*(.+)$/);
+    if(special)return canonical(special[1]+special[2])+'-'+special[3].replace(/[-_\s]/g,'');
+    return (name||value).replace(/[-_\s]/g,'');
+  }
   // Preserve suffix boundaries: O31X400_6900 must not become O31X4006900.
   function extract(value){
     const compact=normalize(value);
     return (compact.match(new RegExp(identifier,'g'))||[]).map(canonical);
   }
   function primaryName(value){
+    const original=String(value??'').trim();
+    if(/^NE/i.test(original))return original;
     const compact=normalize(value);
-    return canonical(compact.match(new RegExp('^(?:'+identifier+')'))?.[0]||'');
+    const standard=compact.match(new RegExp('^(?:'+identifier+')'))?.[0];
+    return standard?canonical(standard):specialName(compact);
+  }
+  function linkNames(value){
+    const compact=normalize(value);
+    if(!compact||headings.has(compact.toLowerCase().replace(/[\s_-]/g,'')))return [];
+    // Explicit endpoint separators work even when both names are nonstandard.
+    const explicit=compact.split(/\s*(?:↔|→|<->|\|)\s*|\s+-\s+/);
+    if(explicit.length===2)return explicit.map(primaryName);
+    // In legacy NE_A-NE_B cells, keep hyphens inside special names. An endpoint
+    // boundary is a hyphen followed by a full region prefix or CA-BBM.
+    const boundary=new RegExp('[-]+(?=(?:'+prefix+'[A-Z]|CA[_\\s-]+BBM))','g');
+    const candidates=[...compact.matchAll(boundary)];
+    if(candidates.length===1){
+      const split=candidates[0];
+      return [primaryName(compact.slice(0,split.index)),primaryName(compact.slice(split.index+split[0].length))];
+    }
+    if(candidates.length>1)return [];
+    return extract(compact);
   }
   function parseCells(cells,count){
     const valid=[], invalid=[];
     for(const cell of cells){
       const raw=String(cell.value??'').trim(); if(!raw)continue;
       const primary=count===1?primaryName(raw):'';
-      const ids=count===1?(primary?[primary]:[]):extract(raw);
-      if(ids.length===count && (count!==2||ids[0]!==ids[1]))valid.push(ids);
+      const ids=count===1?(primary?[primary]:[]):linkNames(raw);
+      if(ids.length===count && ids.every(Boolean) && (count!==2||ids[0]!==ids[1]))valid.push(ids);
       else invalid.push({location:cell.location,value:raw});
     }
     return {valid,invalid};
@@ -153,16 +197,17 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   }
   function parseLinks(cells){
     const key=c=>String(c.value??'').trim().toLowerCase().replace(/[\s_-]/g,'');
-    const source=cells.find(c=>key(c)==='sourcenename'),sink=cells.find(c=>key(c)==='sinknename');
+    const source=cells.find(c=>key(c)==='sourcenename'),sink=cells.find(c=>key(c)==='sinknename'),title=cells.find(c=>['link','linkname'].includes(key(c)));
     if(source&&sink){
       const rows=new Map(),valid=[],invalid=[];
       for(const cell of cells){
-        if(cell.row<=Math.max(source.row,sink.row)||![source.column,sink.column].includes(cell.column))continue;
+        if(cell.row<=Math.max(source.row,sink.row)||![source.column,sink.column,title?.column].includes(cell.column))continue;
         if(!rows.has(cell.row))rows.set(cell.row,{});
-        rows.get(cell.row)[cell.column===source.column?'source':'sink']=cell;
+        rows.get(cell.row)[cell.column===source.column?'source':cell.column===sink.column?'sink':'title']=cell;
       }
       for(const [row,pair] of rows){
-        const a=primaryName(pair.source?.value),b=primaryName(pair.sink?.value);
+        let a=primaryName(pair.source?.value),b=primaryName(pair.sink?.value);
+        if(!a&&!b){const fallback=linkNames(pair.title?.value);if(fallback.length===2)[a,b]=fallback;}
         if(a&&b&&a!==b)valid.push([a,b]);
         else invalid.push({location:`صف ${row}`,value:`${pair.source?.value??''} ↔ ${pair.sink?.value??''}`});
       }
@@ -311,6 +356,19 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     for(const [key,value] of Object.entries(attrs))node.setAttribute(key,value);
     return node;
   }
+  function wrapName(label,background){
+    const name=label.textContent,lines=[];let line='';
+    // Measure at the full requested font size; long special names wrap rather
+    // than shrinking, truncating, or covering neighboring sites.
+    for(const character of name){
+      label.textContent=line+character;
+      if(line&&label.getComputedTextLength()>134){lines.push(line);line=character;}
+      else line+=character;
+    }
+    lines.push(line);label.textContent='';
+    lines.forEach((value,index)=>{const span=el('tspan',{x:0,y:60+index*24});span.textContent=value;label.append(span);});
+    background.setAttribute('height',30+(lines.length-1)*24);
+  }
   class View{
     constructor(container,onZoom){this.container=container;this.onZoom=onZoom;this.clear();}
     clear(){this.key=null;this.svg=null;this.points=null;this.camera={x:0,y:0,k:1};this.onZoom?.(1);}
@@ -352,7 +410,9 @@ https://github.com/nodeca/pako/blob/main/LICENSE
         }
         nodes.append(g);this.nodeElements.set(n,g);
       }
-      this.updateEdges();this.container.replaceChildren(svg);this.bindInteractions(svg);
+      this.updateEdges();this.container.replaceChildren(svg);
+      for(const node of this.nodeElements.values())wrapName(node.querySelector('.node-name'),node.querySelector('.node-label-bg'));
+      this.bindInteractions(svg);
       if(changed)this.open();else this.applyCamera();
       return extraCount;
     }
@@ -371,7 +431,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     fit(){
       if(!this.svg)return;
       let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;
-      for(const p of this.points.values()){left=Math.min(left,p.x-90);right=Math.max(right,p.x+90);top=Math.min(top,p.y-65);bottom=Math.max(bottom,p.y+85);}
+      for(const [name,p] of this.points){const box=this.nodeElements.get(name).getBBox();left=Math.min(left,p.x+box.x-15);right=Math.max(right,p.x+box.x+box.width+15);top=Math.min(top,p.y+box.y-15);bottom=Math.max(bottom,p.y+box.y+box.height+15);}
       const w=this.container.clientWidth,h=this.container.clientHeight,k=Math.min(1.35,(w-40)/(right-left),(h-40)/(bottom-top));
       this.camera={k,x:(w-(right-left)*k)/2-left*k,y:(h-(bottom-top)*k)/2-top*k};this.applyCamera();
     }
@@ -411,7 +471,7 @@ const topologyView=new Topology.View($('map'),k=>{$('zoomLabel').textContent=Mat
 let cleanedFiles=null;
 function prepareDownloads(links,gates){
   cleanedFiles={
-    links:[...new Set(links.map(pair=>pair.slice().sort().join('-')))],
+    links:[...new Map(links.map(pair=>{const sorted=pair.slice().sort();return [JSON.stringify(sorted),sorted];})).values()],
     gates:[...new Set(gates)]
   };
   $('downloadLinks').disabled=!cleanedFiles.links.length;
@@ -419,8 +479,10 @@ function prepareDownloads(links,gates){
 }
 function downloadCleaned(kind){
   const values=cleanedFiles?.[kind];if(!values?.length)return;
-  const header=kind==='links'?'link':'GNE';
-  const blob=new Blob(['\uFEFF',header+'\r\n',values.join('\r\n')+'\r\n'],{type:'text/csv;charset=utf-8'});
+  const quote=value=>/[",\r\n]/.test(value)?'"'+value.replace(/"/g,'""')+'"':value;
+  const header=kind==='links'?'Source NE Name,Sink NE Name':'GNE';
+  const lines=kind==='links'?values.map(pair=>pair.map(quote).join(',')):values.map(quote);
+  const blob=new Blob(['\uFEFF',header+'\r\n',lines.join('\r\n')+'\r\n'],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob),link=document.createElement('a');
   link.href=url;link.download=kind==='links'?'cleaned-links.csv':'cleaned-gne.csv';
   document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
@@ -436,7 +498,7 @@ async function readCells(file,kind){
     const sheet=book.worksheets[0];if(!sheet)throw Error('This Excel file has no worksheets.');
     const headings=new Map();sheet.getRow(1).eachCell(cell=>headings.set(cell.text.trim().toLowerCase().replace(/[\s_-]/g,''),cell.col));
     let columns=null;
-    if(kind==='links'&&headings.has('sourcenename')&&headings.has('sinknename'))columns=[headings.get('sourcenename'),headings.get('sinknename')];
+    if(kind==='links'&&headings.has('sourcenename')&&headings.has('sinknename'))columns=[headings.get('sourcenename'),headings.get('sinknename'),headings.get('linkname')||headings.get('link')].filter(Boolean);
     else if(kind==='links'&&(headings.has('linkname')||headings.has('link')))columns=[headings.get('linkname')||headings.get('link')];
     else if(kind==='gates')for(const key of ['gnename','gne','gatewayname','gateway'])if(headings.has(key)){columns=[headings.get(key)];break;}
     const cells=[];const add=cell=>cells.push({value:cell.text,location:cell.address,row:cell.row,column:cell.col});

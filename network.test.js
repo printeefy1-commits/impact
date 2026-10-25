@@ -13,11 +13,11 @@ test('extract identifiers while discarding descriptive prefixes, suffixes and wh
  const r=N.parseCells([{value:'A12S345 text-C12M3456 text-O12X345 text'}],2);
  assert.equal(r.valid.length,0);assert.equal(r.invalid.length,1);
 });
-test('GNE keeps the primary name and rejects unsupported primary types instead of using annotations',()=>{
+test('GNE keeps primary standard identities and retains nonstandard names',()=>{
  assert.equal(N.primaryName('A12X345 Main site (C12M3456)_IDU1'),'A12X345');
- assert.equal(N.primaryName('A12Z345 (C12M3456)'), '');
+ assert.equal(N.primaryName('A12Z345 (C12M3456)'), 'A12Z345');
  assert.equal(N.primaryName('A12X345_6900'),'A12X345');
- assert.equal(N.primaryName('A12X34567'),'');
+ assert.equal(N.primaryName('A12X34567'),'A12X34567');
  assert.deepEqual(N.extract('A12X345_6900-C12M3456 IDU1'),['A12X345','C12M3456']);
 });
 test('GNE table reads the name column only, never subnet names',()=>{
@@ -27,8 +27,8 @@ test('GNE table reads the name column only, never subnet names',()=>{
   {value:'O12S345',row:3,column:1},{value:'A12X345_IDU2',row:3,column:2},
   {value:'C12M3456',row:4,column:1},{value:'A12Z345 (C12M3456)',row:4,column:2}
  ]);
- assert.equal(result.column,2);assert.deepEqual(result.valid,[['A12X345'],['A12X345']]);
- assert.equal(result.review[2][3],'مكرر بعد التنظيف');assert.equal(result.review[3][2],'');
+ assert.equal(result.column,2);assert.deepEqual(result.valid,[['A12X345'],['A12X345'],['A12Z345']]);
+ assert.equal(result.review[2][3],'مكرر بعد التنظيف');assert.equal(result.review[3][2],'A12Z345');
 });
 test('T is accepted for primary GNE names, links, and both numeric lengths',()=>{
  assert.equal(N.primaryName('O48T084_IDU1'),'O48T084');
@@ -40,7 +40,7 @@ test('SU is a two-letter type in primary names, links and future GNE imports',()
  assert.equal(N.primaryName('O01SU478_IDU1'),'O01SU478');
  assert.equal(N.primaryName('a 12 su 3456 (C12M3456)'),'A12SU3456');
  assert.deepEqual(N.extract('O01SU478-C12T3456'),['O01SU478','C12T3456']);
- assert.equal(N.primaryName('O01SU47890'),'');
+ assert.equal(N.primaryName('O01SU47890'),'O01SU47890');
  assert.deepEqual(N.parseGates([{value:'GNE'},{value:'O01SU478_IDU1'},{value:'O01SU478_IDU2'}]).valid,[['O01SU478'],['O01SU478']]);
 });
 test('TSU normalizes to SU, B is accepted, and numeric suffixes remain separate',()=>{
@@ -64,7 +64,7 @@ test('approved O46 WX corrections restore routes in names, GNE tables and MLR en
  assert.equal(parsed.invalid.length,0);
  assert.deepEqual(N.analyze(adj,['O46T078']).offline,[]);
  for(const n of ['O46X001','O46X117','O46X209','O46X158','O46X159'])assert.ok(adj.has(n));
- for(const unknown of ['O46WX1589','O46WX1590','O47WX158','O46WX157'])assert.equal(N.primaryName(unknown),'');
+ for(const unknown of ['O46WX1589','O46WX1590','O47WX158','O46WX157'])assert.equal(N.primaryName(unknown),unknown);
 });
 test('approved A33 gateway connection applies only to its network and does not duplicate',()=>{
  const original=[['A33X005','A33T001']],gates=['A33CA01'];
@@ -89,14 +89,14 @@ test('link title variants resolve to approved GNE identities',()=>{
  assert.deepEqual(N.extract('O01CA_Timimoune-O01T033-SDB-18G'),['O01CA02','O01T033']);
  assert.equal(N.primaryName('O01CA_Timimoune ___ FO AT to O01X127'),'O01CA02');
 });
-test('MLR imports source and sink identities, excludes other columns and keeps unknown names unresolved',()=>{
+test('MLR imports endpoint identities, excludes unrelated columns and retains special names',()=>{
  const result=N.parseLinks([
   {row:1,column:1,value:'Link Name'},{row:1,column:3,value:'Source NE Name'},{row:1,column:8,value:'Sink NE Name'},
   {row:2,column:1,value:'an ambiguous title'},{row:2,column:3,value:'A11X013'},{row:2,column:8,value:'A11CA-Ain-Guezzam'},
   {row:2,column:6,value:'O12S345-C12X345'},
   {row:3,column:3,value:'O01T033'},{row:3,column:8,value:'unapproved site name'}
  ]);
- assert.equal(result.mode,'endpoints');assert.deepEqual(result.valid,[['A11X013','A11CA03']]);assert.equal(result.invalid.length,1);
+ assert.equal(result.mode,'endpoints');assert.deepEqual(result.valid,[['A11X013','A11CA03'],['O01T033','UNAPPROVEDSITENAME']]);assert.equal(result.invalid.length,0);
  assert.deepEqual(N.parseLinks([{row:1,column:1,value:'Link Name'},{row:2,column:1,value:'CA_AT_BBM-O01X026'},{row:2,column:2,value:'A12S345-O12M345'}]).valid,[['CA-BBM','O01X026']]);
 });
 test('CA site identifiers and the special CA-BBM gateway remain importable',()=>{
@@ -107,11 +107,74 @@ test('CA site identifiers and the special CA-BBM gateway remain importable',()=>
  assert.equal(N.primaryName('A33CABordj alhaouas'),'A33CA04');
  assert.deepEqual(N.extract('A33CABordj alhaouas-A33CA01'),['A33CA04','A33CA01']);
  assert.equal(N.primaryName('A33CA03 description'),'A33CA03');
- assert.equal(N.primaryName('A33CA003'),'');
+ assert.equal(N.primaryName('A33CA003'),'A33CA003');
  assert.deepEqual(N.extract('CA-BBM-O01CA03'),['CA-BBM','O01CA03']);
  assert.deepEqual(N.extract('A11CA03-O48T084'),['A11CA03','O48T084']);
  assert.deepEqual(N.extract('A11CA-Ain-Guezzam-O01CA_Aoulef'),['A11CA03','O01CA03']);
- assert.equal(N.primaryName('unrecognized A11CA03'),'');
+ assert.equal(N.primaryName('unrecognized A11CA03'),'UNRECOGNIZEDA11CA03');
+});
+test('approved special-name rules preserve identity and are stable on re-import',()=>{
+ const cases=[
+  ['A16-SCE1-PEPSI-050','A16SCE1-PEPSI050'],
+  ['A09SCE1- SOPROVI-001','A09SCE1-SOPROVI001'],
+  ['A16_SCE1_DGSN_008_NE_1','A16SCE1-DGSN008'],
+  ['O31_SCE1_BAHIAPHA_NE_ODU_1','O31SCE1-BAHIAPHA'],
+  ['O29-SCE1-Lafarge-OGGAZ-001_EB','O29SCE1-LAFARGEOGGAZ001'],
+  ['O31-SCE1-Trust Bank EBAND2','O31SCE1-TRUSTBANK'],
+  ['O31-SCE1-Trust Bank E-band','O31SCE1-TRUSTBANK'],
+  ['A16-SCE1-PEPSI-050_NE','A16SCE1-PEPSI050'],
+  ['A16-SCE1-PEPSI-050_EBAND2 H','A16SCE1-PEPSI050'],
+  ['A16-SCE1-HYDRA_A16X1577','A16X1577'],
+  ['A16SEC1Thinkercareg','A16SCE1-THINKERCAREG'],
+  ['A16SE01-sikaalgérie-062_E-band','A16SCE1-SIKAALGÉRIE062'],
+  ['A16-SE1-ELKENDI sidi moussa','A16SCE1-ELKENDISIDIMOUSSA'],
+  ['A16SC-E01 MSD 047','A16SCE1-MSD047'],
+  ['A16-SEC1-AXA-058','A16SCE1-AXA058'],
+  ['A16SC1-SINAATEC-042','A16SC1-SINAATEC042'],
+  ['El kendi Rahmania-015','A16SCE1-ELKENDIRAHMANIA015'],
+  ['ERMA Baraki_A16M1230','A16M1230'],
+  ['CDS EL BIAR_A16T120 (A16M632)','A16M632'],
+  ['EB O31X160 H','O31X160'],['EB O31X160 V','O31X160'],
+  ['E-band  O22X060R','O22X060'],['TO O48X190','O48X190'],
+  ['16X424_EB V','A16X424'],['16X919 EBAND2 H','A16X919'],
+  ['04X106_EB','C04X106'],['O4X106_EB','C04X106'],
+  ['031X537','O31X537'],['022X209NEW','O22X209'],
+  ['09x170eband 2','A09X170'],['22X163 new','O22X163'],
+  ['A6S496_EB-V','A06S496'],['5A16X369_HOTEL_IBIS-5G','A16X369'],
+  ['AAAX030_IDU2','A44X030'],['A16XT1999 EB-H','A16X1999'],
+  ['O38R050 (38X090)','O38R050'],['O38X090','O38R050'],
+  ['O27R120','O27R120'],['A16WX1055-A16X1055','A16WX1055'],
+  ['A16WX1060_EB-H','A16WX1060'],['A16SM1982(A16X1550)','A16SM1982'],
+  ['A16W1043 EB V','A16W1043'],['EL_SENIA_SC-Eband','ELSENIASC'],
+  ['NE(160-32630)','NE(160-32630)'],['NE(40-1710)','NE(40-1710)'],
+  ['New_Custom_Site','New_Custom_Site'],['CUSTOMER_SPECIAL_07','CUSTOMERSPECIAL07']
+ ];
+ for(const [raw,expected] of cases){
+  assert.equal(N.primaryName(raw),expected,raw);
+  assert.equal(N.primaryName(expected),expected,'Re-import: '+raw);
+ }
+ for(const header of ['GNE','Link Name','Source NE Name','Sink NE Name'])assert.equal(N.primaryName(header),'');
+});
+test('special link endpoints survive all imports and main-path impact',()=>{
+ const parsed=N.parseCells([
+  {value:'A16X001-A16-SCE1-PEPSI-050'},
+  {value:'A16SCE1-PEPSI050-O31-SCE1-Trust Bank_EB'},
+  {value:'NE(160-32630)-A16X001'},
+  {value:'A16SCE1-PEPSI050 ↔ CUSTOM_SITE'}
+ ],2);
+ assert.equal(parsed.invalid.length,0);
+ assert.deepEqual(parsed.valid,[['A16X001','A16SCE1-PEPSI050'],['A16SCE1-PEPSI050','O31SCE1-TRUSTBANK'],['NE(160-32630)','A16X001'],['A16SCE1-PEPSI050','CUSTOMSITE']]);
+ const adj=N.graph(parsed.valid,['A16X001']);
+ assert.deepEqual(N.impact(adj,['A16X001'],'A16SCE1-PEPSI050'),['A16SCE1-PEPSI050','CUSTOMSITE','O31SCE1-TRUSTBANK']);
+});
+test('MLR uses a link title only when both endpoint names are empty',()=>{
+ const cells=[{row:1,column:1,value:'Link Name'},{row:1,column:3,value:'Source NE Name'},{row:1,column:8,value:'Sink NE Name'},
+ {row:2,column:1,value:'A16X001-A16SCE1-PEPSI050'},{row:2,column:3,value:''},{row:2,column:8,value:''},
+ {row:3,column:1,value:'A16X001-A16X002'},{row:3,column:3,value:'NE(160-32630)'},{row:3,column:8,value:'EL_SENIA_SC-Eband'},
+ {row:4,column:1,value:'A16X001-A16X002'},{row:4,column:3,value:'A16X003'},{row:4,column:8,value:''}];
+ const parsed=N.parseLinks(cells);
+ assert.deepEqual(parsed.valid,[['A16X001','A16SCE1-PEPSI050'],['NE(160-32630)','ELSENIASC']]);
+ assert.equal(parsed.invalid.length,1);
 });
 test('reject malformed rows and self links',()=>{
  const r=N.parseCells([{value:'link'},{value:'A12S345-A12S345'},{value:'A12S345-C12X3456'}],2);

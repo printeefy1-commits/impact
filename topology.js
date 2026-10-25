@@ -13,6 +13,19 @@
     for(const [key,value] of Object.entries(attrs))node.setAttribute(key,value);
     return node;
   }
+  function wrapName(label,background){
+    const name=label.textContent,lines=[];let line='';
+    // Measure at the full requested font size; long special names wrap rather
+    // than shrinking, truncating, or covering neighboring sites.
+    for(const character of name){
+      label.textContent=line+character;
+      if(line&&label.getComputedTextLength()>134){lines.push(line);line=character;}
+      else line+=character;
+    }
+    lines.push(line);label.textContent='';
+    lines.forEach((value,index)=>{const span=el('tspan',{x:0,y:60+index*24});span.textContent=value;label.append(span);});
+    background.setAttribute('height',30+(lines.length-1)*24);
+  }
   class View{
     constructor(container,onZoom){this.container=container;this.onZoom=onZoom;this.clear();}
     clear(){this.key=null;this.svg=null;this.points=null;this.camera={x:0,y:0,k:1};this.onZoom?.(1);}
@@ -54,7 +67,9 @@
         }
         nodes.append(g);this.nodeElements.set(n,g);
       }
-      this.updateEdges();this.container.replaceChildren(svg);this.bindInteractions(svg);
+      this.updateEdges();this.container.replaceChildren(svg);
+      for(const node of this.nodeElements.values())wrapName(node.querySelector('.node-name'),node.querySelector('.node-label-bg'));
+      this.bindInteractions(svg);
       if(changed)this.open();else this.applyCamera();
       return extraCount;
     }
@@ -73,7 +88,7 @@
     fit(){
       if(!this.svg)return;
       let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;
-      for(const p of this.points.values()){left=Math.min(left,p.x-90);right=Math.max(right,p.x+90);top=Math.min(top,p.y-65);bottom=Math.max(bottom,p.y+85);}
+      for(const [name,p] of this.points){const box=this.nodeElements.get(name).getBBox();left=Math.min(left,p.x+box.x-15);right=Math.max(right,p.x+box.x+box.width+15);top=Math.min(top,p.y+box.y-15);bottom=Math.max(bottom,p.y+box.y+box.height+15);}
       const w=this.container.clientWidth,h=this.container.clientHeight,k=Math.min(1.35,(w-40)/(right-left),(h-40)/(bottom-top));
       this.camera={k,x:(w-(right-left)*k)/2-left*k,y:(h-(bottom-top)*k)/2-top*k};this.applyCamera();
     }

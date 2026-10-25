@@ -77,7 +77,7 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     assert.equal(await page.locator('#gneSelect option[value="A12X345"]').count(),0);
     const exported={};
     for(const [button,name,expected] of [
-      ['downloadLinks','cleaned-links.csv','link\r\nA12X345-C12SU3456\r\n'],
+      ['downloadLinks','cleaned-links.csv','Source NE Name,Sink NE Name\r\nA12X345,C12SU3456\r\n'],
       ['downloadGates','cleaned-gne.csv','GNE\r\nC12SU3456\r\n']
     ]){
       const downloadPromise=page.waitForEvent('download');await page.click('#'+button);
@@ -171,6 +171,36 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     assert.equal(await page.locator('#impactResult').inputValue(),'C01M001,O01X001');
     await page.selectOption('#gneSelect','A02S002');
     assert.equal(await page.locator('#impactResult').inputValue(),'C01M001,O01X001');
+    // Special sites survive import, lookup, impact, downloads and re-import.
+    const specialCSV='Source NE Name,Sink NE Name,Link Name\nA16X001,A16-SCE1-PEPSI-050,\nA16SCE1-PEPSI050,NE(160-32630),\nA16SCE1-PEPSI050,A16SE01-sikaalgérie-062_E-band,\nA16X001,A16W1043 EB V,\n,,A16W1043-A16WX1055\n';
+    await page.setInputFiles('#links',{name:'special.csv',mimeType:'text/csv',buffer:Buffer.from(specialCSV)});
+    await page.setInputFiles('#gates',{name:'special-gne.csv',mimeType:'text/csv',buffer:Buffer.from('GNE\nA16X001\n')});
+    await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
+    assert.equal(await page.locator('#nodesCount').textContent(),'6');
+    await page.fill('#search','A16-SCE1-PEPSI-050');
+    assert.equal(await page.locator('#gneSelect').inputValue(),'A16X001');
+    assert.ok((await visibleNames()).includes('NE(160-32630)'));
+    const longLabel=page.locator('.network-node[data-node="A16SCE1-SIKAALGÉRIE062"] .node-name');
+    assert.ok(await longLabel.locator('tspan').count()>1);
+    assert.equal(await longLabel.evaluate(el=>getComputedStyle(el).fontSize),'19.5px');
+    assert.ok(await page.locator('#map .network-node').evaluateAll(nodes=>nodes.every(node=>{
+      const a=node.querySelector('.node-name').getBBox(),b=node.querySelector('.node-label-bg').getBBox();
+      return a.x>=b.x&&a.y>=b.y&&a.x+a.width<=b.x+b.width&&a.y+a.height<=b.y+b.height;
+    })));
+    await page.click('#fitMap');
+    await page.fill('#impactSite','A16-SCE1-PEPSI-050');await page.click('#calculateImpact');
+    const specialImpact='A16SCE1-PEPSI050,A16SCE1-SIKAALGÉRIE062,NE(160-32630)';
+    assert.equal(await page.locator('#impactResult').inputValue(),specialImpact);
+    const specialDownload=page.waitForEvent('download');await page.click('#downloadLinks');
+    const specialChunks=[];for await(const chunk of await (await specialDownload).createReadStream())specialChunks.push(chunk);
+    const specialBuffer=Buffer.concat(specialChunks);
+    assert.match(specialBuffer.toString('utf8'),/Source NE Name,Sink NE Name/);
+    assert.match(specialBuffer.toString('utf8'),/NE\(160-32630\)/);
+    await page.setInputFiles('#links',{name:'cleaned-special.csv',mimeType:'text/csv',buffer:specialBuffer});
+    await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
+    assert.equal(await page.locator('#nodesCount').textContent(),'6');
+    await page.fill('#impactSite','A16SCE1-PEPSI050');await page.click('#calculateImpact');
+    assert.equal(await page.locator('#impactResult').inputValue(),specialImpact);
     assert.doesNotMatch(await page.locator('body').innerText(),/[\u0600-\u06ff]/);
     assert.deepEqual(errors,[]);
   }finally{

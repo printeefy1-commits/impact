@@ -10,13 +10,17 @@ Open **athar-offline.html** in Chrome or Edge. It contains the interface, icons,
 
 Upload a links file and a GNE file, then choose **Build network map**. Supported formats are XLSX, CSV, and TXT, up to 10 MB per file. Only the first Excel worksheet is read; legacy XLS is not supported.
 
-- In MLR tables, `Source NE Name` and `Sink NE Name` are authoritative. Otherwise the importer uses `Link Name`, `Link`, or the first column; each link cell should contain two site identifiers.
+- In MLR tables, `Source NE Name` and `Sink NE Name` are authoritative. If both endpoint cells are empty, a valid Link Name supplies the pair. Otherwise, for files without endpoint columns, the importer uses `Link Name`, `Link`, or the first column; each link cell should contain two site identifiers.
 - For gateways, the importer uses `GNE Name`, `GNE`, `Gateway Name`, or the first column. It keeps the primary identifier at the beginning of the cell and discards descriptions and annotated secondary names.
-- Identifiers start with A, C, or O, followed by two digits, then S, M, X, T, B, or SU, followed by three or four digits. CA identifiers such as `A11CA03` and the special gateway `CA-BBM` are also supported. TSU is normalized to SU.
+- Identifiers start with A, C, or O, followed by two digits, then S, M, X, T, B, SU, WX, SM, W, or R, followed by three or four digits. CA identifiers such as `A11CA03` and the special gateway `CA-BBM` are also supported. TSU is normalized to SU.
 - All user-approved name corrections are applied automatically, including `O46WX158 → O46X158` and `O46WX159 → O46X159`. Numeric model suffixes remain separate: `A16X1801 6900 → A16X1801`.
+- Special sites are retained. `A16-SCE1-PEPSI-050` becomes `A16SCE1-PEPSI050`. Spaces and extra hyphens/underscores are removed, with one hyphen after SCE1; case is normalized to uppercase. Equipment suffixes such as EB, EBAND2, E-band, NE, NE_1 and radio H/V are removed. SE01, SE1, SC-E01 and SEC1 use SCE1; SC1 remains separate.
+- User-approved prefix repairs include `16 → A16`, `04 → C04`, a leading zero → O, `5A16 → A16`, `AAAX030 → A44X030`, `O4X106 → C04X106`, `A6S496 → A06S496`, `09X170 → A09X170`, `22X163 → O22X163`, and `A16XT1999 → A16X1999`.
+- Explicit identity corrections include HYDRA → A16X1577, ERMA Baraki → A16M1230, CDS EL BIAR → A16M632, O38X090 → O38R050, and El kendi Rahmania-015 → A16SCE1-ELKENDIRAHMANIA015. Other descriptions do not override an existing primary standard identifier.
+- Names starting with NE, including `NE(160-32630)`, remain exactly as written. Other nonempty special endpoint names are retained after cleanup. Unconnected sites remain counted and searchable; no route is invented for them.
 - The confirmed `A33T001 ↔ A33CA01` connection is added only when that site and gateway are present and the connection is missing. The import message identifies the addition.
 
-The two cleaned CSV downloads contain valid, unique links and gateways. Original files remain unchanged. The import message reports skipped non-matching cells, including headers.
+The two cleaned CSV downloads contain valid, unique links and gateways. Links are exported in separate `Source NE Name` and `Sink NE Name` columns, preserving special names and internal hyphens without ambiguous splitting. Original files remain unchanged. The import message reports skipped non-matching cells, including headers.
 
 ## Gateway ownership and topology
 
@@ -24,7 +28,7 @@ Every NE is assigned to exactly one GNE using the fewest physical hops. Equal-ho
 
 Type a complete NE or GNE name into **Find any site across the network** to automatically open its assigned map, highlight its icon, and center it. Suggestions include all imported sites. Saved name corrections are supported in searches too. Unknown or unconnected sites show an explanatory message instead of an unrelated map. You can also select or filter gateways manually.
 
-Maps use a radial arrangement with a single straight line per unique undirected link. Drag the background to pan, use the wheel or buttons to zoom, and drag icons to rearrange sites. Site names use a 19.5 px font, 50% larger than before. Maps open at 100% icon size; **Fit map** shows the whole branch. Extra links can be hidden. Auto arrange restores the layout. Full screen is available where supported. Local SVG dish, radio, gateway, and tower icons require no external resources.
+Maps use a radial arrangement with a single straight line per unique undirected link. Drag the background to pan, use the wheel or buttons to zoom, and drag icons to rearrange sites. Site names use a 19.5 px font, 50% larger than before. Maps open at 100% icon size; **Fit map** shows the whole branch. Long site names wrap at the full font size inside their labels. Extra links can be hidden. Auto arrange restores the layout. Full screen is available where supported. Local SVG dish, radio, gateway, and tower icons require no external resources.
 
 ## Impact calculation
 
@@ -44,6 +48,6 @@ The entered site is listed first; other names are sorted. Use **Copy list** or s
 - Graph and layout tests: `node --test network.test.js topology.test.js radial-layout.test.js`
 - Browser workflow tests: `node --test import.browser.test.cjs` (requires Playwright and Chromium; set `CHROMIUM_PATH` if needed).
 
-Browser checks cover CSV/XLSX import, a 150,000-cell rejection report, cleaned exports and re-import, ownership ties, global site search, map interactions, and comma-separated impact results.
+Browser checks cover CSV/XLSX import, a 150,000-cell rejection report, cleaned exports and re-import, ownership ties, global site search, map interactions, special-name normalization and round trips, and comma-separated impact results.
 
 ExcelJS 4.4.0 is bundled in `vendor/` under the MIT license. System fonts and local icons keep the application independent of network access.

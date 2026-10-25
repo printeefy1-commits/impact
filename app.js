@@ -4,7 +4,7 @@ const topologyView=new Topology.View($('map'),k=>{$('zoomLabel').textContent=Mat
 let cleanedFiles=null;
 function prepareDownloads(links,gates){
   cleanedFiles={
-    links:[...new Set(links.map(pair=>pair.slice().sort().join('-')))],
+    links:[...new Map(links.map(pair=>{const sorted=pair.slice().sort();return [JSON.stringify(sorted),sorted];})).values()],
     gates:[...new Set(gates)]
   };
   $('downloadLinks').disabled=!cleanedFiles.links.length;
@@ -12,8 +12,10 @@ function prepareDownloads(links,gates){
 }
 function downloadCleaned(kind){
   const values=cleanedFiles?.[kind];if(!values?.length)return;
-  const header=kind==='links'?'link':'GNE';
-  const blob=new Blob(['\uFEFF',header+'\r\n',values.join('\r\n')+'\r\n'],{type:'text/csv;charset=utf-8'});
+  const quote=value=>/[",\r\n]/.test(value)?'"'+value.replace(/"/g,'""')+'"':value;
+  const header=kind==='links'?'Source NE Name,Sink NE Name':'GNE';
+  const lines=kind==='links'?values.map(pair=>pair.map(quote).join(',')):values.map(quote);
+  const blob=new Blob(['\uFEFF',header+'\r\n',lines.join('\r\n')+'\r\n'],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob),link=document.createElement('a');
   link.href=url;link.download=kind==='links'?'cleaned-links.csv':'cleaned-gne.csv';
   document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
@@ -29,7 +31,7 @@ async function readCells(file,kind){
     const sheet=book.worksheets[0];if(!sheet)throw Error('This Excel file has no worksheets.');
     const headings=new Map();sheet.getRow(1).eachCell(cell=>headings.set(cell.text.trim().toLowerCase().replace(/[\s_-]/g,''),cell.col));
     let columns=null;
-    if(kind==='links'&&headings.has('sourcenename')&&headings.has('sinknename'))columns=[headings.get('sourcenename'),headings.get('sinknename')];
+    if(kind==='links'&&headings.has('sourcenename')&&headings.has('sinknename'))columns=[headings.get('sourcenename'),headings.get('sinknename'),headings.get('linkname')||headings.get('link')].filter(Boolean);
     else if(kind==='links'&&(headings.has('linkname')||headings.has('link')))columns=[headings.get('linkname')||headings.get('link')];
     else if(kind==='gates')for(const key of ['gnename','gne','gatewayname','gateway'])if(headings.has(key)){columns=[headings.get(key)];break;}
     const cells=[];const add=cell=>cells.push({value:cell.text,location:cell.address,row:cell.row,column:cell.col});
