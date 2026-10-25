@@ -46,8 +46,8 @@
         for(let i=0;i<3;i++)g.append(el('rect',{x:-20+i*15,y:12,width:10,height:13,rx:1,fill:'none',stroke:'white','stroke-width':1.5}));
         g.append(el('rect',{x:gate?-44:-32,y:-48,width:gate?40:30,height:17,rx:4,fill:gate?'#ddfaff':'#e3ecef',stroke:'#fff','stroke-width':.5}));
         const type=el('text',{'class':'node-type',x:gate?-24:-17,y:-36,'text-anchor':'middle',fill:gate?'#075f70':'#385c6b','font-size':10,'font-weight':'bold'});type.textContent=gate?'GNE':'NE';g.append(type);
-        g.append(el('rect',{'class':'node-label-bg',x:-75,y:39,width:150,height:26,rx:5,fill:'#f7fcff',stroke:query&&n===query?'#ffe778':'#c8dce5','stroke-width':query&&n===query?3:1}));
-        const label=el('text',{'class':'node-name',x:0,y:56,'text-anchor':'middle',fill:'#173e50','font-size':13,'font-weight':'bold'});label.textContent=n;g.append(label);
+        g.append(el('rect',{'class':'node-label-bg',x:-75,y:39,width:150,height:30,rx:5,fill:'#f7fcff',stroke:query&&n===query?'#ffe778':'#c8dce5','stroke-width':query&&n===query?3:1}));
+        const label=el('text',{'class':'node-name',x:0,y:60,'text-anchor':'middle',fill:'#173e50','font-size':19.5,'font-weight':'bold'});label.textContent=n;g.append(label);
         if(selectable){
           g.onclick=e=>{if(e.detail===0)onSelect(n);};
           g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onSelect(n);}};

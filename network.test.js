@@ -146,7 +146,7 @@ test('each NE belongs only to the nearest GNE and file order resolves ties',()=>
  const same=N.traverse(equal,['G1','G1','G2']);assert.equal(same.owner.get('X'),'G1');
  for(const [child,parent] of same.parent){assert.equal(same.owner.get(child),same.owner.get(parent));assert.equal(same.depth.get(child),same.depth.get(parent)+1);}
 });
-test('impact includes self, honors alternate NE routes and unique GNE membership',()=>{
+test('impact includes self and main-path descendants within unique GNE membership',()=>{
  const links=[['G','N1'],['N1','N2'],['N2','N3']],adj=N.graph(links,['G']);
  assert.deepEqual(N.impact(adj,['G'],'N1'),['N1','N2','N3']);
  assert.deepEqual(N.impact(adj,['G'],'G'),['G','N1','N2','N3']);
@@ -164,5 +164,19 @@ test('impact cannot switch equal-hop ownership to another gateway after a failur
  assert.equal(N.impactRoot(adj,gates,'X'),'G1');
  assert.deepEqual(N.impact(adj,['G2','G1'],'U'),['U']);
  const internal=N.graph([['G1','U'],['U','X'],['X','V'],['V','G1']],['G1']);
- assert.deepEqual(N.impact(internal,['G1'],'U'),['U']);
+ assert.deepEqual(N.impact(internal,['G1'],'U'),['U','X']);
+});
+test('additional links provide no protection for main-path descendants',()=>{
+ const links=[['G','U'],['G','V'],['U','X'],['V','X'],['X','Y']],adj=N.graph(links,['G']);
+ assert.deepEqual(N.impact(adj,['G'],'U'),['U','X','Y']);
+ assert.deepEqual(N.impact(adj,['G'],'V'),['V']);
+ assert.deepEqual(N.impact(adj,['G'],'X'),['X','Y']);
+ assert.deepEqual(N.impact(adj,['G'],'G'),['G','U','V','X','Y']);
+ const offline=N.graph([['Z','W']],['G']);
+ assert.deepEqual(N.impact(offline,['G'],'Z'),['Z']);
+});
+test('impact follows deep main paths without recursion overflow',()=>{
+ const links=Array.from({length:15000},(_,i)=>[String(i),String(i+1)]),adj=N.graph(links,['0']);
+ const result=N.impact(adj,['0'],'1');
+ assert.equal(result.length,15000);assert.equal(result[0],'1');assert.ok(result.includes('15000'));
 });

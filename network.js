@@ -107,18 +107,16 @@
   }
   function impact(adj,gates,site){
     if(!adj.has(site))return [];
-    // Freeze pre-failure ownership. Routes through another GNE's domain cannot
-    // rescue a site; alternate routes inside its own domain remain usable.
-    const assigned=traverse(adj,gates),root=assigned.owner.get(site);
-    if(!root)return [site];
-    const reachable=new Set(),queue=[];
-    if(site!==root){reachable.add(root);queue.push(root);}
-    for(let i=0;i<queue.length;i++)for(const next of adj.get(queue[i])||[]){
-      if(next===site||assigned.owner.get(next)!==root||reachable.has(next))continue;
-      reachable.add(next);queue.push(next);
+    // Use the same fixed main-path tree as the map. Additional physical links
+    // provide no service protection and cannot bypass an outage.
+    const assigned=traverse(adj,gates),children=new Map();
+    for(const [child,parent] of assigned.parent){
+      if(!children.has(parent))children.set(parent,[]);
+      children.get(parent).push(child);
     }
-    const impacted=[...assigned.owner].filter(([node,owner])=>owner===root&&!reachable.has(node)&&node!==site).map(([node])=>node);
-    return [site,...impacted.sort()];
+    const impacted=[site];
+    for(let i=0;i<impacted.length;i++)for(const child of children.get(impacted[i])||[])impacted.push(child);
+    return [site,...impacted.slice(1).sort()];
   }
   const api={impactRoot,impact,extract,primaryName,parseCells,parseGates,parseLinks,applyConnections,graph,traverse,analyze,branch};
   if(typeof module!=='undefined')module.exports=api;else root.Network=api;

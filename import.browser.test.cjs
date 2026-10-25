@@ -98,6 +98,12 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     ],['A01S001']));
     await page.selectOption('#gneSelect','A01S001');
     assert.equal(await page.locator('#map .tree-link').count(),3);
+    assert.equal(await page.locator('#map .node-name').first().evaluate(el=>getComputedStyle(el).fontSize),'19.5px');
+    const labelFits=await page.locator('#map .network-node').evaluateAll(nodes=>nodes.every(node=>{
+      const text=node.querySelector('.node-name').getBBox(),bg=node.querySelector('.node-label-bg').getBBox();
+      return text.x>=bg.x&&text.y>=bg.y&&text.x+text.width<=bg.x+bg.width&&text.y+text.height<=bg.y+bg.height;
+    }));
+    assert.ok(labelFits);
     assert.equal(await page.locator('#extraCount').textContent(),'1');
     assert.notEqual(await page.locator('#map .extra-link').getAttribute('display'),'none');
     await page.uncheck('#extraLinks');
@@ -136,7 +142,10 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     await page.fill('#impactSite','A01S001');await page.click('#calculateImpact');
     assert.deepEqual((await page.locator('#impactResult').inputValue()).split(','),['A01S001','C01M001','C02M002','O01X001']);
     await page.fill('#impactSite','C01M001');await page.press('#impactSite','Enter');
-    assert.equal(await page.locator('#impactResult').inputValue(),'C01M001');
+    assert.equal(await page.locator('#impactResult').inputValue(),'C01M001,O01X001');
+    await page.uncheck('#extraLinks');await page.click('#calculateImpact');
+    assert.equal(await page.locator('#impactResult').inputValue(),'C01M001,O01X001');
+    await page.check('#extraLinks');
     await page.fill('#impactSite','O99X999');await page.click('#calculateImpact');
     assert.equal(await page.locator('#impactResult').inputValue(),'');
     assert.match(await page.locator('#impactSummary').textContent(),/not found/);
