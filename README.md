@@ -8,7 +8,9 @@ Open **athar-offline.html** in Chrome or Edge. It contains the interface, icons,
 
 ## Import network data
 
-Upload a links file and a GNE file, then choose **Build network map**. Supported formats are XLSX, CSV, and TXT, up to 10 MB per file. Only the first Excel worksheet is read; legacy XLS is not supported.
+Upload your daily links file, then choose **Build network map**. The application already includes the confirmed **272 GNE gateways**: the 251 from the Ethernet-port analysis, A16X589 from the MLR name review, and 20 earlier confirmed gateways absent from the port analysis. This retains the complete original 191-gateway list. Supported formats are XLSX, CSV, and TXT, up to 10 MB per file. Only the first Excel worksheet is read; legacy XLS is not supported.
+
+**Add GNE gateways** is optional. Its cleaned names are merged with the built-in list and any earlier additions, with duplicates removed. New gateways are saved locally in this browser for subsequent daily imports and page reloads. Storage belongs to the browser and page location; keep the downloadable GNE CSV when moving to another browser or computer. If storage is unavailable, additions work for the current session and the import message explains how to retain them. The GNE CSV contains the complete active list, including additions.
 
 - In MLR tables, `Source NE Name` and `Sink NE Name` are authoritative. If both endpoint cells are empty, a valid Link Name supplies the pair. Otherwise, for files without endpoint columns, the importer uses `Link Name`, `Link`, or the first column; each link cell should contain two site identifiers.
 - For gateways, the importer uses `GNE Name`, `GNE`, `Gateway Name`, or the first column. It keeps the primary identifier at the beginning of the cell and discards descriptions and annotated secondary names.
@@ -24,7 +26,7 @@ The two cleaned CSV downloads contain valid, unique links and gateways. Links ar
 
 ## Gateway ownership and topology
 
-Every NE is assigned to exactly one GNE using the fewest physical hops. Equal-hop ties are resolved by the GNE's first appearance in the uploaded gateway file after normalization and deduplication. Alphabetical sorting in the dropdown does not change this priority. A site appears only in its assigned gateway's map.
+Every connected NE is assigned to exactly one GNE using the fewest physical hops. Equal-hop ties use the saved gateway order: the built-in list first, earlier additions next, and newly uploaded gateways in their file order. The built-in list preserves the previous file priority for all 191 original gateways, then discovery order for new port-detected gateways, then A16X589. Alphabetical sorting in the dropdown does not change this priority. A site appears only in its assigned gateway's map. Gateways absent from a daily links file remain in the list and have isolated maps until links are imported for them.
 
 Type a complete NE or GNE name into **Find any site across the network** to automatically open its assigned map, highlight its icon, and center it. Suggestions include all imported sites. Saved name corrections are supported in searches too. Unknown or unconnected sites show an explanatory message instead of an unrelated map. You can also select or filter gateways manually.
 
@@ -40,12 +42,12 @@ The copyable output contains only comma-separated identifiers, with no extra spa
 
 `O46X158,O46X001,O46X117,O46X157,O46X165,O46X209`
 
-The entered site is listed first; other names are sorted. Use **Copy list** or select the text manually. The count includes the entered site. Calculations describe imported topology, not live equipment state. Data and manual node positions are not retained after reloading the page.
+The entered site is listed first; other names are sorted. Use **Copy list** or select the text manually. The count includes the entered site. Calculations describe imported topology, not live equipment state. Daily links and manual node positions are not retained after reloading the page; added gateways are retained when browser storage is available.
 
 ## Development checks
 
 - Build the standalone file: `python build_offline.py`
-- Graph and layout tests: `node --test network.test.js topology.test.js radial-layout.test.js`
+- Graph and layout tests: `node --test network.test.js default-gne.test.js topology.test.js radial-layout.test.js`
 - Browser workflow tests: `node --test import.browser.test.cjs` (requires Playwright and Chromium; set `CHROMIUM_PATH` if needed).
 
 Browser checks cover CSV/XLSX import, a 150,000-cell rejection report, cleaned exports and re-import, ownership ties, global site search, map interactions, special-name normalization and round trips, and comma-separated impact results.

@@ -44,16 +44,17 @@ SOFTWARE.
 <header class="topbar"><div class="brand"><span class="brand-mark"><svg class="icon"><use href="#i-dish"/></svg></span><div>ATHAR <span>MW</span><small>MICROWAVE NETWORK INTELLIGENCE</small></div></div><div class="header-tags"><span class="workspace-tag"><span class="live-dot"></span>Network workspace</span><span class="privacy-tag"><svg class="icon"><use href="#i-shield"/></svg>Local & private</span></div></header>
 <main><section class="intro"><div><p class="eyebrow">TOPOLOGY / IMPACT ANALYSIS</p><h1>Your network. <span>A clearer picture.</span></h1><p>Explore microwave paths, find any site, and understand its impact.</p></div><div class="intro-art" aria-hidden="true"><svg class="icon"><use href="#i-tower"/></svg><span class="signal-line"></span><svg class="icon dish-art"><use href="#i-dish"/></svg><span class="signal-line"></span><svg class="icon"><use href="#i-gateway"/></svg></div></section>
 <section class="workspace"><aside>
-<section class="import-panel"><div class="section-title"><span class="section-icon"><svg class="icon"><use href="#i-upload"/></svg></span><div><h2>Network data</h2><p>Start with your two files</p></div><span class="step-tag">01</span></div>
+<section class="import-panel"><div class="section-title"><span class="section-icon"><svg class="icon"><use href="#i-upload"/></svg></span><div><h2>Network data</h2><p>Upload your daily links file</p></div><span class="step-tag">01</span></div>
 <label class="upload"><span class="upload-top"><svg class="icon"><use href="#i-link"/></svg><strong>Microwave links</strong><span class="file-type">CSV / XLSX</span></span><small id="linksName">Choose a link or MLR file</small><span class="browse">Browse file <svg class="icon"><use href="#i-upload"/></svg></span><input id="links" type="file" accept=".csv,.txt,.xlsx" aria-label="Upload microwave links"></label>
-<label class="upload"><span class="upload-top"><svg class="icon"><use href="#i-gateway"/></svg><strong>GNE gateways</strong><span class="file-type">CSV / XLSX</span></span><small id="gatesName">Choose your gateway list</small><span class="browse">Browse file <svg class="icon"><use href="#i-upload"/></svg></span><input id="gates" type="file" accept=".csv,.txt,.xlsx" aria-label="Upload GNE gateways"></label>
+<p class="hint" id="gatewayInfo" role="status">272 built-in GNEs ready. Upload a GNE file only to add new gateways.</p>
+<label class="upload"><span class="upload-top"><svg class="icon"><use href="#i-gateway"/></svg><strong>Add GNE gateways</strong><span class="file-type">OPTIONAL</span></span><small id="gatesName">Optional — add new gateways</small><span class="browse">Browse file <svg class="icon"><use href="#i-upload"/></svg></span><input id="gates" type="file" accept=".csv,.txt,.xlsx" aria-label="Add GNE gateways (optional)"></label>
 <p class="hint">The first worksheet is used. MLR source and sink columns are detected automatically. Your files stay in your browser.</p>
 <button id="load" class="primary"><svg class="icon"><use href="#i-gateway"/></svg>Build network map</button>
 <div class="exports"><span class="subheading">CLEANED DATA</span><div class="export-buttons"><button id="downloadLinks" class="secondary" disabled><svg class="icon"><use href="#i-download"/></svg>Links CSV</button><button id="downloadGates" class="secondary" disabled><svg class="icon"><use href="#i-download"/></svg>GNE CSV</button></div></div></section>
 <section class="impact-panel"><div class="section-title"><span class="section-icon amber"><svg class="icon"><use href="#i-target"/></svg></span><div><h2>Impact calculator</h2><p>One site. Every affected NE.</p></div></div><form id="impactForm"><label for="impactSite">NE or GNE name</label><input id="impactSite" placeholder="e.g. O46X158" autocomplete="off" disabled><button id="calculateImpact" class="primary" disabled><svg class="icon"><use href="#i-target"/></svg>Calculate impact</button></form><p class="hint">Includes the site itself and all downstream sites on the main path. Extra links provide no service protection.</p><p id="impactSummary" role="status" aria-live="polite">Import your files to get started.</p><div class="result-heading"><label for="impactResult">Affected sites</label><button id="copyImpact" class="text-button" disabled><svg class="icon"><use href="#i-copy"/></svg><span id="copyLabel">Copy list</span></button></div><textarea id="impactResult" readonly rows="7" spellcheck="false" placeholder="Comma-separated site names will appear here."></textarea></section>
-</aside><div class="content"><div id="status" role="status" aria-live="polite">Upload your links and GNE list to build your network.</div>
+</aside><div class="content"><div id="status" role="status" aria-live="polite">Upload your links file to build your network. 272 GNE gateways are already included.</div>
 <div class="stats"><div><span class="stat-icon"><svg class="icon"><use href="#i-tower"/></svg></span><div><span>Network elements</span><b id="nodesCount">0</b></div><small>NE in your network</small></div><div><span class="stat-icon teal"><svg class="icon"><use href="#i-gateway"/></svg></span><div><span>GNE gateways</span><b id="gatesCount">0</b></div><small>One gateway per NE</small></div><div><span class="stat-icon amber"><svg class="icon"><use href="#i-alert"/></svg></span><div><span>Unconnected NE</span><b id="offlineCount">0</b></div><small>No assigned GNE route</small></div></div>
-<section class="map-panel" id="mapPanel"><div class="map-heading"><div><p class="eyebrow">LIVE TOPOLOGY</p><h2><svg class="icon"><use href="#i-gateway"/></svg>Network explorer</h2><p>One NE, one gateway. Assigned by fewest hops, then GNE file order.</p></div><div class="site-finder"><label for="search">Find any site across the network</label><div class="search-input"><svg class="icon"><use href="#i-search"/></svg><input id="search" type="search" list="siteNames" placeholder="Search any NE, e.g. O46X158" autocomplete="off" disabled></div><datalist id="siteNames"></datalist><p id="searchStatus" role="status" aria-live="polite">Enter a full site name to open its gateway map.</p></div></div>
+<section class="map-panel" id="mapPanel"><div class="map-heading"><div><p class="eyebrow">LIVE TOPOLOGY</p><h2><svg class="icon"><use href="#i-gateway"/></svg>Network explorer</h2><p>One NE, one gateway. Assigned by fewest hops, then saved gateway order.</p></div><div class="site-finder"><label for="search">Find any site across the network</label><div class="search-input"><svg class="icon"><use href="#i-search"/></svg><input id="search" type="search" list="siteNames" placeholder="Search any NE, e.g. O46X158" autocomplete="off" disabled></div><datalist id="siteNames"></datalist><p id="searchStatus" role="status" aria-live="polite">Enter a full site name to open its gateway map.</p></div></div>
 <div class="gateway-controls"><label>Filter gateways<input id="gneSearch" type="search" placeholder="Type a GNE name" disabled></label><label>Displayed gateway<select id="gneSelect" disabled><option value="">Select a GNE gateway…</option></select></label></div>
 <p id="viewSummary" class="view-summary" aria-live="polite">Import your files, then select a gateway or search for a site.</p>
 <div class="map-toolbar" role="group" aria-label="Map controls"><div class="zoom-controls"><button id="zoomIn" disabled aria-label="Zoom in">＋</button><output id="zoomLabel" aria-live="polite">100%</output><button id="zoomOut" disabled aria-label="Zoom out">−</button></div><button id="fitMap" disabled><svg class="icon"><use href="#i-expand"/></svg>Fit map</button><button id="centerMap" disabled><svg class="icon"><use href="#i-target"/></svg>GNE · 100%</button><button id="resetLayout" disabled><svg class="icon"><use href="#i-refresh"/></svg>Auto arrange</button><button id="fullscreen" disabled><svg class="icon"><use href="#i-expand"/></svg><span id="fullscreenLabel">Full screen</span></button><label class="extra-toggle"><input id="extraLinks" type="checkbox" checked disabled>Extra links <span id="extraCount">0</span></label></div>
@@ -271,6 +272,286 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   const api={impactRoot,impact,extract,primaryName,parseCells,parseGates,parseLinks,applyConnections,graph,traverse,analyze,branch};
   if(typeof module!=='undefined')module.exports=api;else root.Network=api;
 })(globalThis);
+</script><script>// Complete confirmed gateway list: original gateways plus Ethernet-port
+// discoveries and A16X589 from the MLR review. Earlier file priority is kept;
+// new gateways follow discovery order. User additions append to this baseline.
+(function(root){
+  const gates=Object.freeze([
+  "O48X048",
+  "O48X027",
+  "O48X024",
+  "O48T084",
+  "O46X081",
+  "O46T078",
+  "O46S479",
+  "O46S330",
+  "O45S296",
+  "O45S283",
+  "O38X047",
+  "O38T012",
+  "O38S239",
+  "O31X933",
+  "O31X574",
+  "O31X525",
+  "O31X501",
+  "O31X442",
+  "O31X408",
+  "O31X400",
+  "O31X316",
+  "O31X298",
+  "O31X295",
+  "O31X289",
+  "O31X250",
+  "O31X224",
+  "O31X210",
+  "O31X186",
+  "O31X165",
+  "O31X160",
+  "O31X158",
+  "O31X098",
+  "O31X085",
+  "O31X062",
+  "O31X061",
+  "O31X058",
+  "O31X045",
+  "O31X040",
+  "O31X039",
+  "O31X025",
+  "O31X021",
+  "O31X020",
+  "O31X009",
+  "O31X007",
+  "O31X001",
+  "O31T326",
+  "O31T295",
+  "O31T193",
+  "O31T148",
+  "O31T073",
+  "O31S341",
+  "O31S331",
+  "O29T112",
+  "O29S471",
+  "O29S340",
+  "O29S279",
+  "O27X118",
+  "O27S446",
+  "O27S277",
+  "O27S244",
+  "O22X099",
+  "O22X051",
+  "O22T110",
+  "O22S503",
+  "O02X165",
+  "O02X162",
+  "O02X100",
+  "O02X054",
+  "O02X016",
+  "O02X015",
+  "O02X011",
+  "O02T039",
+  "O02T032",
+  "O02S289",
+  "O01S478",
+  "O01S434",
+  "O01S432",
+  "CA-BBM",
+  "O01CA03",
+  "C47X007",
+  "C47X004",
+  "C41T102",
+  "C41S348",
+  "C40X052",
+  "C40T103",
+  "C40S247",
+  "C36S220",
+  "C12X003",
+  "C12S245",
+  "C04X010",
+  "C04T106",
+  "C04T103",
+  "C04S489",
+  "C04S472",
+  "C04S217",
+  "A44X082",
+  "A44X069",
+  "A44X018",
+  "A44X011",
+  "A44X009",
+  "A44X004",
+  "A44S336",
+  "A42X092",
+  "A42T006",
+  "A42T004",
+  "A42S319",
+  "A42S242",
+  "A33X006",
+  "A33T002",
+  "A33CA04",
+  "A33CA03",
+  "A33CA02",
+  "A33CA01",
+  "A16X930",
+  "A16X873",
+  "A16X832",
+  "A16X807",
+  "A16X764",
+  "A16X757",
+  "A16X746",
+  "A16X745",
+  "A16X741",
+  "A16X720",
+  "A16X683",
+  "A16X573",
+  "A16X563",
+  "A16X518",
+  "A16X514",
+  "A16X485",
+  "A16X475",
+  "A16X432",
+  "A16X421",
+  "A16X416",
+  "A16X393",
+  "A16X382",
+  "A16X181",
+  "A16X1754",
+  "A16X173",
+  "A16X169",
+  "A16X144",
+  "A16X138",
+  "A16X1248",
+  "A16X113",
+  "A16X112",
+  "A16X085",
+  "A16X057",
+  "A16X053",
+  "A16X052",
+  "A16T148",
+  "A16T140",
+  "A16T122",
+  "A16T119",
+  "A16T095",
+  "A16T075",
+  "A16T052",
+  "A16T048",
+  "A16T045",
+  "A16T029",
+  "A16T028",
+  "A16T024",
+  "A16T022",
+  "A16T013",
+  "A16T011",
+  "A16S496",
+  "A16S495",
+  "A16S113",
+  "A16M831",
+  "A11X016",
+  "A11X004",
+  "A11CA03",
+  "A11CA02",
+  "A11CA01",
+  "A09X170",
+  "A09X136",
+  "A09X130",
+  "A09X014",
+  "A09T004",
+  "A09T003",
+  "A09S105",
+  "A06X232",
+  "A06X194",
+  "A06X183",
+  "A06X130",
+  "A06X126",
+  "A06X025",
+  "A06X023",
+  "A06T019",
+  "A06T014",
+  "A06S307",
+  "A06S306",
+  "A06S287",
+  "O27X113",
+  "A16X002",
+  "O31X415",
+  "O27T031",
+  "O27X003",
+  "O48X025",
+  "C47X035",
+  "A09X135",
+  "C12X097",
+  "C41T106",
+  "O31T192",
+  "A06X020",
+  "O31S278",
+  "A06X029",
+  "A16X415",
+  "O48X171",
+  "A09X115",
+  "O27S445",
+  "A16X529",
+  "A42X010",
+  "O31X209",
+  "A16X809",
+  "A09X122",
+  "A09X146",
+  "O45T085",
+  "O27T104",
+  "O27X074",
+  "C47X013",
+  "A16X117",
+  "A16X875",
+  "A16X1074",
+  "C40X007",
+  "O22X177",
+  "A42X201",
+  "O31X144",
+  "A16X1666",
+  "A16X1611",
+  "A16X1902",
+  "O31X041",
+  "A16X1468",
+  "O02X253",
+  "A16X577",
+  "O29S509",
+  "A16X924",
+  "O31X027",
+  "O31T797",
+  "A16X1068",
+  "O02X090",
+  "A16X1781",
+  "O48S211",
+  "A26S241",
+  "O31X504",
+  "A16X1359",
+  "A16X1769",
+  "O48X108",
+  "O31X507",
+  "C12X119",
+  "A16X1309",
+  "O29S280",
+  "A09X318",
+  "A16X2022",
+  "O38T009",
+  "O38X091",
+  "O46S533",
+  "A16X199",
+  "A16X1412",
+  "O02X092",
+  "A16X024",
+  "A16X1357",
+  "O31X419",
+  "O31X214",
+  "A16X1801",
+  "A16X160",
+  "O02T158",
+  "A16X374",
+  "A16X1454",
+  "A16X575",
+  "A09S320",
+  "A16X433",
+  "A16X1621",
+  "A16X589"
+]);
+  if(typeof module!=='undefined')module.exports=gates;else root.DefaultGNE=gates;
+})(globalThis);
 </script><script>(function(root){
   const tau=2*Math.PI;
   function circular(angle){return ((angle%tau)+tau)%tau;}
@@ -469,6 +750,16 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 let state=null;
 const topologyView=new Topology.View($('map'),k=>{$('zoomLabel').textContent=Math.round(k*100)+'%';});
 let cleanedFiles=null;
+const gatewayStorageKey='athar.mw.extraGateways.v1';
+let additionalGates=[];
+try{
+  const saved=JSON.parse(localStorage.getItem(gatewayStorageKey)||'[]');
+  if(Array.isArray(saved))additionalGates=[...new Set(saved.filter(value=>typeof value==='string').map(Network.primaryName).filter(Boolean))].filter(gate=>!DefaultGNE.includes(gate));
+}catch{}
+function gatewayInfo(){
+  $('gatewayInfo').textContent=`${DefaultGNE.length} built-in GNEs ready${additionalGates.length?' + '+additionalGates.length+' added in this browser':''}. Upload a GNE file only to add new gateways.`;
+}
+gatewayInfo();
 function prepareDownloads(links,gates){
   cleanedFiles={
     links:[...new Map(links.map(pair=>{const sorted=pair.slice().sort();return [JSON.stringify(sorted),sorted];})).values()],
@@ -490,7 +781,7 @@ function downloadCleaned(kind){
 $('downloadLinks').onclick=()=>downloadCleaned('links');
 $('downloadGates').onclick=()=>downloadCleaned('gates');
 async function readCells(file,kind){
-  if(!file)throw Error('Choose both a links file and a GNE file first.');
+  if(!file)throw Error('Choose a links file first. The GNE file is optional.');
   if(file.size>10*1024*1024)throw Error('Each file must be 10 MB or smaller.');
   if(/\.xlsx$/i.test(file.name)){
     if(!window.ExcelJS)throw Error('The Excel reader could not load. Reload the page or use CSV.');
@@ -565,12 +856,23 @@ function draw(){
 $('load').onclick=async()=>{const button=$('load');button.disabled=true;
   cleanedFiles=null;$('downloadLinks').disabled=true;$('downloadGates').disabled=true;
   try{
-  const [l,g]=await Promise.all([readCells($('links').files[0],'links'),readCells($('gates').files[0],'gates')]);
+  const gatewayFile=$('gates').files[0];
+  const [l,g]=await Promise.all([readCells($('links').files[0],'links'),gatewayFile?readCells(gatewayFile,'gates'):Promise.resolve([])]);
   const pl=Network.parseLinks(l),pg=Network.parseGates(g);
-  const confirmed=Network.applyConnections(pl.valid,pg.valid.flat());
-  prepareDownloads(confirmed.links,pg.valid.flat());
+  if(!pl.valid.length)throw Error('No valid links found in the selected file.');
+  if(gatewayFile&&!pg.valid.length)throw Error('The optional GNE file contains no gateway names. The built-in list is still available.');
+  const gates=[...new Set([...DefaultGNE,...additionalGates,...pg.valid.flat()])];
+  const added=gates.length-DefaultGNE.length-additionalGates.length;
+  const confirmed=Network.applyConnections(pl.valid,gates);
   const ignoredCount=pl.invalid.length+pg.invalid.length;
-  setData(confirmed.links,pg.valid.flat(),ignoredCount,confirmed.added.length?'Applied your confirmed A33T001 ↔ A33CA01 connection. It is included in the cleaned links export.':'');
+  const messages=[`Using ${gates.length} GNEs (${DefaultGNE.length} built-in${gates.length>DefaultGNE.length?' + '+(gates.length-DefaultGNE.length)+' added':''}).`];
+  if(added)messages.push(`Added ${added} new ${added===1?'gateway':'gateways'} from your GNE file.`);
+  if(confirmed.added.length)messages.push('Applied your confirmed A33T001 ↔ A33CA01 connection. It is included in the cleaned links export.');
+  setData(confirmed.links,gates,ignoredCount,messages.join(' '));
+  prepareDownloads(confirmed.links,gates);
+  additionalGates=gates.slice(DefaultGNE.length);
+  if(added){try{localStorage.setItem(gatewayStorageKey,JSON.stringify(additionalGates));}catch{$('status').textContent+=' Browser storage is unavailable; keep the GNE CSV to reload these additions next time.';}}
+  gatewayInfo();
 }catch(e){$('status').textContent='Import failed: '+e.message;}finally{button.disabled=false;}};
 $('search').oninput=findSite;
 $('gneSearch').oninput=()=>{clearSiteSearch();filterGateways();draw();if($('impactResult').value)calculateImpact();};
@@ -592,7 +894,7 @@ document.addEventListener('fullscreenchange',()=>{$('fullscreenLabel').textConte
 $('impactSite').oninput=()=>{$('impactResult').value='';$('copyImpact').disabled=true;$('copyLabel').textContent='Copy list';$('impactSummary').textContent='Choose Calculate impact to refresh the list.';};
 function calculateImpact(){
   $('impactResult').value='';$('copyImpact').disabled=true;$('copyLabel').textContent='Copy list';
-  if(!state){$('impactSummary').textContent='Import both files first.';return;}
+  if(!state){$('impactSummary').textContent='Import your links file first.';return;}
   const site=Network.primaryName($('impactSite').value);
   if(!site||!state.adj.has(site)){$('impactSummary').textContent='Site not found in the imported network.';return;}
   const gateway=Network.impactRoot(state.adj,state.gates,site);
@@ -623,7 +925,7 @@ function findSite(){
   $('searchStatus').textContent=`${site} → ${gateway} · ${hops} ${hops===1?'hop':'hops'}`;
 }
 for(const id of ['links','gates'])$(id).addEventListener('change',()=>{
-  $(id+'Name').textContent=$(id).files[0]?.name||(id==='links'?'Choose a link or MLR file':'Choose your gateway list');
+  $(id+'Name').textContent=$(id).files[0]?.name||(id==='links'?'Choose a link or MLR file':'Optional — add new gateways');
 });
 $('copyImpact').onclick=async()=>{
   const value=$('impactResult').value;if(!value)return;

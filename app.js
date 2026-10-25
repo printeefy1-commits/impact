@@ -2,6 +2,16 @@ const $=id=>document.getElementById(id);
 let state=null;
 const topologyView=new Topology.View($('map'),k=>{$('zoomLabel').textContent=Math.round(k*100)+'%';});
 let cleanedFiles=null;
+const gatewayStorageKey='athar.mw.extraGateways.v1';
+let additionalGates=[];
+try{
+  const saved=JSON.parse(localStorage.getItem(gatewayStorageKey)||'[]');
+  if(Array.isArray(saved))additionalGates=[...new Set(saved.filter(value=>typeof value==='string').map(Network.primaryName).filter(Boolean))].filter(gate=>!DefaultGNE.includes(gate));
+}catch{}
+function gatewayInfo(){
+  $('gatewayInfo').textContent=`${DefaultGNE.length} built-in GNEs ready${additionalGates.length?' + '+additionalGates.length+' added in this browser':''}. Upload a GNE file only to add new gateways.`;
+}
+gatewayInfo();
 function prepareDownloads(links,gates){
   cleanedFiles={
     links:[...new Map(links.map(pair=>{const sorted=pair.slice().sort();return [JSON.stringify(sorted),sorted];})).values()],
@@ -23,7 +33,7 @@ function downloadCleaned(kind){
 $('downloadLinks').onclick=()=>downloadCleaned('links');
 $('downloadGates').onclick=()=>downloadCleaned('gates');
 async function readCells(file,kind){
-  if(!file)throw Error('Choose both a links file and a GNE file first.');
+  if(!file)throw Error('Choose a links file first. The GNE file is optional.');
   if(file.size>10*1024*1024)throw Error('Each file must be 10 MB or smaller.');
   if(/\.xlsx$/i.test(file.name)){
     if(!window.ExcelJS)throw Error('The Excel reader could not load. Reload the page or use CSV.');
@@ -98,12 +108,23 @@ function draw(){
 $('load').onclick=async()=>{const button=$('load');button.disabled=true;
   cleanedFiles=null;$('downloadLinks').disabled=true;$('downloadGates').disabled=true;
   try{
-  const [l,g]=await Promise.all([readCells($('links').files[0],'links'),readCells($('gates').files[0],'gates')]);
+  const gatewayFile=$('gates').files[0];
+  const [l,g]=await Promise.all([readCells($('links').files[0],'links'),gatewayFile?readCells(gatewayFile,'gates'):Promise.resolve([])]);
   const pl=Network.parseLinks(l),pg=Network.parseGates(g);
-  const confirmed=Network.applyConnections(pl.valid,pg.valid.flat());
-  prepareDownloads(confirmed.links,pg.valid.flat());
+  if(!pl.valid.length)throw Error('No valid links found in the selected file.');
+  if(gatewayFile&&!pg.valid.length)throw Error('The optional GNE file contains no gateway names. The built-in list is still available.');
+  const gates=[...new Set([...DefaultGNE,...additionalGates,...pg.valid.flat()])];
+  const added=gates.length-DefaultGNE.length-additionalGates.length;
+  const confirmed=Network.applyConnections(pl.valid,gates);
   const ignoredCount=pl.invalid.length+pg.invalid.length;
-  setData(confirmed.links,pg.valid.flat(),ignoredCount,confirmed.added.length?'Applied your confirmed A33T001 ↔ A33CA01 connection. It is included in the cleaned links export.':'');
+  const messages=[`Using ${gates.length} GNEs (${DefaultGNE.length} built-in${gates.length>DefaultGNE.length?' + '+(gates.length-DefaultGNE.length)+' added':''}).`];
+  if(added)messages.push(`Added ${added} new ${added===1?'gateway':'gateways'} from your GNE file.`);
+  if(confirmed.added.length)messages.push('Applied your confirmed A33T001 ↔ A33CA01 connection. It is included in the cleaned links export.');
+  setData(confirmed.links,gates,ignoredCount,messages.join(' '));
+  prepareDownloads(confirmed.links,gates);
+  additionalGates=gates.slice(DefaultGNE.length);
+  if(added){try{localStorage.setItem(gatewayStorageKey,JSON.stringify(additionalGates));}catch{$('status').textContent+=' Browser storage is unavailable; keep the GNE CSV to reload these additions next time.';}}
+  gatewayInfo();
 }catch(e){$('status').textContent='Import failed: '+e.message;}finally{button.disabled=false;}};
 $('search').oninput=findSite;
 $('gneSearch').oninput=()=>{clearSiteSearch();filterGateways();draw();if($('impactResult').value)calculateImpact();};
@@ -125,7 +146,7 @@ document.addEventListener('fullscreenchange',()=>{$('fullscreenLabel').textConte
 $('impactSite').oninput=()=>{$('impactResult').value='';$('copyImpact').disabled=true;$('copyLabel').textContent='Copy list';$('impactSummary').textContent='Choose Calculate impact to refresh the list.';};
 function calculateImpact(){
   $('impactResult').value='';$('copyImpact').disabled=true;$('copyLabel').textContent='Copy list';
-  if(!state){$('impactSummary').textContent='Import both files first.';return;}
+  if(!state){$('impactSummary').textContent='Import your links file first.';return;}
   const site=Network.primaryName($('impactSite').value);
   if(!site||!state.adj.has(site)){$('impactSummary').textContent='Site not found in the imported network.';return;}
   const gateway=Network.impactRoot(state.adj,state.gates,site);
@@ -156,7 +177,7 @@ function findSite(){
   $('searchStatus').textContent=`${site} → ${gateway} · ${hops} ${hops===1?'hop':'hops'}`;
 }
 for(const id of ['links','gates'])$(id).addEventListener('change',()=>{
-  $(id+'Name').textContent=$(id).files[0]?.name||(id==='links'?'Choose a link or MLR file':'Choose your gateway list');
+  $(id+'Name').textContent=$(id).files[0]?.name||(id==='links'?'Choose a link or MLR file':'Optional — add new gateways');
 });
 $('copyImpact').onclick=async()=>{
   const value=$('impactResult').value;if(!value)return;

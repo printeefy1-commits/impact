@@ -4,6 +4,7 @@ const {chromium}=require('playwright');
 const http=require('node:http');
 const fs=require('node:fs');
 const path=require('node:path');
+const defaultGates=require('./default-gne');
 
 test('standalone edition imports large CSV reports and XLSX without argument overflow',async()=>{
   const html=fs.readFileSync(path.join(__dirname,'athar-offline.html'));
@@ -15,6 +16,10 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
     await page.goto(`http://127.0.0.1:${server.address().port}`);
     await page.context().setOffline(true);
+    const resetGatewayAdditions=async()=>{
+      await page.context().setOffline(false);await page.evaluate(()=>localStorage.clear());
+      await page.reload();await page.context().setOffline(true);
+    };
     assert.equal(await page.locator('#downloadReview, #exportSummary, #demo, #failure, #reset, #impactCount, #report, footer, a[download]').count(),0);
     assert.equal(await page.locator('html').getAttribute('lang'),'en');
     assert.equal(await page.locator('html').getAttribute('dir'),'ltr');
@@ -47,22 +52,24 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     await page.fill('#gneSearch','not-found');
     assert.equal(await page.locator('#map svg').count(),0);
     assert.equal(await page.locator('#gneSelect option').count(),1);
-    await page.fill('#gneSearch','a01');
+    await page.fill('#gneSearch','a01s');
     assert.equal(await page.locator('#gneSelect option').count(),2);
     await page.selectOption('#gneSelect','A01S001');
     assert.equal((await visibleNames()).length,4);
     await page.setViewportSize({width:390,height:844});
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
     // The former replaceChildren(...issues) throws RangeError with this input.
+    await resetGatewayAdditions();
     const csv='link\n'+'unmatched\n'.repeat(150000)+'A01S001-C01M001\nC01M001-O01X001\n';
     await page.setInputFiles('#links',{name:'large.csv',mimeType:'text/csv',buffer:Buffer.from(csv)});
     await page.setInputFiles('#gates',{name:'gne.csv',mimeType:'text/csv',buffer:Buffer.from('GNE\nA01S001')});
     await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
-    assert.equal(await page.locator('#nodesCount').textContent(),'3');
+    assert.equal(await page.locator('#nodesCount').textContent(),String(defaultGates.length+3));
     assert.equal(await page.locator('#map svg').count(),0);
     await page.selectOption('#gneSelect','A01S001');
     assert.equal((await visibleNames()).length,3);
     assert.match(await page.locator('#status').textContent(),/150002/);
+    await resetGatewayAdditions();
     await page.evaluate(async()=>{
       for(const [id,rows] of [['links',[['link'],['A_12 X345 site north - C12SU3456 microwave'],['C12SU3456 duplicate-A12X345 note']]],['gates',[['GNE Name','Subnet'],[' C12SU3456 gateway (A12X345) description ','O12S345']]]]){
         const book=new ExcelJS.Workbook();book.addWorksheet('data').addRows(rows);
@@ -71,14 +78,14 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
       }
     });
     await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
-    assert.equal(await page.locator('#nodesCount').textContent(),'2');
-    assert.equal(await page.locator('#gatesCount').textContent(),'1');
+    assert.equal(await page.locator('#nodesCount').textContent(),String(defaultGates.length+2));
+    assert.equal(await page.locator('#gatesCount').textContent(),String(defaultGates.length+1));
     assert.equal(await page.locator('#gneSelect option[value="O12S345"]').count(),0);
     assert.equal(await page.locator('#gneSelect option[value="A12X345"]').count(),0);
     const exported={};
     for(const [button,name,expected] of [
       ['downloadLinks','cleaned-links.csv','Source NE Name,Sink NE Name\r\nA12X345,C12SU3456\r\n'],
-      ['downloadGates','cleaned-gne.csv','GNE\r\nC12SU3456\r\n']
+      ['downloadGates','cleaned-gne.csv','GNE\r\n'+defaultGates.join('\r\n')+'\r\nC12SU3456\r\n']
     ]){
       const downloadPromise=page.waitForEvent('download');await page.click('#'+button);
       const download=await downloadPromise;assert.equal(download.suggestedFilename(),name);
@@ -90,7 +97,7 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     await page.setInputFiles('#links',{name:'cleaned-links.csv',mimeType:'text/csv',buffer:exported.downloadLinks});
     await page.setInputFiles('#gates',{name:'cleaned-gne.csv',mimeType:'text/csv',buffer:exported.downloadGates});
     await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
-    assert.equal(await page.locator('#nodesCount').textContent(),'2');
+    assert.equal(await page.locator('#nodesCount').textContent(),String(defaultGates.length+2));
     // A diamond has one real additional edge beyond its displayed spanning tree.
     await page.evaluate(()=>setData([
       ['A01S001','C01M001'],['A01S001','C02M002'],
@@ -158,6 +165,7 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     assert.match(await page.locator('#impactSummary').textContent(),/A01S001/);
     assert.ok(!(await visibleNames()).includes('C01M001'));
     // File order wins equal-hop ties even though the dropdown is sorted by name.
+    await resetGatewayAdditions();
     await page.setInputFiles('#links',{name:'equal.csv',mimeType:'text/csv',buffer:Buffer.from('link\nA01S001-C01M001\nA02S002-C01M001\nC01M001-O01X001\n')});
     await page.setInputFiles('#gates',{name:'ordered-gne.csv',mimeType:'text/csv',buffer:Buffer.from('GNE\nA02S002\nA01S001\n')});
     await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
@@ -172,11 +180,12 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     await page.selectOption('#gneSelect','A02S002');
     assert.equal(await page.locator('#impactResult').inputValue(),'C01M001,O01X001');
     // Special sites survive import, lookup, impact, downloads and re-import.
+    await resetGatewayAdditions();
     const specialCSV='Source NE Name,Sink NE Name,Link Name\nA16X001,A16-SCE1-PEPSI-050,\nA16SCE1-PEPSI050,NE(160-32630),\nA16SCE1-PEPSI050,A16SE01-sikaalgérie-062_E-band,\nA16X001,A16W1043 EB V,\n,,A16W1043-A16WX1055\n';
     await page.setInputFiles('#links',{name:'special.csv',mimeType:'text/csv',buffer:Buffer.from(specialCSV)});
     await page.setInputFiles('#gates',{name:'special-gne.csv',mimeType:'text/csv',buffer:Buffer.from('GNE\nA16X001\n')});
     await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
-    assert.equal(await page.locator('#nodesCount').textContent(),'6');
+    assert.equal(await page.locator('#nodesCount').textContent(),String(defaultGates.length+6));
     await page.fill('#search','A16-SCE1-PEPSI-050');
     assert.equal(await page.locator('#gneSelect').inputValue(),'A16X001');
     assert.ok((await visibleNames()).includes('NE(160-32630)'));
@@ -198,7 +207,7 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     assert.match(specialBuffer.toString('utf8'),/NE\(160-32630\)/);
     await page.setInputFiles('#links',{name:'cleaned-special.csv',mimeType:'text/csv',buffer:specialBuffer});
     await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
-    assert.equal(await page.locator('#nodesCount').textContent(),'6');
+    assert.equal(await page.locator('#nodesCount').textContent(),String(defaultGates.length+6));
     await page.fill('#impactSite','A16SCE1-PEPSI050');await page.click('#calculateImpact');
     assert.equal(await page.locator('#impactResult').inputValue(),specialImpact);
     assert.doesNotMatch(await page.locator('body').innerText(),/[\u0600-\u06ff]/);
@@ -207,4 +216,59 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     if(browser)await browser.close();
     await new Promise(resolve=>server.close(resolve));
   }
+});
+
+test('daily links use built-in GNEs and optional additions persist across reloads',async()=>{
+  const html=fs.readFileSync(path.join(__dirname,'athar-offline.html'));
+  const server=http.createServer((req,res)=>{res.setHeader('Content-Type','text/html; charset=utf-8');res.end(html);});
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));let browser;
+  try{
+    browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
+    const page=await browser.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+    await page.goto(`http://127.0.0.1:${server.address().port}`);
+    assert.deepEqual(await page.evaluate(()=>[...DefaultGNE]),[...defaultGates]);
+    assert.match(await page.textContent('#gatewayInfo'),/272 built-in GNEs/);
+    await page.click('#load');assert.match(await page.textContent('#status'),/Choose a links file first/);
+    const links='link\nA16X589-A99X100\nA99X100-A99X101\nO46T078-O46X158\n';
+    await page.setInputFiles('#links',{name:'day-one.csv',mimeType:'text/csv',buffer:Buffer.from(links)});
+    await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
+    assert.equal(await page.textContent('#gatesCount'),'272');
+    assert.match(await page.textContent('#status'),/Using 272 GNEs/);
+    await page.fill('#search','A99X101');assert.equal(await page.inputValue('#gneSelect'),'A16X589');
+    await page.fill('#impactSite','A16X589');await page.click('#calculateImpact');
+    assert.equal(await page.inputValue('#impactResult'),'A16X589,A99X100,A99X101');
+    await page.setInputFiles('#gates',{name:'new-gates.csv',mimeType:'text/csv',buffer:Buffer.from('GNE\nA99X100_IDU1\nA99X100\nA16X589\n')});
+    await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
+    assert.equal(await page.textContent('#gatesCount'),'273');
+    assert.match(await page.textContent('#status'),/Added 1 new gateway/);
+    await page.fill('#search','A99X101');assert.equal(await page.inputValue('#gneSelect'),'A99X100');
+    assert.deepEqual(await page.evaluate(()=>state.gates.slice(0,272)),[...defaultGates]);
+    const promise=page.waitForEvent('download');await page.click('#downloadGates');const chunks=[];
+    for await(const chunk of await(await promise).createReadStream())chunks.push(chunk);
+    const exported=Buffer.concat(chunks).toString('utf8').replace(/^\uFEFF/,'').trim().split(/\r?\n/).slice(1);
+    assert.deepEqual(exported,[...defaultGates,'A99X100']);
+    await page.reload();
+    assert.match(await page.textContent('#gatewayInfo'),/1 added in this browser/);
+    assert.equal(await page.locator('#gates').evaluate(input=>input.files.length),0);
+    await page.setInputFiles('#links',{name:'day-two.csv',mimeType:'text/csv',buffer:Buffer.from('link\nA16X589-A99X100\nA99X100-A99X101\nA99X101-A99X102\n')});
+    await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
+    assert.equal(await page.textContent('#gatesCount'),'273');
+    await page.fill('#search','A99X102');assert.equal(await page.inputValue('#gneSelect'),'A99X100');
+    await page.fill('#impactSite','A99X100');await page.click('#calculateImpact');
+    assert.equal(await page.inputValue('#impactResult'),'A99X100,A99X101,A99X102');
+    // Failed optional imports leave the working network and saved list intact.
+    await page.setInputFiles('#gates',{name:'empty.csv',mimeType:'text/csv',buffer:Buffer.from('GNE\n')});
+    await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
+    assert.match(await page.textContent('#status'),/optional GNE file contains no gateway names/);
+    assert.equal(await page.textContent('#gatesCount'),'273');
+    // If persistence is blocked, additions still work for the current session.
+    await page.evaluate(()=>{Storage.prototype.setItem=function(){throw Error('Storage blocked');};});
+    await page.setInputFiles('#gates',{name:'another-gate.csv',mimeType:'text/csv',buffer:Buffer.from('GNE\nA99X102\n')});
+    await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
+    assert.equal(await page.textContent('#gatesCount'),'274');
+    assert.match(await page.textContent('#status'),/Browser storage is unavailable/);
+    await page.setInputFiles('#gates',[]);await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
+    assert.equal(await page.textContent('#gatesCount'),'274');
+    assert.deepEqual(errors,[]);
+  }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}
 });
