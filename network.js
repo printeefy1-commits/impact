@@ -163,6 +163,16 @@
     for(let i=0;i<impacted.length;i++)for(const child of children.get(impacted[i])||[])impacted.push(child);
     return [site,...impacted.slice(1).sort()];
   }
-  const api={impactRoot,impact,extract,primaryName,parseCells,parseGates,parseLinks,applyConnections,graph,traverse,analyze,branch};
+  function resolveSite(value,adj){
+    const short=String(value??'').trim().toUpperCase().replace(/[_\s-]/g,'');
+    // Resolve abbreviations against the imported sites, never guess a region
+    // letter when more than one distinct site has the same suffix.
+    if(/^\d{2}(?:(?:WX|SM|SU|[SMXTBWR])\d{3,4}|CA\d{2})$/.test(short)){
+      const matches=['A','C','O'].map(prefix=>prefix+short).filter(name=>adj.has(name));
+      return matches.length===1?matches[0]:'';
+    }
+    const site=primaryName(value);return adj.has(site)?site:'';
+  }
+  const api={resolveSite,impactRoot,impact,extract,primaryName,parseCells,parseGates,parseLinks,applyConnections,graph,traverse,analyze,branch};
   if(typeof module!=='undefined')module.exports=api;else root.Network=api;
 })(globalThis);

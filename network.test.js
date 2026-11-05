@@ -243,3 +243,15 @@ test('impact follows deep main paths without recursion overflow',()=>{
  const result=N.impact(adj,['0'],'1');
  assert.equal(result.length,15000);assert.equal(result[0],'1');assert.ok(result.includes('15000'));
 });
+test('short search names resolve uniquely without changing imported identities',()=>{
+ const adj=N.graph([['A44X003','O22X163'],['C04X106','A44X003'],['A09X170','NE(1-2)']],['A44X003']);
+ assert.equal(N.resolveSite('44X003',adj),'A44X003');
+ assert.equal(N.resolveSite('22x163',adj),'O22X163');
+ assert.equal(N.resolveSite('04X106',adj),'C04X106');
+ assert.equal(N.resolveSite('09X170',adj),'A09X170');
+ assert.equal(N.resolveSite('NE(1-2)',adj),'NE(1-2)');
+ adj.set('C44X003',new Set());
+ assert.equal(N.resolveSite('44X003',adj),'');
+ assert.equal(N.resolveSite('A44X003',adj),'A44X003');
+ assert.equal(N.resolveSite('99X999',adj),'');
+});

@@ -147,8 +147,8 @@ function calculateImpact(){
   $('impactResult').value='';$('copyImpact').disabled=true;$('copyLabel').textContent='Copy list';
   if(state){state.affected=new Set();draw();}
   if(!state){$('impactSummary').textContent='Import your links file first.';return;}
-  const site=Network.primaryName($('impactSite').value);
-  if(!site||!state.adj.has(site)){$('impactSummary').textContent='Site not found in the imported network.';return;}
+  const site=Network.resolveSite($('impactSite').value,state.adj);
+  if(!site){$('impactSummary').textContent='Site not found or abbreviation is ambiguous. Use the full name including A, C, or O.';return;}
   const gateway=Network.impactRoot(state.adj,state.gates,site);
   const result=Network.impact(state.adj,state.gates,site);
   state.affected=new Set(result);
@@ -165,12 +165,12 @@ function clearSiteSearch(){
 }
 function findSite(){
   if(!state)return;
-  const raw=$('search').value.trim(),site=Network.primaryName(raw);
+  const raw=$('search').value.trim(),site=Network.resolveSite(raw,state.adj);
   state.foundSite='';
   if(!raw){$('searchStatus').textContent='Enter a full site name to open its gateway map.';draw();return;}
   if(!site||!state.adj.has(site)){
     $('gneSelect').value='';draw();
-    $('searchStatus').textContent='No match yet. Enter a full site name or choose a suggestion.';return;
+    $('searchStatus').textContent='No match yet. Enter a full site name; include A, C, or O if the abbreviation is ambiguous.';return;
   }
   state.foundSite=site;
   const gateway=state.assignment.owner.get(site),hops=state.assignment.depth.get(site);

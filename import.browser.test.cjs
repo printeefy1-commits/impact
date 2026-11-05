@@ -24,9 +24,18 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     assert.equal(await page.locator('.intro, #gneSearch').count(),0);
     assert.equal(await page.locator('.map-stage .stats').count(),1);
     assert.equal(await page.locator('.map-stage .canvas-bar').count(),1);
+    assert.equal(await page.locator('.legend').count(),0);
+    assert.ok(await page.locator('.topbar').evaluate(el=>Math.abs(el.getBoundingClientRect().height-96/2.54)<1));
+    assert.ok(await page.locator('.map-stage').evaluate(el=>Math.abs(el.clientWidth-el.clientHeight)<2));
+    assert.equal(await page.locator('.stats').evaluate(el=>getComputedStyle(el).opacity),'0.5');
+    await page.locator('.stats').hover();await page.waitForTimeout(180);
+    assert.equal(await page.locator('.stats').evaluate(el=>getComputedStyle(el).opacity),'1');
+    await page.mouse.move(0,0);
     assert.equal(await page.locator('.compact-heading #fitMap, .compact-heading #fullscreen, .compact-heading #resetLayout').count(),3);
     assert.ok(await page.locator('#status').evaluate(el=>el.hidden));
-    assert.ok(await page.locator('.search-input').evaluate(el=>Math.abs(el.getBoundingClientRect().width-3*96/2.54)<1));
+    assert.ok(await page.locator('.search-input').evaluate(el=>Math.abs(el.getBoundingClientRect().width-4*96/2.54)<1));
+    assert.ok(await page.locator('#gneSelect').evaluate(el=>Math.abs(el.getBoundingClientRect().width-4*96/2.54)<1));
+    assert.ok(await page.evaluate(()=>Math.abs(document.querySelector('aside').getBoundingClientRect().bottom-document.querySelector('#mapPanel').getBoundingClientRect().bottom)<2));
     assert.ok(await page.locator('.compact-heading').evaluate(el=>el.getBoundingClientRect().height<=40));
     assert.equal(await page.locator('html').getAttribute('lang'),'en');
     assert.equal(await page.locator('html').getAttribute('dir'),'ltr');
@@ -181,6 +190,11 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     assert.equal(await page.locator('#impactResult').inputValue(),'C01M001,O01X001');
     await page.selectOption('#gneSelect','A02S002');
     assert.equal(await page.locator('#impactResult').inputValue(),'C01M001,O01X001');
+    await page.evaluate(()=>setData([['A44X003','A44X004']],['A44X003']));
+    await page.fill('#search','44X004');
+    assert.equal(await page.inputValue('#gneSelect'),'A44X003');
+    await page.fill('#impactSite','44X003');await page.click('#calculateImpact');
+    assert.equal(await page.inputValue('#impactResult'),'A44X003,A44X004');
     // Special sites survive import, lookup, impact, downloads and re-import.
     await resetGatewayAdditions();
     const specialCSV='Source NE Name,Sink NE Name,Link Name\nA16X001,A16-SCE1-PEPSI-050,\nA16SCE1-PEPSI050,NE(160-32630),\nA16SCE1-PEPSI050,A16SE01-sikaalgérie-062_E-band,\nA16X001,A16W1043 EB V,\n,,A16W1043-A16WX1055\n';
