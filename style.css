@@ -11,3 +11,6 @@ main{padding-top:18px}.sr-only{position:absolute;width:1px;height:1px;padding:0;
 
 /* Red search/impact outlines; NE names have no background in any state. */
 .map .network-node:not(.gateway-node) .node-label-bg{fill:none!important;stroke:none!important}.map .network-node:not(.gateway-node) .node-name{fill:#fff;stroke:#294d60;stroke-width:2px;paint-order:stroke fill;stroke-linejoin:round}.map .gateway-node.impacted .node-label-bg,.map .gateway-node.highlighted .node-label-bg,.map .network-node:focus .node-label-bg{stroke:#ff3038}.map .highlighted .device-icon>rect:first-child,.map .impacted .device-icon>rect:first-child{stroke:#ff3038;stroke-width:5px}
+
+.map .network-node:hover .device-icon>rect:first-child{fill:#075b38}.map .selected .device-icon>rect:first-child{stroke:#ff3038;stroke-width:5px}.map .gateway-node.selected .node-label-bg{stroke:#ff3038}
+.map .node-label-bg{pointer-events:all}

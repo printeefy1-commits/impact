@@ -91,7 +91,7 @@ function draw(){
   $('viewSummary').textContent=selected?`${selected} · ${base.visited.size} assigned sites, including the gateway · Counters cover the whole network.`:'Select a gateway, or find any NE to open its assigned map.';
   const query=state.foundSite||'';
   if(selected){
-    const extra=topologyView.render({key:selected,branch:base,links,query,affected:state.affected,showExtra:$('extraLinks').checked});
+    const extra=topologyView.render({key:selected,branch:base,links,query,affected:state.affected,onSelectionChange:()=>{state.foundSite='';$('search').value='';$('searchStatus').textContent='Ctrl+click to add or remove sites. Drag a selected site to move the group.';},showExtra:$('extraLinks').checked});
     $('extraCount').textContent=extra;
   }else{
     topologyView.clear();$('extraCount').textContent='0';
@@ -141,7 +141,7 @@ document.addEventListener('fullscreenchange',()=>{$('fullscreenLabel').textConte
 $('impactSite').oninput=()=>{if(state){state.affected=new Set();draw();}$('impactResult').value='';$('copyImpact').disabled=true;$('copyLabel').textContent='Copy list';$('impactSummary').textContent='Choose Calculate impact to refresh the list.';};
 function calculateImpact(){
   $('impactResult').value='';$('copyImpact').disabled=true;$('copyLabel').textContent='Copy list';
-  if(state){state.affected=new Set();draw();}
+  if(state){topologyView.clearSelection();state.affected=new Set();draw();}
   if(!state){$('impactSummary').textContent='Import your links file first.';return;}
   const site=Network.resolveSite($('impactSite').value,state.adj);
   if(!site){$('impactSummary').textContent='Site not found or abbreviation is ambiguous. Use the full name including A, C, or O.';return;}
@@ -161,6 +161,7 @@ function clearSiteSearch(){
 }
 function findSite(){
   if(!state)return;
+  topologyView.clearSelection();
   const raw=$('search').value.trim(),site=Network.resolveSite(raw,state.adj);
   state.foundSite='';
   if(!raw){$('searchStatus').textContent='Enter a full site name to open its gateway map.';draw();return;}

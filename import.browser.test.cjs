@@ -160,7 +160,7 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     // Nodes remain draggable graphics; clicking or pressing Enter no longer starts a fault.
     const beforeClick={position:await root.getAttribute('transform'),color:await root.locator('rect').first().getAttribute('fill'),count:await page.locator('#nodesCount').textContent()};
     await root.click();await root.press('Enter');
-    assert.equal(await root.getAttribute('role'),'img');
+    assert.equal(await root.getAttribute('role'),'button');
     assert.deepEqual({position:await root.getAttribute('transform'),color:await root.locator('rect').first().getAttribute('fill'),count:await page.locator('#nodesCount').textContent()},beforeClick);
     assert.equal(await page.locator('#map .network-node').count(),4);
     await page.fill('#impactSite','A01S001');await page.click('#calculateImpact');
@@ -319,4 +319,56 @@ test('daily links use built-in GNEs and optional additions persist across reload
     assert.equal(await page.textContent('#gatesCount'),'274');
     assert.deepEqual(errors,[]);
   }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}
+});
+
+test('Ctrl selection moves a group and replaces search highlighting; hover darkens icons',async()=>{
+ const html=fs.readFileSync(path.join(__dirname,'athar-offline.html'));
+ const server=http.createServer((req,res)=>{res.setHeader('Content-Type','text/html; charset=utf-8');res.end(html);});
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));let browser;
+ try{
+  browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
+  const page=await browser.newPage({viewport:{width:1600,height:1200}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(`http://127.0.0.1:${server.address().port}`);
+  await page.evaluate(()=>setData([['A01S001','C01M001'],['A01S001','O01X001'],['A01S001','A02S002']],['A01S001']));
+  await page.fill('#search','C01M001');await page.click('#fitMap');
+  const node=name=>page.locator(`[data-node="${name}"]`),icon=name=>node(name).locator('.device-icon>rect').first();
+  await node('C01M001').locator('.node-name').hover();
+  assert.equal(await icon('C01M001').evaluate(el=>getComputedStyle(el).fill),'rgb(7, 91, 56)');
+  assert.equal(await page.locator('.highlighted').count(),1);
+  await icon('C01M001').click();
+  assert.equal(await page.locator('.highlighted').count(),0);
+  assert.equal(await page.inputValue('#search'),'');
+  assert.equal(await node('C01M001').getAttribute('aria-pressed'),'true');
+  await icon('O01X001').click({modifiers:['Control']});
+  assert.equal(await page.locator('.selected').count(),2);
+  const before=await page.evaluate(()=>Object.fromEntries([...topologyView.points].map(([n,p])=>[n,{...p}])));
+  const edgeBefore=await page.locator('.tree-link').first().getAttribute('x2');
+  const box=await icon('C01M001').boundingBox();
+  await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();
+  await page.mouse.move(box.x+box.width/2+45,box.y+box.height/2+30,{steps:6});await page.mouse.up();
+  const after=await page.evaluate(()=>Object.fromEntries(topologyView.points));
+  const dx=after.C01M001.x-before.C01M001.x,dy=after.C01M001.y-before.C01M001.y;
+  assert.ok(dx>0&&dy>0);
+  assert.ok(Math.abs(after.O01X001.x-before.O01X001.x-dx)<1e-6);
+  assert.ok(Math.abs(after.O01X001.y-before.O01X001.y-dy)<1e-6);
+  assert.deepEqual(after.A01S001,before.A01S001);assert.deepEqual(after.A02S002,before.A02S002);
+  assert.notEqual(await page.locator('.tree-link').first().getAttribute('x2'),edgeBefore);
+  assert.equal(await page.locator('.selected').count(),2);
+  await page.mouse.move(0,0);
+  for(const name of ['C01M001','O01X001'])assert.equal(await icon(name).evaluate(el=>getComputedStyle(el).stroke),'rgb(255, 48, 56)');
+  const controlBox=await icon('C01M001').boundingBox();
+  await page.keyboard.down('Control');
+  await page.mouse.move(controlBox.x+controlBox.width/2,controlBox.y+controlBox.height/2);await page.mouse.down();
+  await page.mouse.move(controlBox.x+controlBox.width/2+20,controlBox.y+controlBox.height/2+10,{steps:4});await page.mouse.up();await page.keyboard.up('Control');
+  assert.equal(await page.locator('.selected').count(),2);
+  await page.uncheck('#extraLinks');await page.check('#extraLinks'); // Rerendering the same map preserves selection.
+  assert.equal(await page.locator('.selected').count(),2);
+  await icon('O01X001').click({modifiers:['Control']});assert.equal(await page.locator('.selected').count(),1);
+  await node('C01M001').press('Escape');assert.equal(await page.locator('.selected').count(),0);
+  await page.fill('#search','A02S002');assert.equal(await page.locator('.highlighted').count(),1);
+  await node('C01M001').press('Enter');assert.equal(await page.locator('.highlighted').count(),0);
+  await node('O01X001').press('Control+Space');assert.equal(await page.locator('.selected').count(),2);
+  await page.fill('#search','A01S001');assert.equal(await page.locator('.selected').count(),0);
+  assert.deepEqual(errors,[]);
+ }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}
 });

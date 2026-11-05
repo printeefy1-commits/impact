@@ -29,10 +29,11 @@
   }
   class View{
     constructor(container,onZoom){this.container=container;this.onZoom=onZoom;this.clear();}
-    clear(){this.key=null;this.svg=null;this.points=null;this.camera={x:0,y:0,k:1};this.onZoom?.(1);}
-    render({key,branch,links,failed='',affected=new Set(),query,showExtra,onSelect}){
+    clear(){this.key=null;this.svg=null;this.points=null;this.selected=new Set();this.camera={x:0,y:0,k:1};this.onZoom?.(1);}
+    render({key,branch,links,failed='',affected=new Set(),query,showExtra,onSelectionChange}){
       const changed=this.key!==key;
-      if(changed){this.points=layout(branch).points;this.key=key;}
+      if(changed){this.points=layout(branch).points;this.key=key;this.selected=new Set();}
+      this.query=query||'';this.onSelectionChange=onSelectionChange;
       const svg=el('svg',{width:'100%',height:'100%',role:'group','aria-label':`Radial topology for gateway ${key}`});
       const layer=el('g',{'class':'topology-layer'}),edges=el('g',{'class':'topology-edges'}),nodes=el('g',{'class':'topology-nodes'});
       svg.append(layer);layer.append(edges,nodes);this.svg=svg;this.layer=layer;this.edges=[];this.nodeElements=new Map();
@@ -50,8 +51,7 @@
       for(const [n,p] of this.points){
         const gate=n===key,color=n===failed?'#e84b5d':affected.has(n)?'#87929d':gate?'#f2c230':'#16b860';
         const status=n===failed?'Down':affected.has(n)?'Impacted':gate?'GNE gateway':'Connected';
-        const selectable=typeof onSelect==='function';
-        const g=el('g',{'class':'network-node'+(affected.has(n)?' impacted':'')+(n===query?' highlighted':'')+(gate?' gateway-node':''),transform:`translate(${p.x} ${p.y})`,tabindex:0,role:selectable?'button':'img','aria-label':`${n}: ${status}. Drag to move this site.`,'data-node':n,opacity:'1'});
+        const g=el('g',{'class':'network-node'+(affected.has(n)?' impacted':'')+(n===query?' highlighted':'')+(gate?' gateway-node':''),transform:`translate(${p.x} ${p.y})`,tabindex:0,role:'button','aria-pressed':'false','aria-label':`${n}: ${status}. Ctrl+click to select multiple sites; drag to move the selection.`,'data-node':n,opacity:'1'});
         const title=el('title');title.textContent=`${n} · ${status}\nDrag to arrange this site`;g.append(title);
         // Microwave dish and radio chassis, drawn as local SVG rather than an external image.
         const device=el('g',{'class':'device-icon',transform:gate?'scale(1.8)':'scale(1.4)'});g.append(device);
@@ -63,18 +63,31 @@
         const type=el('text',{'class':'node-type',x:gate?-24:-17,y:-36,'text-anchor':'middle',fill:gate?'#075f70':'#385c6b','font-size':10,'font-weight':'bold'});type.textContent=gate?'GNE':'NE';device.append(type);
         g.append(el('rect',{'class':'node-label-bg',x:-75,y:gate?62:49,width:150,height:50,rx:5,fill:gate?'#f7fcff':'none',stroke:gate?(query&&n===query?'#ff3038':'#c8dce5'):'none','stroke-width':query&&n===query?3:1}));
         const label=el('text',{'class':'node-name',x:0,y:67,'text-anchor':'middle',fill:gate?'#173e50':'#ffffff','font-size':29.25,'font-weight':'bold'});label.textContent=n;g.append(label);
-        if(selectable){
-          g.onclick=e=>{if(e.detail===0)onSelect(n);};
-          g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onSelect(n);}};
-        }
+        g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();this.select(n,e.ctrlKey||e.metaKey);}else if(e.key==='Escape'){e.preventDefault();this.clearSelection();}};
         nodes.append(g);this.nodeElements.set(n,g);
       }
       this.updateEdges();this.container.replaceChildren(svg);
       for(const node of this.nodeElements.values())wrapName(node.querySelector('.node-name'),node.querySelector('.node-label-bg'),node.classList.contains('gateway-node'));
       this.bindInteractions(svg);
+      this.syncSelection();
       if(changed)this.open();else this.applyCamera();
       return extraCount;
     }
+    syncSelection(){
+      for(const [name,node] of this.nodeElements||[]){
+        const selected=this.selected.has(name),highlighted=name===this.query;
+        node.classList.toggle('selected',selected);node.classList.toggle('highlighted',highlighted);node.setAttribute('aria-pressed',String(selected));
+        const active=selected||highlighted||node.classList.contains('impacted'),gate=name===this.key;
+        const icon=node.querySelector('.device-icon>rect');icon.setAttribute('stroke',active?'#ff3038':gate?'#b6f5ff':'#c6f2d7');icon.setAttribute('stroke-width',active?5:gate?3:1.5);
+        const label=node.querySelector('.node-label-bg');label.setAttribute('stroke',gate?(active?'#ff3038':'#c8dce5'):'none');
+      }
+    }
+    select(name,additive=false,preserveGroup=false){
+      if(additive){if(this.selected.has(name))this.selected.delete(name);else this.selected.add(name);}
+      else if(!preserveGroup||!this.selected.has(name))this.selected=new Set([name]);
+      this.query='';this.syncSelection();this.onSelectionChange?.([...this.selected]);
+    }
+    clearSelection(){this.selected=new Set();this.syncSelection();}
     updateEdges(){
       for(const {a,b,path} of this.edges){
         const coordinates=segment(this.points.get(a),this.points.get(b),a===this.key?1.8:1.4,b===this.key?1.8:1.4);
@@ -118,17 +131,22 @@
       let drag=null;this.moved=false;
       svg.onpointerdown=e=>{
         if(e.button!==0)return;const n=e.target.closest('.network-node')?.getAttribute('data-node');
-        const p=n?this.points.get(n):this.camera;drag={n,startX:e.clientX,startY:e.clientY,x:p.x,y:p.y};this.moved=false;
+        const additive=e.ctrlKey||e.metaKey,collapse=n&&!additive&&this.selected.has(n)&&this.selected.size>1;
+        const removeOnTap=n&&additive&&this.selected.has(n);
+        if(removeOnTap){this.query='';this.syncSelection();this.onSelectionChange?.([...this.selected]);}
+        else if(n)this.select(n,additive,true);else if(!additive)this.clearSelection();
+        if(n&&!this.selected.has(n)){e.preventDefault();return;}
+        const p=n?this.points.get(n):this.camera;
+        drag={n,collapse,removeOnTap,startX:e.clientX,startY:e.clientY,x:p.x,y:p.y,positions:n?new Map([...this.selected].map(name=>[name,{...this.points.get(name)}])):null};this.moved=false;
         svg.setPointerCapture(e.pointerId);e.preventDefault();
       };
       svg.onpointermove=e=>{
         if(!drag)return;const dx=e.clientX-drag.startX,dy=e.clientY-drag.startY;
         if(Math.hypot(dx,dy)>4)this.moved=true;if(!this.moved)return;
-        if(drag.n){const p={x:drag.x+dx/this.camera.k,y:drag.y+dy/this.camera.k};this.points.set(drag.n,p);this.nodeElements.get(drag.n).setAttribute('transform',`translate(${p.x} ${p.y})`);this.updateEdges();}
+        if(drag.n){for(const [name,start] of drag.positions){const p={x:start.x+dx/this.camera.k,y:start.y+dy/this.camera.k};this.points.set(name,p);this.nodeElements.get(name).setAttribute('transform',`translate(${p.x} ${p.y})`);}this.updateEdges();}
         else{this.camera.x=drag.x+dx;this.camera.y=drag.y+dy;this.applyCamera();}
       };
-      // Pointer capture directs the click to the SVG; explicitly select a node on a tap.
-      svg.onpointerup=e=>{if(!drag)return;const n=drag.n;drag=null;if(svg.hasPointerCapture(e.pointerId))svg.releasePointerCapture(e.pointerId);if(n&&!this.moved)this.nodeElements.get(n)?.dispatchEvent(new MouseEvent('click',{bubbles:false}));};
+      svg.onpointerup=e=>{if(!drag)return;const {n,collapse,removeOnTap}=drag;drag=null;if(svg.hasPointerCapture(e.pointerId))svg.releasePointerCapture(e.pointerId);if(n&&!this.moved){if(removeOnTap)this.select(n,true);else if(collapse)this.select(n);}};
       svg.onpointercancel=()=>{drag=null;this.moved=true;};
       svg.addEventListener('wheel',e=>{e.preventDefault();const rect=this.container.getBoundingClientRect();this.zoom(e.deltaY<0?1.15:1/1.15,e.clientX-rect.left,e.clientY-rect.top);},{passive:false});
     }
