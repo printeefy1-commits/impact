@@ -116,7 +116,7 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     ],['A01S001']));
     await page.selectOption('#gneSelect','A01S001');
     assert.equal(await page.locator('#map .tree-link').count(),3);
-    assert.equal(await page.locator('#map .node-name').first().evaluate(el=>getComputedStyle(el).fontSize),'19.5px');
+    assert.equal(await page.locator('#map .node-name').first().evaluate(el=>getComputedStyle(el).fontSize),'29.25px');
     const labelFits=await page.locator('#map .network-node').evaluateAll(nodes=>nodes.every(node=>{
       const text=node.querySelector('.node-name').getBBox(),bg=node.querySelector('.node-label-bg').getBBox();
       return text.x>=bg.x&&text.y>=bg.y&&text.x+text.width<=bg.x+bg.width&&text.y+text.height<=bg.y+bg.height;
@@ -195,6 +195,12 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     assert.equal(await page.inputValue('#gneSelect'),'A44X003');
     await page.fill('#impactSite','44X003');await page.click('#calculateImpact');
     assert.equal(await page.inputValue('#impactResult'),'A44X003,A44X004');
+    assert.equal(await page.textContent('#zoomLabel'),'38%');
+    await page.click('#zoomIn');
+    await page.fill('#search','44X004');
+    assert.equal(await page.textContent('#zoomLabel'),'38%');
+    await page.fill('#search','A44X003');
+    assert.equal(await page.textContent('#zoomLabel'),'38%');
     // Special sites survive import, lookup, impact, downloads and re-import.
     await resetGatewayAdditions();
     const specialCSV='Source NE Name,Sink NE Name,Link Name\nA16X001,A16-SCE1-PEPSI-050,\nA16SCE1-PEPSI050,NE(160-32630),\nA16SCE1-PEPSI050,A16SE01-sikaalgérie-062_E-band,\nA16X001,A16W1043 EB V,\n,,A16W1043-A16WX1055\n';
@@ -207,7 +213,7 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     assert.ok((await visibleNames()).includes('NE(160-32630)'));
     const longLabel=page.locator('.network-node[data-node="A16SCE1-SIKAALGÉRIE062"] .node-name');
     assert.ok(await longLabel.locator('tspan').count()>1);
-    assert.equal(await longLabel.evaluate(el=>getComputedStyle(el).fontSize),'19.5px');
+    assert.equal(await longLabel.evaluate(el=>getComputedStyle(el).fontSize),'29.25px');
     assert.ok(await page.locator('#map .network-node').evaluateAll(nodes=>nodes.every(node=>{
       const a=node.querySelector('.node-name').getBBox(),b=node.querySelector('.node-label-bg').getBBox();
       return a.x>=b.x&&a.y>=b.y&&a.x+a.width<=b.x+b.width&&a.y+a.height<=b.y+b.height;

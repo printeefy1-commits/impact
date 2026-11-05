@@ -153,7 +153,7 @@ function calculateImpact(){
   const result=Network.impact(state.adj,state.gates,site);
   state.affected=new Set(result);
   if(gateway){filterGateways();$('gneSelect').value=gateway;state.foundSite=site;$('search').value=site;}
-  draw();if(gateway){topologyView.fit(result);$('searchStatus').textContent=`${site} · ${result.length} impacted · ${gateway}`;}
+  draw();if(gateway){topologyView.focus(site);$('searchStatus').textContent=`${site} · ${result.length} impacted · ${gateway}`;}
   $('impactResult').value=result.join(',');$('copyImpact').disabled=!result.length;
   $('impactSummary').textContent=`${site} — Impact: ${result.length} ${result.length===1?'site':'sites'}, including this site. ${gateway?'Assigned GNE: '+gateway:'No GNE route is available to determine dependencies.'}`;
 }
