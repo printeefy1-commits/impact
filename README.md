@@ -28,13 +28,15 @@ The two cleaned CSV downloads contain valid, unique links and gateways. Links ar
 
 Every connected NE is assigned to exactly one GNE using the fewest physical hops. Equal-hop ties use the saved gateway order: the built-in list first, earlier additions next, and newly uploaded gateways in their file order. The built-in list preserves the previous file priority for all 191 original gateways, then discovery order for new port-detected gateways, then A16X589. Alphabetical sorting in the dropdown does not change this priority. A site appears only in its assigned gateway's map. Gateways absent from a daily links file remain in the list and have isolated maps until links are imported for them.
 
-Type a complete NE or GNE name into **Find any site across the network** to automatically open its assigned map, highlight its icon, and center it. Suggestions include all imported sites. Saved name corrections are supported in searches too. Unknown or unconnected sites show an explanatory message instead of an unrelated map. You can also select or filter gateways manually.
+Type a complete NE or GNE name into **Search NE or GNE** to automatically open its assigned map, highlight its icon, and center it. Suggestions include all imported sites. Saved name corrections are supported in searches too. Unknown or unconnected sites show an explanatory message instead of an unrelated map. The single search field accepts both NE and GNE names. You can also select gateways from the adjacent dropdown. The explorer header is approximately 1 cm high on desktop, and compact counters overlay the map.
 
 Maps use a radial arrangement with a single straight line per unique undirected link. Drag the background to pan, use the wheel or buttons to zoom, and drag icons to rearrange sites. Site names use a 19.5 px font, 50% larger than before. Maps open at 100% icon size; **Fit map** shows the whole branch. Long site names wrap at the full font size inside their labels. Extra links can be hidden. Auto arrange restores the layout. Full screen is available where supported. Local SVG dish, radio, gateway, and tower icons require no external resources.
 
 ## Impact calculation
 
 Enter an NE or GNE and choose **Calculate impact**, or press Enter. Impact follows the fixed main-path tree drawn with solid lines on the map. Additional links provide no service protection and are ignored for impact, even inside the same GNE domain. Ownership and main paths are fixed before the outage.
+
+Calculating impact opens the assigned map, frames the affected sites, and marks them grey with yellow outlines. Editing the impact input clears the previous highlighting.
 
 An NE's impact includes the site itself and every descendant on its main-path branch. A GNE's impact includes itself and its entire assigned domain. Changing the displayed map, dragging sites, or showing/hiding extra links does not change the result.
 

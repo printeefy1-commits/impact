@@ -21,6 +21,9 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
       await page.reload();await page.context().setOffline(true);
     };
     assert.equal(await page.locator('#downloadReview, #exportSummary, #demo, #failure, #reset, #impactCount, #report, footer, a[download]').count(),0);
+    assert.equal(await page.locator('.intro, #gneSearch').count(),0);
+    assert.equal(await page.locator('.map-stage .stats').count(),1);
+    assert.ok(await page.locator('.compact-heading').evaluate(el=>el.getBoundingClientRect().height<=40));
     assert.equal(await page.locator('html').getAttribute('lang'),'en');
     assert.equal(await page.locator('html').getAttribute('dir'),'ltr');
     assert.doesNotMatch(await page.locator('body').innerText(),/[\u0600-\u06ff]/);
@@ -49,13 +52,8 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     assert.equal(await page.locator('#map svg').count(),0);
     assert.match(await page.locator('#searchStatus').textContent(),/No match/);
 
-    await page.fill('#gneSearch','not-found');
-    assert.equal(await page.locator('#map svg').count(),0);
-    assert.equal(await page.locator('#gneSelect option').count(),1);
-    await page.fill('#gneSearch','a01s');
-    assert.equal(await page.locator('#gneSelect option').count(),2);
-    await page.selectOption('#gneSelect','A01S001');
-    assert.equal((await visibleNames()).length,4);
+    await page.fill('#search','A01S001');
+    assert.equal(await page.inputValue('#gneSelect'),'A01S001');
     await page.setViewportSize({width:390,height:844});
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
     // The former replaceChildren(...issues) throws RangeError with this input.
@@ -237,6 +235,10 @@ test('daily links use built-in GNEs and optional additions persist across reload
     await page.fill('#search','A99X101');assert.equal(await page.inputValue('#gneSelect'),'A16X589');
     await page.fill('#impactSite','A16X589');await page.click('#calculateImpact');
     assert.equal(await page.inputValue('#impactResult'),'A16X589,A99X100,A99X101');
+    assert.equal(await page.locator('#map .impacted').count(),3);
+    assert.ok(await page.locator('#map .impacted').evaluateAll(nodes=>nodes.every(n=>n.querySelector('rect').getAttribute('fill')==='#87929d')));
+    await page.fill('#impactSite','A99X101');
+    assert.equal(await page.locator('#map .impacted').count(),0);
     await page.setInputFiles('#gates',{name:'new-gates.csv',mimeType:'text/csv',buffer:Buffer.from('GNE\nA99X100_IDU1\nA99X100\nA16X589\n')});
     await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
     assert.equal(await page.textContent('#gatesCount'),'273');

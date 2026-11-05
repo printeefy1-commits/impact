@@ -63,11 +63,11 @@ function setData(links,gates,ignoredCount=0,message=''){
   const uniqueLinks=[...new Map(links.map(pair=>[pair.slice().sort().join('|'),pair])).values()];
   const uniqueGates=[...new Set(gates)];
   if(!uniqueLinks.length||!uniqueGates.length)throw Error('No valid links and gateways found. Example link: A12S345-C12X3456; gateway: C12X3456.');
-  state={adj:Network.graph(uniqueLinks,uniqueGates),links:uniqueLinks,gates:uniqueGates,foundSite:''};
+  state={adj:Network.graph(uniqueLinks,uniqueGates),links:uniqueLinks,gates:uniqueGates,foundSite:'',affected:new Set()};
   state.assignment=Network.traverse(state.adj,state.gates);
   topologyView.clear();$('extraLinks').checked=true;
   $('impactSite').disabled=false;$('calculateImpact').disabled=false;$('impactResult').value='';$('copyImpact').disabled=true;$('copyLabel').textContent='Copy list';$('impactSummary').textContent='Enter a site name to calculate its impact.';
-  $('gneSearch').value='';$('gneSearch').disabled=false;$('gneSelect').disabled=false;
+  $('gneSelect').disabled=false;
   $('search').value='';$('search').disabled=false;$('gneSelect').value='';filterGateways();
   replaceItems($('siteNames'),(function*(){for(const name of [...state.adj.keys()].sort()){const option=document.createElement('option');option.value=name;yield option;}})());
   $('searchStatus').textContent='Enter a full site name to open its gateway map.';
@@ -82,8 +82,8 @@ function replaceItems(container,items){
 }
 function filterGateways(){
   if(!state)return;
-  const query=$('gneSearch').value.trim().toUpperCase(),previous=$('gneSelect').value;
-  const matches=state.gates.filter(g=>g.includes(query)).sort();
+  const previous=$('gneSelect').value;
+  const matches=state.gates.slice().sort();
   replaceItems($('gneSelect'),(function*(){yield new Option(matches.length?'Select a GNE gateway…':'No matching gateways','');for(const gate of matches)yield new Option(gate,gate);})());
   $('gneSelect').value=matches.includes(previous)?previous:'';
 }
@@ -95,7 +95,7 @@ function draw(){
   $('viewSummary').textContent=selected?`${selected} · ${base.visited.size} assigned sites, including the gateway · Counters cover the whole network.`:'Select a gateway, or find any NE to open its assigned map.';
   const query=state.foundSite||'';
   if(selected){
-    const extra=topologyView.render({key:selected,branch:base,links,query,showExtra:$('extraLinks').checked});
+    const extra=topologyView.render({key:selected,branch:base,links,query,affected:state.affected,showExtra:$('extraLinks').checked});
     $('extraCount').textContent=extra;
   }else{
     topologyView.clear();$('extraCount').textContent='0';
@@ -127,8 +127,7 @@ $('load').onclick=async()=>{const button=$('load');button.disabled=true;
   gatewayInfo();
 }catch(e){$('status').textContent='Import failed: '+e.message;}finally{button.disabled=false;}};
 $('search').oninput=findSite;
-$('gneSearch').oninput=()=>{clearSiteSearch();filterGateways();draw();if($('impactResult').value)calculateImpact();};
-$('gneSelect').onchange=()=>{clearSiteSearch();draw();$('map').scrollTop=0;$('map').scrollLeft=0;if($('impactResult').value)calculateImpact();};
+$('gneSelect').onchange=()=>{clearSiteSearch();draw();$('map').scrollTop=0;$('map').scrollLeft=0;};
 
 $('zoomIn').onclick=()=>topologyView.zoom(1.25);
 $('zoomOut').onclick=()=>topologyView.zoom(1/1.25);
@@ -143,14 +142,18 @@ $('fullscreen').onclick=async()=>{
 new ResizeObserver(()=>{if(topologyView.svg){if(state?.foundSite&&topologyView.points.has(state.foundSite))topologyView.focus(state.foundSite);else topologyView.open();}}).observe($('map'));
 document.addEventListener('fullscreenchange',()=>{$('fullscreenLabel').textContent=document.fullscreenElement?'Exit full screen':'Full screen';});
 
-$('impactSite').oninput=()=>{$('impactResult').value='';$('copyImpact').disabled=true;$('copyLabel').textContent='Copy list';$('impactSummary').textContent='Choose Calculate impact to refresh the list.';};
+$('impactSite').oninput=()=>{if(state){state.affected=new Set();draw();}$('impactResult').value='';$('copyImpact').disabled=true;$('copyLabel').textContent='Copy list';$('impactSummary').textContent='Choose Calculate impact to refresh the list.';};
 function calculateImpact(){
   $('impactResult').value='';$('copyImpact').disabled=true;$('copyLabel').textContent='Copy list';
+  if(state){state.affected=new Set();draw();}
   if(!state){$('impactSummary').textContent='Import your links file first.';return;}
   const site=Network.primaryName($('impactSite').value);
   if(!site||!state.adj.has(site)){$('impactSummary').textContent='Site not found in the imported network.';return;}
   const gateway=Network.impactRoot(state.adj,state.gates,site);
   const result=Network.impact(state.adj,state.gates,site);
+  state.affected=new Set(result);
+  if(gateway){filterGateways();$('gneSelect').value=gateway;state.foundSite=site;$('search').value=site;}
+  draw();if(gateway){topologyView.fit(result);$('searchStatus').textContent=`${site} · ${result.length} impacted · ${gateway}`;}
   $('impactResult').value=result.join(',');$('copyImpact').disabled=!result.length;
   $('impactSummary').textContent=`${site} — Impact: ${result.length} ${result.length===1?'site':'sites'}, including this site. ${gateway?'Assigned GNE: '+gateway:'No GNE route is available to determine dependencies.'}`;
 }
@@ -172,7 +175,7 @@ function findSite(){
   state.foundSite=site;
   const gateway=state.assignment.owner.get(site),hops=state.assignment.depth.get(site);
   if(!gateway){$('gneSelect').value='';draw();$('searchStatus').textContent=site+' has no route to any GNE in this data.';return;}
-  $('gneSearch').value='';filterGateways();$('gneSelect').value=gateway;
+  filterGateways();$('gneSelect').value=gateway;
   draw();topologyView.focus(site);
   $('searchStatus').textContent=`${site} → ${gateway} · ${hops} ${hops===1?'hop':'hops'}`;
 }

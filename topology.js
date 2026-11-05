@@ -47,13 +47,13 @@
         this.edges.push({a:parent,b:child,path,tree});
       }
       for(const [n,p] of this.points){
-        const gate=n===key,color=n===failed?'#e84b5d':affected.has(n)?'#e8a126':gate?'#087d91':'#16b860';
+        const gate=n===key,color=n===failed?'#e84b5d':affected.has(n)?'#87929d':gate?'#087d91':'#16b860';
         const status=n===failed?'Down':affected.has(n)?'Impacted':gate?'GNE gateway':'Connected';
         const selectable=typeof onSelect==='function';
-        const g=el('g',{'class':'network-node',transform:`translate(${p.x} ${p.y})`,tabindex:0,role:selectable?'button':'img','aria-label':`${n}: ${status}. Drag to move this site.`,'data-node':n,opacity:'1'});
+        const g=el('g',{'class':affected.has(n)?'network-node impacted':'network-node',transform:`translate(${p.x} ${p.y})`,tabindex:0,role:selectable?'button':'img','aria-label':`${n}: ${status}. Drag to move this site.`,'data-node':n,opacity:'1'});
         const title=el('title');title.textContent=`${n} · ${status}\nDrag to arrange this site`;g.append(title);
         // Microwave dish and radio chassis, drawn as local SVG rather than an external image.
-        g.append(el('rect',{x:-29,y:-33,width:58,height:64,rx:4,fill:color,stroke:gate?'#b6f5ff':'#c6f2d7','stroke-width':gate?3:1.5}));
+        g.append(el('rect',{x:-29,y:-33,width:58,height:64,rx:4,fill:color,stroke:affected.has(n)?'#ffe778':gate?'#b6f5ff':'#c6f2d7','stroke-width':affected.has(n)?4:gate?3:1.5}));
         g.append(el('path',{d:'M-15 -22 Q-23 -1 8 0 Z M-14 -21 L7 -3 M-1 -13 L10 -23 M10 -23 L14 -19 M-4 0 L-4 6 M-12 6 H5',fill:'none',stroke:'white','stroke-width':2.2,'stroke-linecap':'round','stroke-linejoin':'round'}));
         g.append(el('circle',{cx:12,cy:-24,r:3,fill:'none',stroke:'white','stroke-width':1.5}));
         for(let i=0;i<3;i++)g.append(el('rect',{x:-20+i*15,y:12,width:10,height:13,rx:1,fill:'none',stroke:'white','stroke-width':1.5}));
@@ -85,10 +85,10 @@
       this.camera={k,x:this.container.clientWidth/2-p.x*k,y:this.container.clientHeight/2-p.y*k};this.applyCamera();
     }
     applyCamera(){if(!this.layer)return;const c=this.camera;this.layer.setAttribute('transform',`translate(${c.x} ${c.y}) scale(${c.k})`);this.onZoom?.(c.k);}
-    fit(){
+    fit(names=this.points?.keys()){
       if(!this.svg)return;
       let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;
-      for(const [name,p] of this.points){const box=this.nodeElements.get(name).getBBox();left=Math.min(left,p.x+box.x-15);right=Math.max(right,p.x+box.x+box.width+15);top=Math.min(top,p.y+box.y-15);bottom=Math.max(bottom,p.y+box.y+box.height+15);}
+      for(const name of names){const p=this.points.get(name);if(!p)continue;const box=this.nodeElements.get(name).getBBox();left=Math.min(left,p.x+box.x-15);right=Math.max(right,p.x+box.x+box.width+15);top=Math.min(top,p.y+box.y-15);bottom=Math.max(bottom,p.y+box.y+box.height+15);}
       const w=this.container.clientWidth,h=this.container.clientHeight,k=Math.min(1.35,(w-40)/(right-left),(h-40)/(bottom-top));
       this.camera={k,x:(w-(right-left)*k)/2-left*k,y:(h-(bottom-top)*k)/2-top*k};this.applyCamera();
     }
