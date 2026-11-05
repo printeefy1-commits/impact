@@ -105,7 +105,7 @@ function draw(){
   $('fullscreen').disabled=!selected||!document.fullscreenEnabled;
 
 }
-$('load').onclick=async()=>{const button=$('load');button.disabled=true;
+$('load').onclick=async()=>{const button=$('load');button.disabled=true;$('status').hidden=true;
   cleanedFiles=null;$('downloadLinks').disabled=true;$('downloadGates').disabled=true;
   try{
   const gatewayFile=$('gates').files[0];
@@ -123,9 +123,9 @@ $('load').onclick=async()=>{const button=$('load');button.disabled=true;
   setData(confirmed.links,gates,ignoredCount,messages.join(' '));
   prepareDownloads(confirmed.links,gates);
   additionalGates=gates.slice(DefaultGNE.length);
-  if(added){try{localStorage.setItem(gatewayStorageKey,JSON.stringify(additionalGates));}catch{$('status').textContent+=' Browser storage is unavailable; keep the GNE CSV to reload these additions next time.';}}
+  if(added){try{localStorage.setItem(gatewayStorageKey,JSON.stringify(additionalGates));}catch{$('status').hidden=false;$('status').textContent+=' Browser storage is unavailable; keep the GNE CSV to reload these additions next time.';}}
   gatewayInfo();
-}catch(e){$('status').textContent='Import failed: '+e.message;}finally{button.disabled=false;}};
+}catch(e){$('status').hidden=false;$('status').textContent='Import failed: '+e.message;}finally{button.disabled=false;}};
 $('search').oninput=findSite;
 $('gneSelect').onchange=()=>{clearSiteSearch();draw();$('map').scrollTop=0;$('map').scrollLeft=0;};
 

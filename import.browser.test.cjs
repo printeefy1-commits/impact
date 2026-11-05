@@ -23,6 +23,10 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     assert.equal(await page.locator('#downloadReview, #exportSummary, #demo, #failure, #reset, #impactCount, #report, footer, a[download]').count(),0);
     assert.equal(await page.locator('.intro, #gneSearch').count(),0);
     assert.equal(await page.locator('.map-stage .stats').count(),1);
+    assert.equal(await page.locator('.map-stage .canvas-bar').count(),1);
+    assert.equal(await page.locator('.compact-heading #fitMap, .compact-heading #fullscreen, .compact-heading #resetLayout').count(),3);
+    assert.ok(await page.locator('#status').evaluate(el=>el.hidden));
+    assert.ok(await page.locator('.search-input').evaluate(el=>Math.abs(el.getBoundingClientRect().width-3*96/2.54)<1));
     assert.ok(await page.locator('.compact-heading').evaluate(el=>el.getBoundingClientRect().height<=40));
     assert.equal(await page.locator('html').getAttribute('lang'),'en');
     assert.equal(await page.locator('html').getAttribute('dir'),'ltr');
