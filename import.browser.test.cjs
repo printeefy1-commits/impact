@@ -137,7 +137,7 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     await page.evaluate(()=>{state.links.push(['C01M001','A01S001'],['A01S001','C01M001']);draw();});
     assert.equal(await page.locator('#map .topology-edges > line').count(),4);
     assert.equal(await page.locator('#map .topology-edges > path').count(),0);
-    assert.equal(await page.locator('#zoomLabel').textContent(),'38%');
+    assert.ok(parseInt(await page.locator('#zoomLabel').textContent(),10)<=38);
     const oldZoom=await page.locator('#zoomLabel').textContent();
     await page.click('#zoomIn');assert.notEqual(await page.locator('#zoomLabel').textContent(),oldZoom);
     await page.click('#centerMap');assert.equal(await page.locator('#zoomLabel').textContent(),'100%');
@@ -199,12 +199,24 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     assert.equal(await page.inputValue('#gneSelect'),'A44X003');
     await page.fill('#impactSite','44X003');await page.click('#calculateImpact');
     assert.equal(await page.inputValue('#impactResult'),'A44X003,A44X004');
-    assert.equal(await page.textContent('#zoomLabel'),'38%');
+    const framing=await page.evaluate(()=>{
+      const map=document.getElementById('map'),area=map.getBoundingClientRect();
+      const root=document.querySelector('[data-node="A44X003"]'),matrix=root.getScreenCTM();
+      const contained=['A44X003','A44X004'].every(name=>{
+        const b=document.querySelector('[data-node="'+name+'"]').getBoundingClientRect();
+        return b.left>=area.left&&b.top>=area.top&&b.right<=area.right&&b.bottom<=area.bottom;
+      });
+      return {contained,x:(matrix.e-area.left)/area.width,y:(matrix.f-area.top)/area.height};
+    });
+    assert.ok(framing.contained);
+    assert.ok(Math.abs(framing.x-.5)<.005&&Math.abs(framing.y-.25)<.005);
+
+    assert.ok(parseInt(await page.textContent('#zoomLabel'),10)<=38);
     await page.click('#zoomIn');
     await page.fill('#search','44X004');
-    assert.equal(await page.textContent('#zoomLabel'),'38%');
+    assert.ok(parseInt(await page.textContent('#zoomLabel'),10)<=38);
     await page.fill('#search','A44X003');
-    assert.equal(await page.textContent('#zoomLabel'),'38%');
+    assert.ok(parseInt(await page.textContent('#zoomLabel'),10)<=38);
     // Special sites survive import, lookup, impact, downloads and re-import.
     await resetGatewayAdditions();
     const specialCSV='Source NE Name,Sink NE Name,Link Name\nA16X001,A16-SCE1-PEPSI-050,\nA16SCE1-PEPSI050,NE(160-32630),\nA16SCE1-PEPSI050,A16SE01-sikaalgérie-062_E-band,\nA16X001,A16W1043 EB V,\n,,A16W1043-A16WX1055\n';
