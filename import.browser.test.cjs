@@ -116,7 +116,8 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     ],['A01S001']));
     await page.selectOption('#gneSelect','A01S001');
     assert.equal(await page.locator('#map .tree-link').count(),3);
-    assert.equal(await page.locator('.gateway-node .device-icon').getAttribute('transform'),'scale(1.5)');
+    assert.equal(await page.locator('.gateway-node .device-icon').getAttribute('transform'),'scale(1.8)');
+    assert.equal(await page.locator('.network-node:not(.gateway-node) .device-icon').first().getAttribute('transform'),'scale(1.4)');
     assert.equal(await page.locator('.gateway-node .device-icon > rect').first().getAttribute('fill'),'#f2c230');
     assert.equal(await page.locator('.stats b').first().evaluate(el=>getComputedStyle(el).fontSize),'25.5px');
     assert.equal(await page.locator('#map .node-name').first().evaluate(el=>getComputedStyle(el).fontSize),'29.25px');
