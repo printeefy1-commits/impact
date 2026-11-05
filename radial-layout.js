@@ -23,6 +23,35 @@
     let offset=0;for(let i=0;i<targets.length;i++)offset+=targets[i]-positions[i];offset/=targets.length;
     for(let i=0;i<ordered.length;i++)angles.set(ordered[i].name,offset+positions[i]);
   }
+  // Keep each branch near its own parent instead of stretching every site to
+  // the radius required by the busiest branch at the same hop depth.
+  function compact(points,parent,root,gap){
+    const origin=points.get(root),placed=new Map([[root,{x:0,y:0}]]),cells=new Map();
+    const key=(x,y)=>x+','+y;
+    function put(p){const k=key(Math.floor(p.x/gap),Math.floor(p.y/gap));if(!cells.has(k))cells.set(k,[]);cells.get(k).push(p);}
+    function free(p){const x=Math.floor(p.x/gap),y=Math.floor(p.y/gap);for(let i=x-1;i<=x+1;i++)for(let j=y-1;j<=y+1;j++)for(const other of cells.get(key(i,j))||[])if(Math.hypot(p.x-other.x,p.y-other.y)<gap-1e-6)return false;return true;}
+    put(placed.get(root));
+    for(const [name,original] of points){
+      if(name===root)continue;
+      const ancestor=parent.get(name),p=placed.get(ancestor)||placed.get(root);
+      let position;
+      if(ancestor===root||!parent.has(name))position={x:original.x-origin.x,y:original.y-origin.y};
+      else{
+        const oldParent=points.get(ancestor),direction=Math.atan2(original.y-oldParent.y,original.x-oldParent.x),parentRadius=Math.hypot(p.x,p.y);
+        // Expanding local rings and angular alternatives retain readable names.
+        for(let ring=0;!position;ring++)for(let turn=0;turn<25&&!position;turn++){
+          const angle=direction+(turn?Math.ceil(turn/2)*(turn%2?1:-1)*Math.PI/18:0),r=260+ring*80;
+          const candidate={x:p.x+r*Math.cos(angle),y:p.y+r*Math.sin(angle)};
+          if(Math.hypot(candidate.x,candidate.y)<parentRadius+80)continue;
+          if(free(candidate))position=candidate;
+        }
+      }
+      placed.set(name,position);put(position);
+    }
+    let extent=140;for(const p of placed.values())extent=Math.max(extent,Math.abs(p.x)+110,Math.abs(p.y)+110);
+    for(const p of placed.values()){p.x+=extent;p.y+=extent;}
+    return {points:placed,width:extent*2,height:extent*2};
+  }
   // Each subtree occupies an angular sector. All traversals are iterative so a
   // long microwave chain does not consume the JavaScript call stack.
   function layout(branch){
@@ -62,9 +91,9 @@
       }
       radii.set(depth,radius);previous=radius;
     }
-    const center=Math.max(140,previous+110),size=center*2,points=new Map([[anchor,{x:center,y:center}]]);
+    const center=Math.max(140,previous+110),points=new Map([[anchor,{x:center,y:center}]]);
     for(const [depth,nodes] of levels)for(const name of nodes){const angle=angles.get(name),r=radii.get(depth);points.set(name,{x:center+r*Math.cos(angle),y:center+r*Math.sin(angle)});}
-    return {points,width:Math.max(280,size),height:Math.max(280,size)};
+    return compact(points,branch.parent,anchor,gap);
   }
   const api={layout};if(typeof module!=='undefined')module.exports=api;else root.RadialLayout=api;
 })(globalThis);

@@ -15,13 +15,10 @@ test('GNE is centered and direct neighbors form spokes on every side',()=>{
  for(const p of direct)assert.ok(Math.abs(distance(p,root)-260)<1e-6);
 });
 
-test('dense radial levels keep icon and name bounds separate and every depth shares a ring',()=>{
+test('compact branches keep icon and name bounds separate',()=>{
  const links=[];for(let i=0;i<8;i++){links.push(['G','P'+i]);for(let j=0;j<10;j++)links.push(['P'+i,`C${i}-${j}`]);}
  const branch=tree(links),result=layout(branch),root=result.points.get('G'),rings=new Map();
  for(const [name,p] of result.points){const depth=branch.depth.get(name);if(!rings.has(depth))rings.set(depth,[]);rings.get(depth).push(p);assert.ok(p.x>=100&&p.y>=100);}
- for(const nodes of rings.values()){
-  const r=distance(nodes[0],root);for(const p of nodes)assert.ok(Math.abs(distance(p,root)-r)<1e-6);
- }
  const points=[...result.points.values()];
  for(let i=0;i<points.length;i++)for(let j=i+1;j<points.length;j++)assert.ok(distance(points[i],points[j])>=200-1e-6);
 });
@@ -54,5 +51,15 @@ test('skewed sparse rings redistribute angles instead of inflating the whole map
  assert.ok(result.width<175000,'sparse inherited sectors must not force an enormous radius');
  const root=result.points.get('G'),ll=result.points.get('LL'),m=result.points.get('M');
  assert.ok(distance(ll,m)>=200-1e-6);
- assert.ok(Math.abs(distance(ll,root)-distance(m,root))<1e-6);
+ assert.ok(distance(ll,result.points.get('L'))<=500);
+ assert.ok(distance(m,result.points.get('H'))<=500);
+});
+
+test('a dense distant branch does not stretch unrelated short links',()=>{
+ const links=[['G','A'],['G','B'],['A','AA'],['AA','LEAF'],['B','HUB']];
+ for(let i=0;i<60;i++)links.push(['HUB','L'+i]);
+ const branch=tree(links),result=layout(branch);
+ assert.ok(distance(result.points.get('AA'),result.points.get('LEAF'))<500);
+ const points=[...result.points.values()];
+ for(let i=0;i<points.length;i++)for(let j=i+1;j<points.length;j++)assert.ok(distance(points[i],points[j])>=200-1e-6);
 });
