@@ -121,6 +121,8 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     assert.equal(await page.locator('.gateway-node .device-icon > rect').first().getAttribute('fill'),'#f2c230');
     assert.equal(await page.locator('.stats b').first().evaluate(el=>getComputedStyle(el).fontSize),'25.5px');
     assert.equal(await page.locator('#map .node-name').first().evaluate(el=>getComputedStyle(el).fontSize),'29.25px');
+    assert.ok(await page.locator('.network-node:not(.gateway-node) .node-label-bg').evaluateAll(nodes=>nodes.every(n=>getComputedStyle(n).fill==='none')));
+    assert.notEqual(await page.locator('.gateway-node .node-label-bg').evaluate(n=>getComputedStyle(n).fill),'none');
     const labelFits=await page.locator('#map .network-node').evaluateAll(nodes=>nodes.every(node=>{
       const text=node.querySelector('.node-name').getBBox(),bg=node.querySelector('.node-label-bg').getBBox();
       return text.x>=bg.x&&text.y>=bg.y&&text.x+text.width<=bg.x+bg.width&&text.y+text.height<=bg.y+bg.height;
@@ -275,8 +277,10 @@ test('daily links use built-in GNEs and optional additions persist across reload
     assert.equal(await page.textContent('#gatesCount'),'272');
     assert.match(await page.textContent('#status'),/Using 272 GNEs/);
     await page.fill('#search','A99X101');assert.equal(await page.inputValue('#gneSelect'),'A16X589');
+    assert.equal(await page.locator('[data-node="A99X101"] .device-icon>rect').first().getAttribute('stroke'),'#ff3038');
     await page.fill('#impactSite','A16X589');await page.click('#calculateImpact');
     assert.equal(await page.inputValue('#impactResult'),'A16X589,A99X100,A99X101');
+    assert.ok(await page.locator('.impacted .device-icon>rect:first-child').evaluateAll(nodes=>nodes.every(n=>n.getAttribute('stroke')==='#ff3038')));
     assert.equal(await page.locator('#map .impacted').count(),3);
     assert.ok(await page.locator('#map .impacted').evaluateAll(nodes=>nodes.every(n=>n.querySelector('rect').getAttribute('fill')==='#87929d')));
     await page.fill('#impactSite','A99X101');

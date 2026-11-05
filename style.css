@@ -8,3 +8,6 @@ main{padding-top:18px}.sr-only{position:absolute;width:1px;height:1px;padding:0;
 .map-stage .canvas-bar{justify-content:flex-end}
 /* Explicit square sizing and enlarged gateway indicators. */
 .compact-heading .search-input{width:5cm;flex:0 0 5cm}.map-stage{height:0;padding-bottom:100%;aspect-ratio:auto;flex:none}.map-stage .map{height:100%;border-radius:0}.map-stage .stats>div>div>span{font-size:15.3px}.map-stage .stats b{font-size:28.9px}.map-panel:fullscreen .map-stage{height:auto;padding-bottom:0;flex:1}.map-panel{border-radius:0}@media(max-width:600px){.compact-heading>.search-input{width:5cm;flex:0 1 5cm}.compact-heading select{width:4cm;flex:0 1 4cm}.map-stage .stats>div>div>span{font-size:13.6px}.map-stage .stats b{font-size:25.5px}}
+
+/* Red search/impact outlines; NE names have no background in any state. */
+.map .network-node:not(.gateway-node) .node-label-bg{fill:none!important;stroke:none!important}.map .network-node:not(.gateway-node) .node-name{fill:#fff;stroke:#294d60;stroke-width:2px;paint-order:stroke fill;stroke-linejoin:round}.map .gateway-node.impacted .node-label-bg,.map .gateway-node.highlighted .node-label-bg,.map .network-node:focus .node-label-bg{stroke:#ff3038}.map .highlighted .device-icon>rect:first-child,.map .impacted .device-icon>rect:first-child{stroke:#ff3038;stroke-width:5px}

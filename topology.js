@@ -51,18 +51,18 @@
         const gate=n===key,color=n===failed?'#e84b5d':affected.has(n)?'#87929d':gate?'#f2c230':'#16b860';
         const status=n===failed?'Down':affected.has(n)?'Impacted':gate?'GNE gateway':'Connected';
         const selectable=typeof onSelect==='function';
-        const g=el('g',{'class':'network-node'+(affected.has(n)?' impacted':'')+(gate?' gateway-node':''),transform:`translate(${p.x} ${p.y})`,tabindex:0,role:selectable?'button':'img','aria-label':`${n}: ${status}. Drag to move this site.`,'data-node':n,opacity:'1'});
+        const g=el('g',{'class':'network-node'+(affected.has(n)?' impacted':'')+(n===query?' highlighted':'')+(gate?' gateway-node':''),transform:`translate(${p.x} ${p.y})`,tabindex:0,role:selectable?'button':'img','aria-label':`${n}: ${status}. Drag to move this site.`,'data-node':n,opacity:'1'});
         const title=el('title');title.textContent=`${n} · ${status}\nDrag to arrange this site`;g.append(title);
         // Microwave dish and radio chassis, drawn as local SVG rather than an external image.
         const device=el('g',{'class':'device-icon',transform:gate?'scale(1.8)':'scale(1.4)'});g.append(device);
-        device.append(el('rect',{x:-29,y:-33,width:58,height:64,rx:4,fill:color,stroke:affected.has(n)?'#ffe778':gate?'#b6f5ff':'#c6f2d7','stroke-width':affected.has(n)?4:gate?3:1.5}));
+        device.append(el('rect',{x:-29,y:-33,width:58,height:64,rx:4,fill:color,stroke:affected.has(n)||n===query?'#ff3038':gate?'#b6f5ff':'#c6f2d7','stroke-width':affected.has(n)||n===query?5:gate?3:1.5}));
         device.append(el('path',{d:'M-15 -22 Q-23 -1 8 0 Z M-14 -21 L7 -3 M-1 -13 L10 -23 M10 -23 L14 -19 M-4 0 L-4 6 M-12 6 H5',fill:'none',stroke:'white','stroke-width':2.2,'stroke-linecap':'round','stroke-linejoin':'round'}));
         device.append(el('circle',{cx:12,cy:-24,r:3,fill:'none',stroke:'white','stroke-width':1.5}));
         for(let i=0;i<3;i++)device.append(el('rect',{x:-20+i*15,y:12,width:10,height:13,rx:1,fill:'none',stroke:'white','stroke-width':1.5}));
         device.append(el('rect',{x:gate?-44:-32,y:-48,width:gate?40:30,height:17,rx:4,fill:gate?'#ddfaff':'#e3ecef',stroke:'#fff','stroke-width':.5}));
         const type=el('text',{'class':'node-type',x:gate?-24:-17,y:-36,'text-anchor':'middle',fill:gate?'#075f70':'#385c6b','font-size':10,'font-weight':'bold'});type.textContent=gate?'GNE':'NE';device.append(type);
-        g.append(el('rect',{'class':'node-label-bg',x:-75,y:gate?62:49,width:150,height:50,rx:5,fill:'#f7fcff',stroke:query&&n===query?'#ffe778':'#c8dce5','stroke-width':query&&n===query?3:1}));
-        const label=el('text',{'class':'node-name',x:0,y:67,'text-anchor':'middle',fill:'#173e50','font-size':29.25,'font-weight':'bold'});label.textContent=n;g.append(label);
+        g.append(el('rect',{'class':'node-label-bg',x:-75,y:gate?62:49,width:150,height:50,rx:5,fill:gate?'#f7fcff':'none',stroke:gate?(query&&n===query?'#ff3038':'#c8dce5'):'none','stroke-width':query&&n===query?3:1}));
+        const label=el('text',{'class':'node-name',x:0,y:67,'text-anchor':'middle',fill:gate?'#173e50':'#ffffff','font-size':29.25,'font-weight':'bold'});label.textContent=n;g.append(label);
         if(selectable){
           g.onclick=e=>{if(e.detail===0)onSelect(n);};
           g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onSelect(n);}};
