@@ -8,6 +8,8 @@ main{padding-top:18px}.sr-only{position:absolute;width:1px;height:1px;padding:0;
 /* Square canvas with a compact, aligned workspace. */
 .topbar{height:1cm;padding:0 max(18px,calc((100vw - 1500px)/2))}.brand{font-size:17px;gap:8px}.brand-mark{width:29px;height:29px;border-radius:8px}.brand-mark .icon{width:22px;height:22px}.brand small{font-size:6px;letter-spacing:1px}.brand>div>span{font-size:11px}.header-tags{font-size:10px;gap:12px}.privacy-tag{padding:3px 8px}.compact-heading .search-input{width:4cm;flex:0 0 4cm}.compact-heading select{width:4cm;max-width:4cm;flex:0 0 4cm}.map-stage{aspect-ratio:1;width:100%;min-height:0}.map-stage .map{position:absolute;inset:0;width:100%;height:100%;min-height:0}.map-stage .stats{top:8px;transform:scale(.75);transform-origin:top left;opacity:.5;pointer-events:auto;transition:opacity .15s}.map-stage .stats:hover,.map-stage .stats:focus-within{opacity:1}.workspace{align-items:stretch}.workspace>aside{contain:size;min-height:0;display:flex;flex-direction:column;overflow:auto}.import-panel,.impact-panel{padding:14px}.section-title{margin-bottom:12px}.section-title p{font-size:10px}.section-icon{width:30px;height:30px}.upload{padding:9px;margin:8px 0}.upload small{margin:5px 0}.hint{font-size:9px;margin:8px 0}.primary{padding:9px;margin-top:9px}.exports{margin-top:10px}.impact-panel{display:flex;flex-direction:column;flex:1;min-height:300px}.impact-panel textarea{flex:1;min-height:80px;resize:none}.impact-panel input{padding:9px 11px}#impactSummary{margin:9px 0;font-size:10px}.map-panel:fullscreen .map-stage{aspect-ratio:auto;flex:1}.map-panel:fullscreen .map-stage .map{position:absolute;height:100%;min-height:0}@media(max-width:1450px){.compact-heading .map-toolbar{gap:3px}.compact-heading .extra-toggle{font-size:8px}.compact-heading .zoom-controls output{min-width:29px}}@media(max-width:850px){.workspace>aside{contain:none;display:grid;overflow:visible}.impact-panel{min-height:300px}.import-panel,.impact-panel{padding:14px}}@media(max-width:600px){.workspace>aside{display:flex}.topbar{height:1cm}.compact-heading select{max-width:4cm;min-width:0}.map-panel .compact-heading{column-gap:5px}.compact-heading>.search-input,.compact-heading select{flex:0 1 4cm;min-width:0}.map-stage .stats{transform:scale(.75)}.map-panel:fullscreen .map-stage{aspect-ratio:auto}}
 .map-stage .canvas-bar{justify-content:flex-end}
+/* Explicit square sizing and enlarged gateway indicators. */
+.compact-heading .search-input{width:5cm;flex:0 0 5cm}.map-stage{height:0;padding-bottom:100%;aspect-ratio:auto;flex:none}.map-stage .map{height:100%;border-radius:0}.map-stage .stats>div>div>span{font-size:15.3px}.map-stage .stats b{font-size:28.9px}.map-panel:fullscreen .map-stage{height:auto;padding-bottom:0;flex:1}.map-panel{border-radius:0}@media(max-width:600px){.compact-heading>.search-input{width:5cm;flex:0 1 5cm}.compact-heading select{width:4cm;flex:0 1 4cm}.map-stage .stats>div>div>span{font-size:13.6px}.map-stage .stats b{font-size:25.5px}}
 </style></head>
 <body>
 <!-- ExcelJS 4.4.0, MIT license: The MIT License (MIT)
@@ -53,12 +55,12 @@ SOFTWARE.
 <section class="workspace"><aside>
 <section class="import-panel"><div class="section-title"><span class="section-icon"><svg class="icon"><use href="#i-upload"/></svg></span><div><h2>Network data</h2><p>Upload your daily links file</p></div><span class="step-tag">01</span></div>
 <label class="upload"><span class="upload-top"><svg class="icon"><use href="#i-link"/></svg><strong>Microwave links</strong><span class="file-type">CSV / XLSX</span></span><small id="linksName">Choose a link or MLR file</small><span class="browse">Browse file <svg class="icon"><use href="#i-upload"/></svg></span><input id="links" type="file" accept=".csv,.txt,.xlsx" aria-label="Upload microwave links"></label>
-<p class="hint" id="gatewayInfo" role="status">272 built-in GNEs ready. Upload a GNE file only to add new gateways.</p>
+
 <label class="upload"><span class="upload-top"><svg class="icon"><use href="#i-gateway"/></svg><strong>Add GNE gateways</strong><span class="file-type">OPTIONAL</span></span><small id="gatesName">Optional — add new gateways</small><span class="browse">Browse file <svg class="icon"><use href="#i-upload"/></svg></span><input id="gates" type="file" accept=".csv,.txt,.xlsx" aria-label="Add GNE gateways (optional)"></label>
-<p class="hint">The first worksheet is used. MLR source and sink columns are detected automatically. Your files stay in your browser.</p>
+
 <div id="status" hidden role="status" aria-live="polite">Upload your links file to build your network. 272 GNE gateways are already included.</div><button id="load" class="primary"><svg class="icon"><use href="#i-gateway"/></svg>Build network map</button>
 <div class="exports"><span class="subheading">CLEANED DATA</span><div class="export-buttons"><button id="downloadLinks" class="secondary" disabled><svg class="icon"><use href="#i-download"/></svg>Links CSV</button><button id="downloadGates" class="secondary" disabled><svg class="icon"><use href="#i-download"/></svg>GNE CSV</button></div></div></section>
-<section class="impact-panel"><div class="section-title"><span class="section-icon amber"><svg class="icon"><use href="#i-target"/></svg></span><div><h2>Impact calculator</h2><p>One site. Every affected NE.</p></div></div><form id="impactForm"><label for="impactSite">NE or GNE name</label><input id="impactSite" placeholder="e.g. O46X158" autocomplete="off" disabled><button id="calculateImpact" class="primary" disabled><svg class="icon"><use href="#i-target"/></svg>Calculate impact</button></form><p class="hint">Includes the site itself and all downstream sites on the main path. Extra links provide no service protection.</p><p id="impactSummary" role="status" aria-live="polite">Import your files to get started.</p><div class="result-heading"><label for="impactResult">Affected sites</label><button id="copyImpact" class="text-button" disabled><svg class="icon"><use href="#i-copy"/></svg><span id="copyLabel">Copy list</span></button></div><textarea id="impactResult" readonly rows="7" spellcheck="false" placeholder="Comma-separated site names will appear here."></textarea></section>
+<section class="impact-panel"><div class="section-title"><span class="section-icon amber"><svg class="icon"><use href="#i-target"/></svg></span><div><h2>Impact calculator</h2><p>One site. Every affected NE.</p></div></div><form id="impactForm"><input id="impactSite" aria-label="NE or GNE name" placeholder="NE or GNE name, e.g. 44X003" autocomplete="off" disabled><button id="calculateImpact" class="primary" disabled><svg class="icon"><use href="#i-target"/></svg>Calculate impact</button></form><p id="impactSummary" role="status" aria-live="polite">Import your files to get started.</p><div class="result-heading"><label for="impactResult">Affected sites</label><button id="copyImpact" class="text-button" disabled><svg class="icon"><use href="#i-copy"/></svg><span id="copyLabel">Copy list</span></button></div><textarea id="impactResult" readonly rows="7" spellcheck="false" placeholder="Comma-separated site names will appear here."></textarea></section>
 </aside><div class="content">
 
 <section class="map-panel" id="mapPanel"><div class="map-heading compact-heading"><svg class="icon"><use href="#i-gateway"/></svg><div class="search-input"><svg class="icon"><use href="#i-search"/></svg><input id="search" type="search" list="siteNames" placeholder="Search NE or GNE…" aria-label="Search NE or GNE" autocomplete="off" disabled></div><datalist id="siteNames"></datalist><select id="gneSelect" aria-label="Displayed gateway" disabled><option value="">Select GNE…</option></select><div class="map-toolbar" role="group" aria-label="Map controls"><div class="zoom-controls"><button id="zoomIn" disabled aria-label="Zoom in">＋</button><output id="zoomLabel" aria-live="polite">100%</output><button id="zoomOut" disabled aria-label="Zoom out">−</button></div><button id="fitMap" title="Fit map" aria-label="Fit map" disabled><svg class="icon"><use href="#i-expand"/></svg>Fit map</button><button id="centerMap" title="GNE at 100%" aria-label="GNE at 100%" disabled><svg class="icon"><use href="#i-target"/></svg>GNE · 100%</button><button id="resetLayout" title="Auto arrange" aria-label="Auto arrange" disabled><svg class="icon"><use href="#i-refresh"/></svg>Auto arrange</button><button id="fullscreen" title="Full screen" aria-label="Full screen" disabled><svg class="icon"><use href="#i-expand"/></svg><span id="fullscreenLabel">Full screen</span></button><label class="extra-toggle"><input id="extraLinks" type="checkbox" checked disabled>Extra links <span id="extraCount">0</span></label></div><p class="sr-only" id="searchStatus" role="status" aria-live="polite">Search any NE or GNE.</p></div><p id="viewSummary" class="sr-only" aria-live="polite"></p>
@@ -641,18 +643,19 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   const radial=typeof module!=='undefined'?require('./radial-layout.js'):root.RadialLayout;
   const layout=branch=>radial.layout(branch);
   // Each physical adjacency gets one direct segment, clipped to the two device icons.
-  function segment(p,q){
+  function segment(p,q,scaleP=1,scaleQ=1){
     const dx=q.x-p.x,dy=q.y-p.y;
-    const inset=Math.min(.45,1/Math.max(Math.abs(dx)/33,Math.abs(dy)/37));
+    const ratio=Math.max(Math.abs(dx)/33,Math.abs(dy)/37);
+    const inset=Math.min(.45,scaleP/ratio),endInset=Math.min(.45,scaleQ/ratio);
     if(!Number.isFinite(inset))return {x1:p.x,y1:p.y,x2:q.x,y2:q.y};
-    return {x1:p.x+dx*inset,y1:p.y+dy*inset,x2:q.x-dx*inset,y2:q.y-dy*inset};
+    return {x1:p.x+dx*inset,y1:p.y+dy*inset,x2:q.x-dx*endInset,y2:q.y-dy*endInset};
   }
   function el(tag,attrs={}){
     const node=document.createElementNS('http://www.w3.org/2000/svg',tag);
     for(const [key,value] of Object.entries(attrs))node.setAttribute(key,value);
     return node;
   }
-  function wrapName(label,background){
+  function wrapName(label,background,gate){
     const name=label.textContent,lines=[];let line='';
     // Measure at the full requested font size; long special names wrap rather
     // than shrinking, truncating, or covering neighboring sites.
@@ -662,7 +665,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       else line+=character;
     }
     lines.push(line);label.textContent='';
-    lines.forEach((value,index)=>{const span=el('tspan',{x:0,y:67+index*34});span.textContent=value;label.append(span);});
+    lines.forEach((value,index)=>{const span=el('tspan',{x:0,y:(gate?84:67)+index*34});span.textContent=value;label.append(span);});
     background.setAttribute('height',42+(lines.length-1)*34);
   }
   class View{
@@ -686,19 +689,20 @@ https://github.com/nodeca/pako/blob/main/LICENSE
         this.edges.push({a:parent,b:child,path,tree});
       }
       for(const [n,p] of this.points){
-        const gate=n===key,color=n===failed?'#e84b5d':affected.has(n)?'#87929d':gate?'#087d91':'#16b860';
+        const gate=n===key,color=n===failed?'#e84b5d':affected.has(n)?'#87929d':gate?'#f2c230':'#16b860';
         const status=n===failed?'Down':affected.has(n)?'Impacted':gate?'GNE gateway':'Connected';
         const selectable=typeof onSelect==='function';
-        const g=el('g',{'class':affected.has(n)?'network-node impacted':'network-node',transform:`translate(${p.x} ${p.y})`,tabindex:0,role:selectable?'button':'img','aria-label':`${n}: ${status}. Drag to move this site.`,'data-node':n,opacity:'1'});
+        const g=el('g',{'class':'network-node'+(affected.has(n)?' impacted':'')+(gate?' gateway-node':''),transform:`translate(${p.x} ${p.y})`,tabindex:0,role:selectable?'button':'img','aria-label':`${n}: ${status}. Drag to move this site.`,'data-node':n,opacity:'1'});
         const title=el('title');title.textContent=`${n} · ${status}\nDrag to arrange this site`;g.append(title);
         // Microwave dish and radio chassis, drawn as local SVG rather than an external image.
-        g.append(el('rect',{x:-29,y:-33,width:58,height:64,rx:4,fill:color,stroke:affected.has(n)?'#ffe778':gate?'#b6f5ff':'#c6f2d7','stroke-width':affected.has(n)?4:gate?3:1.5}));
-        g.append(el('path',{d:'M-15 -22 Q-23 -1 8 0 Z M-14 -21 L7 -3 M-1 -13 L10 -23 M10 -23 L14 -19 M-4 0 L-4 6 M-12 6 H5',fill:'none',stroke:'white','stroke-width':2.2,'stroke-linecap':'round','stroke-linejoin':'round'}));
-        g.append(el('circle',{cx:12,cy:-24,r:3,fill:'none',stroke:'white','stroke-width':1.5}));
-        for(let i=0;i<3;i++)g.append(el('rect',{x:-20+i*15,y:12,width:10,height:13,rx:1,fill:'none',stroke:'white','stroke-width':1.5}));
-        g.append(el('rect',{x:gate?-44:-32,y:-48,width:gate?40:30,height:17,rx:4,fill:gate?'#ddfaff':'#e3ecef',stroke:'#fff','stroke-width':.5}));
-        const type=el('text',{'class':'node-type',x:gate?-24:-17,y:-36,'text-anchor':'middle',fill:gate?'#075f70':'#385c6b','font-size':10,'font-weight':'bold'});type.textContent=gate?'GNE':'NE';g.append(type);
-        g.append(el('rect',{'class':'node-label-bg',x:-75,y:39,width:150,height:42,rx:5,fill:'#f7fcff',stroke:query&&n===query?'#ffe778':'#c8dce5','stroke-width':query&&n===query?3:1}));
+        const device=el('g',{'class':'device-icon',transform:gate?'scale(1.5)':'scale(1)'});g.append(device);
+        device.append(el('rect',{x:-29,y:-33,width:58,height:64,rx:4,fill:color,stroke:affected.has(n)?'#ffe778':gate?'#b6f5ff':'#c6f2d7','stroke-width':affected.has(n)?4:gate?3:1.5}));
+        device.append(el('path',{d:'M-15 -22 Q-23 -1 8 0 Z M-14 -21 L7 -3 M-1 -13 L10 -23 M10 -23 L14 -19 M-4 0 L-4 6 M-12 6 H5',fill:'none',stroke:'white','stroke-width':2.2,'stroke-linecap':'round','stroke-linejoin':'round'}));
+        device.append(el('circle',{cx:12,cy:-24,r:3,fill:'none',stroke:'white','stroke-width':1.5}));
+        for(let i=0;i<3;i++)device.append(el('rect',{x:-20+i*15,y:12,width:10,height:13,rx:1,fill:'none',stroke:'white','stroke-width':1.5}));
+        device.append(el('rect',{x:gate?-44:-32,y:-48,width:gate?40:30,height:17,rx:4,fill:gate?'#ddfaff':'#e3ecef',stroke:'#fff','stroke-width':.5}));
+        const type=el('text',{'class':'node-type',x:gate?-24:-17,y:-36,'text-anchor':'middle',fill:gate?'#075f70':'#385c6b','font-size':10,'font-weight':'bold'});type.textContent=gate?'GNE':'NE';device.append(type);
+        g.append(el('rect',{'class':'node-label-bg',x:-75,y:gate?56:39,width:150,height:42,rx:5,fill:'#f7fcff',stroke:query&&n===query?'#ffe778':'#c8dce5','stroke-width':query&&n===query?3:1}));
         const label=el('text',{'class':'node-name',x:0,y:67,'text-anchor':'middle',fill:'#173e50','font-size':29.25,'font-weight':'bold'});label.textContent=n;g.append(label);
         if(selectable){
           g.onclick=e=>{if(e.detail===0)onSelect(n);};
@@ -707,20 +711,20 @@ https://github.com/nodeca/pako/blob/main/LICENSE
         nodes.append(g);this.nodeElements.set(n,g);
       }
       this.updateEdges();this.container.replaceChildren(svg);
-      for(const node of this.nodeElements.values())wrapName(node.querySelector('.node-name'),node.querySelector('.node-label-bg'));
+      for(const node of this.nodeElements.values())wrapName(node.querySelector('.node-name'),node.querySelector('.node-label-bg'),node.classList.contains('gateway-node'));
       this.bindInteractions(svg);
       if(changed)this.open();else this.applyCamera();
       return extraCount;
     }
     updateEdges(){
       for(const {a,b,path} of this.edges){
-        const coordinates=segment(this.points.get(a),this.points.get(b));
+        const coordinates=segment(this.points.get(a),this.points.get(b),a===this.key?1.5:1,b===this.key?1.5:1);
         for(const [name,value] of Object.entries(coordinates))path.setAttribute(name,value);
       }
     }
     open(){
       if(!this.svg)return;
-      const p=this.points.get(this.key),k=1;
+      const p=this.points.get(this.key),k=.38;
       this.camera={k,x:this.container.clientWidth/2-p.x*k,y:this.container.clientHeight/2-p.y*k};this.applyCamera();
     }
     applyCamera(){if(!this.layer)return;const c=this.camera;this.layer.setAttribute('transform',`translate(${c.x} ${c.y}) scale(${c.k})`);this.onZoom?.(c.k);}
@@ -771,10 +775,6 @@ try{
   const saved=JSON.parse(localStorage.getItem(gatewayStorageKey)||'[]');
   if(Array.isArray(saved))additionalGates=[...new Set(saved.filter(value=>typeof value==='string').map(Network.primaryName).filter(Boolean))].filter(gate=>!DefaultGNE.includes(gate));
 }catch{}
-function gatewayInfo(){
-  $('gatewayInfo').textContent=`${DefaultGNE.length} built-in GNEs ready${additionalGates.length?' + '+additionalGates.length+' added in this browser':''}. Upload a GNE file only to add new gateways.`;
-}
-gatewayInfo();
 function prepareDownloads(links,gates){
   cleanedFiles={
     links:[...new Map(links.map(pair=>{const sorted=pair.slice().sort();return [JSON.stringify(sorted),sorted];})).values()],
@@ -887,10 +887,9 @@ $('load').onclick=async()=>{const button=$('load');button.disabled=true;$('statu
   prepareDownloads(confirmed.links,gates);
   additionalGates=gates.slice(DefaultGNE.length);
   if(added){try{localStorage.setItem(gatewayStorageKey,JSON.stringify(additionalGates));}catch{$('status').hidden=false;$('status').textContent+=' Browser storage is unavailable; keep the GNE CSV to reload these additions next time.';}}
-  gatewayInfo();
 }catch(e){$('status').hidden=false;$('status').textContent='Import failed: '+e.message;}finally{button.disabled=false;}};
 $('search').oninput=findSite;
-$('gneSelect').onchange=()=>{clearSiteSearch();draw();$('map').scrollTop=0;$('map').scrollLeft=0;};
+$('gneSelect').onchange=()=>{clearSiteSearch();draw();if(topologyView.svg)topologyView.focus($('gneSelect').value);$('map').scrollTop=0;$('map').scrollLeft=0;};
 
 $('zoomIn').onclick=()=>topologyView.zoom(1.25);
 $('zoomOut').onclick=()=>topologyView.zoom(1/1.25);

@@ -8,10 +8,6 @@ try{
   const saved=JSON.parse(localStorage.getItem(gatewayStorageKey)||'[]');
   if(Array.isArray(saved))additionalGates=[...new Set(saved.filter(value=>typeof value==='string').map(Network.primaryName).filter(Boolean))].filter(gate=>!DefaultGNE.includes(gate));
 }catch{}
-function gatewayInfo(){
-  $('gatewayInfo').textContent=`${DefaultGNE.length} built-in GNEs ready${additionalGates.length?' + '+additionalGates.length+' added in this browser':''}. Upload a GNE file only to add new gateways.`;
-}
-gatewayInfo();
 function prepareDownloads(links,gates){
   cleanedFiles={
     links:[...new Map(links.map(pair=>{const sorted=pair.slice().sort();return [JSON.stringify(sorted),sorted];})).values()],
@@ -124,10 +120,9 @@ $('load').onclick=async()=>{const button=$('load');button.disabled=true;$('statu
   prepareDownloads(confirmed.links,gates);
   additionalGates=gates.slice(DefaultGNE.length);
   if(added){try{localStorage.setItem(gatewayStorageKey,JSON.stringify(additionalGates));}catch{$('status').hidden=false;$('status').textContent+=' Browser storage is unavailable; keep the GNE CSV to reload these additions next time.';}}
-  gatewayInfo();
 }catch(e){$('status').hidden=false;$('status').textContent='Import failed: '+e.message;}finally{button.disabled=false;}};
 $('search').oninput=findSite;
-$('gneSelect').onchange=()=>{clearSiteSearch();draw();$('map').scrollTop=0;$('map').scrollLeft=0;};
+$('gneSelect').onchange=()=>{clearSiteSearch();draw();if(topologyView.svg)topologyView.focus($('gneSelect').value);$('map').scrollTop=0;$('map').scrollLeft=0;};
 
 $('zoomIn').onclick=()=>topologyView.zoom(1.25);
 $('zoomOut').onclick=()=>topologyView.zoom(1/1.25);

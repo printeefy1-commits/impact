@@ -33,7 +33,7 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     await page.mouse.move(0,0);
     assert.equal(await page.locator('.compact-heading #fitMap, .compact-heading #fullscreen, .compact-heading #resetLayout').count(),3);
     assert.ok(await page.locator('#status').evaluate(el=>el.hidden));
-    assert.ok(await page.locator('.search-input').evaluate(el=>Math.abs(el.getBoundingClientRect().width-4*96/2.54)<1));
+    assert.ok(await page.locator('.search-input').evaluate(el=>Math.abs(el.getBoundingClientRect().width-5*96/2.54)<1));
     assert.ok(await page.locator('#gneSelect').evaluate(el=>Math.abs(el.getBoundingClientRect().width-4*96/2.54)<1));
     assert.ok(await page.evaluate(()=>Math.abs(document.querySelector('aside').getBoundingClientRect().bottom-document.querySelector('#mapPanel').getBoundingClientRect().bottom)<2));
     assert.ok(await page.locator('.compact-heading').evaluate(el=>el.getBoundingClientRect().height<=40));
@@ -116,6 +116,9 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     ],['A01S001']));
     await page.selectOption('#gneSelect','A01S001');
     assert.equal(await page.locator('#map .tree-link').count(),3);
+    assert.equal(await page.locator('.gateway-node .device-icon').getAttribute('transform'),'scale(1.5)');
+    assert.equal(await page.locator('.gateway-node .device-icon > rect').first().getAttribute('fill'),'#f2c230');
+    assert.equal(await page.locator('.stats b').first().evaluate(el=>getComputedStyle(el).fontSize),'25.5px');
     assert.equal(await page.locator('#map .node-name').first().evaluate(el=>getComputedStyle(el).fontSize),'29.25px');
     const labelFits=await page.locator('#map .network-node').evaluateAll(nodes=>nodes.every(node=>{
       const text=node.querySelector('.node-name').getBBox(),bg=node.querySelector('.node-label-bg').getBBox();
@@ -133,7 +136,7 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     await page.evaluate(()=>{state.links.push(['C01M001','A01S001'],['A01S001','C01M001']);draw();});
     assert.equal(await page.locator('#map .topology-edges > line').count(),4);
     assert.equal(await page.locator('#map .topology-edges > path').count(),0);
-    assert.equal(await page.locator('#zoomLabel').textContent(),'100%');
+    assert.equal(await page.locator('#zoomLabel').textContent(),'38%');
     const oldZoom=await page.locator('#zoomLabel').textContent();
     await page.click('#zoomIn');assert.notEqual(await page.locator('#zoomLabel').textContent(),oldZoom);
     await page.click('#centerMap');assert.equal(await page.locator('#zoomLabel').textContent(),'100%');
@@ -249,7 +252,9 @@ test('daily links use built-in GNEs and optional additions persist across reload
     const page=await browser.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
     await page.goto(`http://127.0.0.1:${server.address().port}`);
     assert.deepEqual(await page.evaluate(()=>[...DefaultGNE]),[...defaultGates]);
-    assert.match(await page.textContent('#gatewayInfo'),/272 built-in GNEs/);
+    assert.equal(await page.locator('#gatewayInfo').count(),0);
+    assert.equal(await page.locator('label[for=impactSite]').count(),0);
+    assert.match(await page.getAttribute('#impactSite','placeholder'),/NE or GNE name/);
     await page.click('#load');assert.match(await page.textContent('#status'),/Choose a links file first/);
     const links='link\nA16X589-A99X100\nA99X100-A99X101\nO46T078-O46X158\n';
     await page.setInputFiles('#links',{name:'day-one.csv',mimeType:'text/csv',buffer:Buffer.from(links)});
@@ -274,7 +279,7 @@ test('daily links use built-in GNEs and optional additions persist across reload
     const exported=Buffer.concat(chunks).toString('utf8').replace(/^\uFEFF/,'').trim().split(/\r?\n/).slice(1);
     assert.deepEqual(exported,[...defaultGates,'A99X100']);
     await page.reload();
-    assert.match(await page.textContent('#gatewayInfo'),/1 added in this browser/);
+    assert.deepEqual(await page.evaluate(()=>additionalGates),['A99X100']);
     assert.equal(await page.locator('#gates').evaluate(input=>input.files.length),0);
     await page.setInputFiles('#links',{name:'day-two.csv',mimeType:'text/csv',buffer:Buffer.from('link\nA16X589-A99X100\nA99X100-A99X101\nA99X101-A99X102\n')});
     await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);

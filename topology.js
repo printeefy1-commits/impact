@@ -2,18 +2,19 @@
   const radial=typeof module!=='undefined'?require('./radial-layout.js'):root.RadialLayout;
   const layout=branch=>radial.layout(branch);
   // Each physical adjacency gets one direct segment, clipped to the two device icons.
-  function segment(p,q){
+  function segment(p,q,scaleP=1,scaleQ=1){
     const dx=q.x-p.x,dy=q.y-p.y;
-    const inset=Math.min(.45,1/Math.max(Math.abs(dx)/33,Math.abs(dy)/37));
+    const ratio=Math.max(Math.abs(dx)/33,Math.abs(dy)/37);
+    const inset=Math.min(.45,scaleP/ratio),endInset=Math.min(.45,scaleQ/ratio);
     if(!Number.isFinite(inset))return {x1:p.x,y1:p.y,x2:q.x,y2:q.y};
-    return {x1:p.x+dx*inset,y1:p.y+dy*inset,x2:q.x-dx*inset,y2:q.y-dy*inset};
+    return {x1:p.x+dx*inset,y1:p.y+dy*inset,x2:q.x-dx*endInset,y2:q.y-dy*endInset};
   }
   function el(tag,attrs={}){
     const node=document.createElementNS('http://www.w3.org/2000/svg',tag);
     for(const [key,value] of Object.entries(attrs))node.setAttribute(key,value);
     return node;
   }
-  function wrapName(label,background){
+  function wrapName(label,background,gate){
     const name=label.textContent,lines=[];let line='';
     // Measure at the full requested font size; long special names wrap rather
     // than shrinking, truncating, or covering neighboring sites.
@@ -23,7 +24,7 @@
       else line+=character;
     }
     lines.push(line);label.textContent='';
-    lines.forEach((value,index)=>{const span=el('tspan',{x:0,y:67+index*34});span.textContent=value;label.append(span);});
+    lines.forEach((value,index)=>{const span=el('tspan',{x:0,y:(gate?84:67)+index*34});span.textContent=value;label.append(span);});
     background.setAttribute('height',42+(lines.length-1)*34);
   }
   class View{
@@ -47,19 +48,20 @@
         this.edges.push({a:parent,b:child,path,tree});
       }
       for(const [n,p] of this.points){
-        const gate=n===key,color=n===failed?'#e84b5d':affected.has(n)?'#87929d':gate?'#087d91':'#16b860';
+        const gate=n===key,color=n===failed?'#e84b5d':affected.has(n)?'#87929d':gate?'#f2c230':'#16b860';
         const status=n===failed?'Down':affected.has(n)?'Impacted':gate?'GNE gateway':'Connected';
         const selectable=typeof onSelect==='function';
-        const g=el('g',{'class':affected.has(n)?'network-node impacted':'network-node',transform:`translate(${p.x} ${p.y})`,tabindex:0,role:selectable?'button':'img','aria-label':`${n}: ${status}. Drag to move this site.`,'data-node':n,opacity:'1'});
+        const g=el('g',{'class':'network-node'+(affected.has(n)?' impacted':'')+(gate?' gateway-node':''),transform:`translate(${p.x} ${p.y})`,tabindex:0,role:selectable?'button':'img','aria-label':`${n}: ${status}. Drag to move this site.`,'data-node':n,opacity:'1'});
         const title=el('title');title.textContent=`${n} · ${status}\nDrag to arrange this site`;g.append(title);
         // Microwave dish and radio chassis, drawn as local SVG rather than an external image.
-        g.append(el('rect',{x:-29,y:-33,width:58,height:64,rx:4,fill:color,stroke:affected.has(n)?'#ffe778':gate?'#b6f5ff':'#c6f2d7','stroke-width':affected.has(n)?4:gate?3:1.5}));
-        g.append(el('path',{d:'M-15 -22 Q-23 -1 8 0 Z M-14 -21 L7 -3 M-1 -13 L10 -23 M10 -23 L14 -19 M-4 0 L-4 6 M-12 6 H5',fill:'none',stroke:'white','stroke-width':2.2,'stroke-linecap':'round','stroke-linejoin':'round'}));
-        g.append(el('circle',{cx:12,cy:-24,r:3,fill:'none',stroke:'white','stroke-width':1.5}));
-        for(let i=0;i<3;i++)g.append(el('rect',{x:-20+i*15,y:12,width:10,height:13,rx:1,fill:'none',stroke:'white','stroke-width':1.5}));
-        g.append(el('rect',{x:gate?-44:-32,y:-48,width:gate?40:30,height:17,rx:4,fill:gate?'#ddfaff':'#e3ecef',stroke:'#fff','stroke-width':.5}));
-        const type=el('text',{'class':'node-type',x:gate?-24:-17,y:-36,'text-anchor':'middle',fill:gate?'#075f70':'#385c6b','font-size':10,'font-weight':'bold'});type.textContent=gate?'GNE':'NE';g.append(type);
-        g.append(el('rect',{'class':'node-label-bg',x:-75,y:39,width:150,height:42,rx:5,fill:'#f7fcff',stroke:query&&n===query?'#ffe778':'#c8dce5','stroke-width':query&&n===query?3:1}));
+        const device=el('g',{'class':'device-icon',transform:gate?'scale(1.5)':'scale(1)'});g.append(device);
+        device.append(el('rect',{x:-29,y:-33,width:58,height:64,rx:4,fill:color,stroke:affected.has(n)?'#ffe778':gate?'#b6f5ff':'#c6f2d7','stroke-width':affected.has(n)?4:gate?3:1.5}));
+        device.append(el('path',{d:'M-15 -22 Q-23 -1 8 0 Z M-14 -21 L7 -3 M-1 -13 L10 -23 M10 -23 L14 -19 M-4 0 L-4 6 M-12 6 H5',fill:'none',stroke:'white','stroke-width':2.2,'stroke-linecap':'round','stroke-linejoin':'round'}));
+        device.append(el('circle',{cx:12,cy:-24,r:3,fill:'none',stroke:'white','stroke-width':1.5}));
+        for(let i=0;i<3;i++)device.append(el('rect',{x:-20+i*15,y:12,width:10,height:13,rx:1,fill:'none',stroke:'white','stroke-width':1.5}));
+        device.append(el('rect',{x:gate?-44:-32,y:-48,width:gate?40:30,height:17,rx:4,fill:gate?'#ddfaff':'#e3ecef',stroke:'#fff','stroke-width':.5}));
+        const type=el('text',{'class':'node-type',x:gate?-24:-17,y:-36,'text-anchor':'middle',fill:gate?'#075f70':'#385c6b','font-size':10,'font-weight':'bold'});type.textContent=gate?'GNE':'NE';device.append(type);
+        g.append(el('rect',{'class':'node-label-bg',x:-75,y:gate?56:39,width:150,height:42,rx:5,fill:'#f7fcff',stroke:query&&n===query?'#ffe778':'#c8dce5','stroke-width':query&&n===query?3:1}));
         const label=el('text',{'class':'node-name',x:0,y:67,'text-anchor':'middle',fill:'#173e50','font-size':29.25,'font-weight':'bold'});label.textContent=n;g.append(label);
         if(selectable){
           g.onclick=e=>{if(e.detail===0)onSelect(n);};
@@ -68,20 +70,20 @@
         nodes.append(g);this.nodeElements.set(n,g);
       }
       this.updateEdges();this.container.replaceChildren(svg);
-      for(const node of this.nodeElements.values())wrapName(node.querySelector('.node-name'),node.querySelector('.node-label-bg'));
+      for(const node of this.nodeElements.values())wrapName(node.querySelector('.node-name'),node.querySelector('.node-label-bg'),node.classList.contains('gateway-node'));
       this.bindInteractions(svg);
       if(changed)this.open();else this.applyCamera();
       return extraCount;
     }
     updateEdges(){
       for(const {a,b,path} of this.edges){
-        const coordinates=segment(this.points.get(a),this.points.get(b));
+        const coordinates=segment(this.points.get(a),this.points.get(b),a===this.key?1.5:1,b===this.key?1.5:1);
         for(const [name,value] of Object.entries(coordinates))path.setAttribute(name,value);
       }
     }
     open(){
       if(!this.svg)return;
-      const p=this.points.get(this.key),k=1;
+      const p=this.points.get(this.key),k=.38;
       this.camera={k,x:this.container.clientWidth/2-p.x*k,y:this.container.clientHeight/2-p.y*k};this.applyCamera();
     }
     applyCamera(){if(!this.layer)return;const c=this.camera;this.layer.setAttribute('transform',`translate(${c.x} ${c.y}) scale(${c.k})`);this.onZoom?.(c.k);}
