@@ -71,8 +71,8 @@
       for(const node of this.nodeElements.values())wrapName(node.querySelector('.node-name'),node.querySelector('.node-label-bg'),node.classList.contains('gateway-node'));
       this.parts=new Map();
       for(const [name,node] of this.nodeElements){
-        const scale=name===this.key?1.8:1.4,device=node.querySelector('.device-icon').getBBox(),label=node.querySelector('.node-label-bg').getBBox(),pad=9;
-        this.parts.set(name,[{x:device.x*scale-pad,y:device.y*scale-pad,width:device.width*scale+pad*2,height:device.height*scale+pad*2},{x:label.x-pad,y:label.y-pad,width:label.width+pad*2,height:label.height+pad*2}]);
+        const scale=name===this.key?1.8:1.4,device=node.querySelector('.device-icon').getBBox(),pad=9;
+        this.parts.set(name,[{x:device.x*scale-pad,y:device.y*scale-pad,width:device.width*scale+pad*2,height:device.height*scale+pad*2}]);
       }
       if(changed){
         this.obstructions=clearance.arrange(this.points,this.parts,this.edges,this.key);

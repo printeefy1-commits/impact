@@ -117,6 +117,8 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     await page.selectOption('#gneSelect','A01S001');
     assert.equal(await page.locator('#map .tree-link').count(),3);
     assert.equal(await page.evaluate(()=>LayoutClearance.obstacles(topologyView.points,topologyView.parts,topologyView.edges).length),0);
+    assert.ok(await page.evaluate(()=>[...topologyView.parts.values()].every(parts=>parts.length===1)));
+    assert.ok(await page.evaluate(()=>Boolean(document.querySelector('.topology-edges').compareDocumentPosition(document.querySelector('.topology-nodes'))&Node.DOCUMENT_POSITION_FOLLOWING)));
     assert.equal(await page.locator('.gateway-node .device-icon').getAttribute('transform'),'scale(1.8)');
     assert.equal(await page.locator('.network-node:not(.gateway-node) .device-icon').first().getAttribute('transform'),'scale(1.4)');
     assert.equal(await page.locator('.gateway-node .device-icon > rect').first().getAttribute('fill'),'#f2c230');

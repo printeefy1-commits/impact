@@ -49,7 +49,7 @@
     }
     return conflicts;
   }
-  // Clip the straight segment beyond both the endpoint's device and its label.
+  // Clip a straight segment beyond the endpoint's protected device bounds.
   function endPoint(p,q,boxes){let exit=0;const dx=q.x-p.x,dy=q.y-p.y;
     for(const r of boxes){let low=0,high=1,valid=true;for(const [delta,min,max] of [[dx,r.x,r.x+r.width],[dy,r.y,r.y+r.height]]){if(Math.abs(delta)<1e-10){if(min>0||max<0)valid=false;}else{let a=min/delta,b=max/delta;if(a>b)[a,b]=[b,a];low=Math.max(low,a);high=Math.min(high,b);}}if(valid&&low<=high&&high>=0&&low<=1)exit=Math.max(exit,Math.min(1,high));}
     return {x:p.x+dx*exit,y:p.y+dy*exit};
