@@ -134,8 +134,7 @@ $('fullscreen').onclick=async()=>{
   try{if(document.fullscreenElement)await document.exitFullscreen();else await $('mapPanel').requestFullscreen();}
   catch{$('status').textContent='Full screen is unavailable. Maximize the browser window or use the map controls.';}
 };
-function frameSite(site){topologyView.focus(site,Network.impact(state.adj,state.gates,site));}
-new ResizeObserver(()=>{if(topologyView.svg){if(state?.foundSite&&topologyView.points.has(state.foundSite))frameSite(state.foundSite);else topologyView.open();}}).observe($('map'));
+new ResizeObserver(()=>topologyView.reframe()).observe($('map'));
 document.addEventListener('fullscreenchange',()=>{$('fullscreenLabel').textContent=document.fullscreenElement?'Exit full screen':'Full screen';});
 
 $('impactSite').oninput=()=>{if(state){state.affected=new Set();draw();}$('impactResult').value='';$('copyImpact').disabled=true;$('copyLabel').textContent='Copy list';$('impactSummary').textContent='Choose Calculate impact to refresh the list.';};
@@ -149,7 +148,7 @@ function calculateImpact(){
   const result=Network.impact(state.adj,state.gates,site);
   state.affected=new Set(result);
   if(gateway){filterGateways();$('gneSelect').value=gateway;state.foundSite=site;$('search').value=site;}
-  draw();if(gateway){topologyView.focus(site,result);$('searchStatus').textContent=`${site} · ${result.length} impacted · ${gateway}`;}
+  draw();if(gateway){topologyView.fit(new Set([gateway,...result]));$('searchStatus').textContent=`${site} · ${result.length} impacted · ${gateway}`;}
   $('impactResult').value=result.join(',');$('copyImpact').disabled=!result.length;
   $('impactSummary').textContent=`${site} — Impact: ${result.length} ${result.length===1?'site':'sites'}, including this site. ${gateway?'Assigned GNE: '+gateway:'No GNE route is available to determine dependencies.'}`;
 }
@@ -173,7 +172,7 @@ function findSite(){
   const gateway=state.assignment.owner.get(site),hops=state.assignment.depth.get(site);
   if(!gateway){$('gneSelect').value='';draw();$('searchStatus').textContent=site+' has no route to any GNE in this data.';return;}
   filterGateways();$('gneSelect').value=gateway;
-  draw();frameSite(site);
+  draw();topologyView.focus(site);
   $('searchStatus').textContent=`${site} → ${gateway} · ${hops} ${hops===1?'hop':'hops'}`;
 }
 for(const id of ['links','gates'])$(id).addEventListener('change',()=>{

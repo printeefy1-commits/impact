@@ -157,7 +157,7 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     await page.evaluate(()=>{state.links.push(['C01M001','A01S001'],['A01S001','C01M001']);draw();});
     assert.equal(await page.locator('#map .topology-edges > line').count(),4);
     assert.equal(await page.locator('#map .topology-edges > path').count(),0);
-    assert.ok(parseInt(await page.locator('#zoomLabel').textContent(),10)<=38);
+    assert.equal(await page.locator('#zoomLabel').textContent(),'32%');
     const oldZoom=await page.locator('#zoomLabel').textContent();
     await page.click('#zoomIn');assert.notEqual(await page.locator('#zoomLabel').textContent(),oldZoom);
     await page.click('#centerMap');assert.equal(await page.locator('#zoomLabel').textContent(),'100%');
@@ -221,22 +221,38 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     assert.equal(await page.inputValue('#impactResult'),'A44X003,A44X004');
     const framing=await page.evaluate(()=>{
       const map=document.getElementById('map'),area=map.getBoundingClientRect();
-      const root=document.querySelector('[data-node="A44X003"]'),matrix=root.getScreenCTM();
+      const bounds=['A44X003','A44X004'].map(name=>document.querySelector('[data-node="'+name+'"]').getBoundingClientRect());
+      const cx=(Math.min(...bounds.map(b=>b.left))+Math.max(...bounds.map(b=>b.right)))/2,cy=(Math.min(...bounds.map(b=>b.top))+Math.max(...bounds.map(b=>b.bottom)))/2;
       const contained=['A44X003','A44X004'].every(name=>{
         const b=document.querySelector('[data-node="'+name+'"]').getBoundingClientRect();
         return b.left>=area.left&&b.top>=area.top&&b.right<=area.right&&b.bottom<=area.bottom;
       });
-      return {contained,x:(matrix.e-area.left)/area.width,y:(matrix.f-area.top)/area.height};
+      return {contained,x:(cx-area.left)/area.width,y:(cy-area.top)/area.height};
     });
     assert.ok(framing.contained);
-    assert.ok(Math.abs(framing.x-.5)<.005&&Math.abs(framing.y-.25)<.005);
+    assert.ok(Math.abs(framing.x-.5)<.005&&Math.abs(framing.y-.5)<.005);
 
-    assert.ok(parseInt(await page.textContent('#zoomLabel'),10)<=38);
+    assert.ok(parseInt(await page.textContent('#zoomLabel'),10)>0);
     await page.click('#zoomIn');
     await page.fill('#search','44X004');
-    assert.ok(parseInt(await page.textContent('#zoomLabel'),10)<=38);
+    assert.equal(await page.textContent('#zoomLabel'),'32%');
     await page.fill('#search','A44X003');
-    assert.ok(parseInt(await page.textContent('#zoomLabel'),10)<=38);
+    assert.equal(await page.textContent('#zoomLabel'),'32%');
+    const assertGatewayCentered=async()=>{
+      const position=await page.evaluate(()=>{const area=document.getElementById('map').getBoundingClientRect(),m=document.querySelector('[data-node="A44X003"]').getScreenCTM();return {x:(m.e-area.left)/area.width,y:(m.f-area.top)/area.height};});
+      assert.ok(Math.abs(position.x-.5)<.005&&Math.abs(position.y-.5)<.005);
+    };
+    await assertGatewayCentered();
+    await page.selectOption('#gneSelect','A44X003');
+    assert.equal(await page.textContent('#zoomLabel'),'32%');await assertGatewayCentered();
+    await page.fill('#impactSite','44X004');await page.click('#calculateImpact');
+    assert.equal(await page.inputValue('#impactResult'),'A44X004');
+    await page.setViewportSize({width:520,height:844});
+    await page.waitForFunction(()=>{
+      const area=document.getElementById('map').getBoundingClientRect(),boxes=['A44X003','A44X004'].map(name=>document.querySelector('[data-node="'+name+'"]').getBoundingClientRect());
+      const x=(Math.min(...boxes.map(b=>b.left))+Math.max(...boxes.map(b=>b.right)))/2,y=(Math.min(...boxes.map(b=>b.top))+Math.max(...boxes.map(b=>b.bottom)))/2;
+      return boxes.every(b=>b.left>=area.left&&b.right<=area.right&&b.top>=area.top&&b.bottom<=area.bottom)&&Math.abs(x-area.left-area.width/2)<2&&Math.abs(y-area.top-area.height/2)<2;
+    });
     // Special sites survive import, lookup, impact, downloads and re-import.
     await resetGatewayAdditions();
     const specialCSV='Source NE Name,Sink NE Name,Link Name\nA16X001,A16-SCE1-PEPSI-050,\nA16SCE1-PEPSI050,NE(160-32630),\nA16SCE1-PEPSI050,A16SE01-sikaalgérie-062_E-band,\nA16X001,A16W1043 EB V,\n,,A16W1043-A16WX1055\n';

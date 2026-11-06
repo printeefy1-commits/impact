@@ -30,7 +30,7 @@
   }
   class View{
     constructor(container,onZoom){this.container=container;this.onZoom=onZoom;this.clear();}
-    clear(){this.key=null;this.svg=null;this.points=null;this.selected=new Set();this.camera={x:0,y:0,k:1};this.onZoom?.(1);}
+    clear(){this.key=null;this.svg=null;this.points=null;this.selected=new Set();this.autoFrame=null;this.camera={x:0,y:0,k:1};this.onZoom?.(1);}
     render({key,branch,links,failed='',affected=new Set(),query,showExtra,onSelectionChange}){
       const changed=this.key!==key;
       if(changed){this.points=layout(branch).points;this.key=key;this.selected=new Set();}
@@ -116,31 +116,26 @@
     applyCamera(){if(!this.layer)return;const c=this.camera;this.layer.setAttribute('transform',`translate(${c.x} ${c.y}) scale(${c.k})`);this.onZoom?.(c.k);}
     fit(names=this.points?.keys()){
       if(!this.svg)return;
+      names=[...names];this.autoFrame={type:'fit',names};
       let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;
       for(const name of names){const p=this.points.get(name);if(!p)continue;const box=this.nodeElements.get(name).getBBox();left=Math.min(left,p.x+box.x-15);right=Math.max(right,p.x+box.x+box.width+15);top=Math.min(top,p.y+box.y-15);bottom=Math.max(bottom,p.y+box.y+box.height+15);}
       const w=this.container.clientWidth,h=this.container.clientHeight,k=Math.min(1.35,(w-40)/(right-left),(h-40)/(bottom-top));
       this.camera={k,x:(w-(right-left)*k)/2-left*k,y:(h-(bottom-top)*k)/2-top*k};this.applyCamera();
     }
-    focus(site,targets=[site]){
+    focus(site){
       const root=this.points?.get(this.key);if(!this.svg||!root||!this.points.has(site))return;
-      const names=new Set(site===this.key?this.points.keys():targets);names.add(this.key);names.add(site);
-      const w=this.container.clientWidth,h=this.container.clientHeight;
-      const anchor={x:w*.5,y:h*.25},padding=16,top=Math.min(70,h*.12);
-      let k=.38;
-      for(const name of names){
-        const p=this.points.get(name),node=this.nodeElements.get(name);if(!p||!node)continue;
-        const box=node.getBBox(),left=p.x+box.x-root.x,right=left+box.width,up=p.y+box.y-root.y,down=up+box.height;
-        if(left<0)k=Math.min(k,(anchor.x-padding)/-left);
-        if(right>0)k=Math.min(k,(w-padding-anchor.x)/right);
-        if(up<0)k=Math.min(k,(anchor.y-top)/-up);
-        if(down>0)k=Math.min(k,(h-padding-anchor.y)/down);
-      }
-      k=Math.max(Number.EPSILON,k);
-      this.camera={k,x:anchor.x-root.x*k,y:anchor.y-root.y*k};this.applyCamera();
+      const k=.32;this.autoFrame={type:'gateway'};
+      this.camera={k,x:this.container.clientWidth/2-root.x*k,y:this.container.clientHeight/2-root.y*k};this.applyCamera();
     }
-    center(){if(!this.svg)return;const p=this.points.get(this.key);this.camera={k:1,x:this.container.clientWidth/2-p.x,y:this.container.clientHeight/2-p.y};this.applyCamera();}
+    reframe(){
+      if(!this.svg)return;
+      if(this.autoFrame?.type==='fit')this.fit(this.autoFrame.names);
+      else if(this.autoFrame?.type==='center')this.center();
+      else if(this.autoFrame?.type==='gateway')this.focus(this.key);
+    }
+    center(){if(!this.svg)return;this.autoFrame={type:'center'};const p=this.points.get(this.key);this.camera={k:1,x:this.container.clientWidth/2-p.x,y:this.container.clientHeight/2-p.y};this.applyCamera();}
     zoom(factor,x=this.container.clientWidth/2,y=this.container.clientHeight/2){
-      if(!this.svg)return;const c=this.camera,k=Math.max(.001,Math.min(4,c.k*factor)),ratio=k/c.k;
+      if(!this.svg)return;this.autoFrame=null;const c=this.camera,k=Math.max(.001,Math.min(4,c.k*factor)),ratio=k/c.k;
       this.camera={k,x:x-(x-c.x)*ratio,y:y-(y-c.y)*ratio};this.applyCamera();
     }
     bindInteractions(svg){
