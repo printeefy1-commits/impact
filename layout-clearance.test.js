@@ -28,3 +28,13 @@ test('compact a distant branch without stretching its internal main links',()=>{
  assert.ok(after.reduce((a,b)=>a+b)<before.reduce((a,b)=>a+b)*.5);
  assert.deepEqual(C.obstacles(points,parts,edges),[]);assert.deepEqual(points.get('A'),{x:0,y:0});
 });
+
+test('reserve wrapped names when expanding and compacting branches',()=>{
+ const points=new Map([['A',{x:0,y:0}],['B',{x:0,y:200}],['C',{x:0,y:400}]]);
+ const parts=new Map([...points.keys()].map(n=>[n,boxes]));
+ const spacing=new Map([...points.keys()].map(n=>[n,[{x:-90,y:-75,width:180,height:310}]]));
+ const edges=[{a:'A',b:'B',tree:true},{a:'B',b:'C',tree:true}];
+ C.arrange(points,parts,edges,'A',spacing);
+ assert.ok(points.get('B').y>=310);assert.ok(points.get('C').y-points.get('B').y>=310);
+ assert.deepEqual(points.get('A'),{x:0,y:0});assert.deepEqual(C.obstacles(points,parts,edges),[]);
+});

@@ -16,11 +16,11 @@
     }
     return found;
   }
-  function compactLinks(points,parts,edges){
+  function compactLinks(points,parts,edges,spacing=parts){
     const tree=edges.filter(e=>e.tree),children=new Map([...points.keys()].map(n=>[n,[]]));
     for(const e of tree)children.get(e.a).push(e.b);
     const length=e=>{const a=points.get(e.a),b=points.get(e.b);return Math.hypot(a.x-b.x,a.y-b.y);};
-    const overlap=(a,b)=>{const p=points.get(a),q=points.get(b);return parts.get(a).some(r=>parts.get(b).some(s=>p.x+r.x<q.x+s.x+s.width&&p.x+r.x+r.width>q.x+s.x&&p.y+r.y<q.y+s.y+s.height&&p.y+r.y+r.height>q.y+s.y));};
+    const overlap=(a,b)=>{const p=points.get(a),q=points.get(b);return spacing.get(a).some(r=>spacing.get(b).some(s=>p.x+r.x<q.x+s.x+s.width&&p.x+r.x+r.width>q.x+s.x&&p.y+r.y<q.y+s.y+s.height&&p.y+r.y+r.height>q.y+s.y));};
     function valid(group,moved,fixed){
       for(const a of moved)for(const b of fixed)if(overlap(a,b))return false;
       for(const e of edges){
@@ -56,12 +56,22 @@
       if(!changed)break;
     }
   }
-  function arrange(points,parts,edges,root){
+  function arrange(points,parts,edges,root,spacing=parts){
+    // Reserve the complete icon-and-name footprint, including wrapped labels.
+    // Uniform expansion preserves the radial order and existing straight-line planarity.
+    const names=[...points.keys()];
+    function crowded(){for(let i=0;i<names.length;i++)for(let j=i+1;j<names.length;j++){
+      const a=names[i],b=names[j],p=points.get(a),q=points.get(b);
+      if(spacing.get(a).some(r=>spacing.get(b).some(s=>p.x+r.x<q.x+s.x+s.width&&p.x+r.x+r.width>q.x+s.x&&p.y+r.y<q.y+s.y+s.height&&p.y+r.y+r.height>q.y+s.y)))return true;
+    }return false;}
+    for(let step=0;step<80&&crowded();step++){
+      const anchor=points.get(root);for(const [name,p] of points)if(name!==root)points.set(name,{x:anchor.x+(p.x-anchor.x)*1.05,y:anchor.y+(p.y-anchor.y)*1.05});
+    }
     const incident=new Map([...points.keys()].map(n=>[n,[]]));
     for(const edge of edges){incident.get(edge.a).push(edge);incident.get(edge.b).push(edge);}
     const blocked=(edge,name)=>{if(edge.a===name||edge.b===name)return false;const p=points.get(name);return parts.get(name).some(r=>intersects(points.get(edge.a),points.get(edge.b),{...r,x:p.x+r.x,y:p.y+r.y}));};
     function local(name){let count=0;for(const edge of edges)if(blocked(edge,name))count++;for(const edge of incident.get(name))for(const other of points.keys())if(blocked(edge,other))count++;return count;}
-    function collisions(name){const p=points.get(name);let count=0;for(const [other,q] of points){if(other===name)continue;if(parts.get(name).some(a=>parts.get(other).some(b=>p.x+a.x<q.x+b.x+b.width&&p.x+a.x+a.width>q.x+b.x&&p.y+a.y<q.y+b.y+b.height&&p.y+a.y+a.height>q.y+b.y)))count++;}return count;}
+    function collisions(name){const p=points.get(name);let count=0;for(const [other,q] of points){if(other===name)continue;if(spacing.get(name).some(a=>spacing.get(other).some(b=>p.x+a.x<q.x+b.x+b.width&&p.x+a.x+a.width>q.x+b.x&&p.y+a.y<q.y+b.y+b.height&&p.y+a.y+a.height>q.y+b.y)))count++;}return count;}
     function crosses(name){for(const edge of incident.get(name)){if(!edge.tree)continue;for(const other of edges){if(!other.tree||edge.a===other.a||edge.a===other.b||edge.b===other.a||edge.b===other.b)continue;const a=points.get(edge.a),b=points.get(edge.b),c=points.get(other.a),d=points.get(other.b);if(orient(a,b,c)*orient(a,b,d)<-1e-6&&orient(c,d,a)*orient(c,d,b)<-1e-6)return true;}}return false;}
     let conflicts=obstacles(points,parts,edges),expansions=0;
     for(let round=0;conflicts.length&&round<160;round++){
@@ -87,7 +97,7 @@
       }
       conflicts=obstacles(points,parts,edges);
     }
-    if(!conflicts.length)compactLinks(points,parts,edges);
+    if(!conflicts.length)compactLinks(points,parts,edges,spacing);
     return conflicts;
   }
   // Clip a straight segment beyond the endpoint's protected device bounds.

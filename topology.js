@@ -69,15 +69,17 @@
       }
       this.container.replaceChildren(svg);
       for(const node of this.nodeElements.values())wrapName(node.querySelector('.node-name'),node.querySelector('.node-label-bg'),node.classList.contains('gateway-node'));
-      this.parts=new Map();this.attachments=new Map();
+      this.parts=new Map();this.attachments=new Map();this.spacing=new Map();
       for(const [name,node] of this.nodeElements){
         const scale=name===this.key?1.8:1.4,device=node.querySelector('.device-icon').getBBox(),pad=9;
         this.parts.set(name,[{x:device.x*scale-pad,y:device.y*scale-pad,width:device.width*scale+pad*2,height:device.height*scale+pad*2}]);
+        const footprint=node.getBBox();
+        this.spacing.set(name,[{x:footprint.x-14,y:footprint.y-14,width:footprint.width+28,height:footprint.height+28}]);
         const body=node.querySelector('.device-icon>rect').getBBox();
         this.attachments.set(name,[{x:body.x*scale,y:body.y*scale,width:body.width*scale,height:body.height*scale}]);
       }
       if(changed){
-        this.obstructions=clearance.arrange(this.points,this.parts,this.edges,this.key);
+        this.obstructions=clearance.arrange(this.points,this.parts,this.edges,this.key,this.spacing);
         for(const [name,p] of this.points)this.nodeElements.get(name).setAttribute('transform',`translate(${p.x} ${p.y})`);
       }
       this.updateEdges();
