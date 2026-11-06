@@ -245,6 +245,15 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     await assertGatewayCentered();
     await page.selectOption('#gneSelect','A44X003');
     assert.equal(await page.textContent('#zoomLabel'),'32%');await assertGatewayCentered();
+    const savedPosition=await page.evaluate(()=>({...topologyView.points.get('A44X004')}));
+    await page.evaluate(()=>{const root=topologyView.points.get('A44X003');topologyView.points.set('A44X004',{x:root.x+10000,y:root.y+3000});});
+    await page.fill('#search','44X004');
+    assert.ok(parseInt(await page.textContent('#zoomLabel'),10)<32);
+    await assertGatewayCentered();
+    assert.ok(await page.evaluate(()=>{const area=document.getElementById('map').getBoundingClientRect(),b=document.querySelector('[data-node="A44X004"]').getBoundingClientRect();return b.left>=area.left&&b.right<=area.right&&b.top>=area.top&&b.bottom<=area.bottom;}));
+    await page.evaluate(position=>topologyView.points.set('A44X004',position),savedPosition);
+    await page.fill('#search','A44X003');await page.fill('#search','44X004');
+    assert.equal(await page.textContent('#zoomLabel'),'32%');
     await page.fill('#impactSite','44X004');await page.click('#calculateImpact');
     assert.equal(await page.inputValue('#impactResult'),'A44X004');
     await page.setViewportSize({width:520,height:844});

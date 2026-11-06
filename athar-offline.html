@@ -877,14 +877,26 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     }
     focus(site){
       const root=this.points?.get(this.key);if(!this.svg||!root||!this.points.has(site))return;
-      const k=.32;this.autoFrame={type:'gateway'};
-      this.camera={k,x:this.container.clientWidth/2-root.x*k,y:this.container.clientHeight/2-root.y*k};this.applyCamera();
+      const w=this.container.clientWidth,h=this.container.clientHeight;let k=.32;
+      if(site!==this.key){
+        const p=this.points.get(site),box=this.nodeElements.get(site).getBBox();
+        const left=p.x+box.x-root.x,right=left+box.width,top=p.y+box.y-root.y,bottom=top+box.height;
+        if(left*k<-w/2||right*k>w/2||top*k<-h/2||bottom*k>h/2){
+          const padding=16;
+          if(left<0)k=Math.min(k,(w/2-padding)/-left);
+          if(right>0)k=Math.min(k,(w/2-padding)/right);
+          if(top<0)k=Math.min(k,(h/2-padding)/-top);
+          if(bottom>0)k=Math.min(k,(h/2-padding)/bottom);
+        }
+      }
+      this.autoFrame={type:'gateway',site};
+      this.camera={k,x:w/2-root.x*k,y:h/2-root.y*k};this.applyCamera();
     }
     reframe(){
       if(!this.svg)return;
       if(this.autoFrame?.type==='fit')this.fit(this.autoFrame.names);
       else if(this.autoFrame?.type==='center')this.center();
-      else if(this.autoFrame?.type==='gateway')this.focus(this.key);
+      else if(this.autoFrame?.type==='gateway')this.focus(this.autoFrame.site||this.key);
     }
     center(){if(!this.svg)return;this.autoFrame={type:'center'};const p=this.points.get(this.key);this.camera={k:1,x:this.container.clientWidth/2-p.x,y:this.container.clientHeight/2-p.y};this.applyCamera();}
     zoom(factor,x=this.container.clientWidth/2,y=this.container.clientHeight/2){
