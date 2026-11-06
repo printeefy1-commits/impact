@@ -14,3 +14,9 @@ main{padding-top:18px}.sr-only{position:absolute;width:1px;height:1px;padding:0;
 
 .map .network-node:hover .device-icon>rect:first-child{fill:#075b38}.map .selected .device-icon>rect:first-child{stroke:#ff3038;stroke-width:5px}.map .gateway-node.selected .node-label-bg{stroke:#ff3038}
 .map .node-label-bg{pointer-events:all}
+/* Fill the browser height instead of forcing a square canvas. */
+.map-stage{height:min(70dvh,650px);padding-bottom:0;aspect-ratio:auto;min-height:300px}
+@media(min-width:851px){body{height:100vh;height:100dvh;overflow:hidden;display:flex;flex-direction:column}.topbar{flex:0 0 1cm}main{width:100%;flex:1;min-height:0;padding:18px 28px 14px;display:flex}.workspace{width:100%;min-height:0;flex:1}.content{min-height:0;display:flex;flex-direction:column}.map-panel{flex:1;min-height:0;display:flex;flex-direction:column}.map-panel .compact-heading{flex:0 0 auto}.map-stage{height:auto;min-height:0;flex:1}.workspace>aside{min-height:0;overflow:auto}}
+.map-panel:fullscreen .map-stage{height:auto;min-height:0;padding-bottom:0;flex:1}
+@media(min-width:851px) and (max-width:1100px){.map-panel .compact-heading{height:auto;flex-wrap:wrap;padding-block:4px}.compact-heading .map-toolbar{flex-basis:100%;flex-wrap:wrap;padding-bottom:2px}}
+@media(min-width:851px){main{max-width:none}.topbar{padding-inline:28px}}

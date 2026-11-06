@@ -26,7 +26,16 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     assert.equal(await page.locator('.map-stage .canvas-bar').count(),1);
     assert.equal(await page.locator('.legend').count(),0);
     assert.ok(await page.locator('.topbar').evaluate(el=>Math.abs(el.getBoundingClientRect().height-96/2.54)<1));
-    assert.ok(await page.locator('.map-stage').evaluate(el=>Math.abs(el.clientWidth-el.clientHeight)<2));
+    assert.ok(await page.evaluate(()=>document.getElementById('mapPanel').getBoundingClientRect().bottom<=innerHeight));
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+1));
+    for(const [width,height] of [[1920,1080],[1100,650],[900,600],[1280,720]]){
+      await page.setViewportSize({width,height});
+      assert.ok(await page.evaluate(()=>{
+        const map=document.getElementById('mapPanel').getBoundingClientRect(),side=document.querySelector('aside').getBoundingClientRect();
+        return map.bottom<=innerHeight&&map.bottom>=innerHeight-20&&Math.abs(map.bottom-side.bottom)<2&&document.documentElement.scrollWidth<=innerWidth;
+      }));
+    }
+
     assert.equal(await page.locator('.stats').evaluate(el=>getComputedStyle(el).opacity),'0.5');
     await page.locator('.stats').hover();await page.waitForTimeout(180);
     assert.equal(await page.locator('.stats').evaluate(el=>getComputedStyle(el).opacity),'1');
