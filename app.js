@@ -104,9 +104,11 @@ function draw(){
 $('load').onclick=async()=>{const button=$('load');button.disabled=true;$('status').hidden=true;
   cleanedFiles=null;$('downloadLinks').disabled=true;$('downloadGates').disabled=true;
   try{
+  const selectedGateway=$('gneSelect').value;
   const gatewayFile=$('gates').files[0];
-  const [l,g]=await Promise.all([readCells($('links').files[0],'links'),gatewayFile?readCells(gatewayFile,'gates'):Promise.resolve([])]);
-  const pl=Network.parseLinks(l),pg=Network.parseGates(g);
+  const linksFile=$('links').files[0];
+  const [l,g]=await Promise.all([linksFile?readCells(linksFile,'links'):Promise.resolve(null),gatewayFile?readCells(gatewayFile,'gates'):Promise.resolve([])]);
+  const pl=l?Network.parseLinks(l):{valid:state?.links||DefaultLinks.links,invalid:[]},pg=Network.parseGates(g);
   if(!pl.valid.length)throw Error('No valid links found in the selected file.');
   if(gatewayFile&&!pg.valid.length)throw Error('The optional GNE file contains no gateway names. The built-in list is still available.');
   const gates=[...new Set([...DefaultGNE,...additionalGates,...pg.valid.flat()])];
@@ -118,6 +120,7 @@ $('load').onclick=async()=>{const button=$('load');button.disabled=true;$('statu
   if(confirmed.added.length)messages.push('Applied your confirmed A33T001 ↔ A33CA01 connection. It is included in the cleaned links export.');
   setData(confirmed.links,gates,ignoredCount,messages.join(' '));
   prepareDownloads(confirmed.links,gates);
+  if(!linksFile&&gates.includes(selectedGateway)){$('gneSelect').value=selectedGateway;draw();topologyView.focus(selectedGateway);}
   additionalGates=gates.slice(DefaultGNE.length);
   if(added){try{localStorage.setItem(gatewayStorageKey,JSON.stringify(additionalGates));}catch{$('status').hidden=false;$('status').textContent+=' Browser storage is unavailable; keep the GNE CSV to reload these additions next time.';}}
 }catch(e){$('status').hidden=false;$('status').textContent='Import failed: '+e.message;}finally{button.disabled=false;}};
@@ -176,7 +179,7 @@ function findSite(){
   $('searchStatus').textContent=`${site} → ${gateway} · ${hops} ${hops===1?'hop':'hops'}`;
 }
 for(const id of ['links','gates'])$(id).addEventListener('change',()=>{
-  $(id+'Name').textContent=$(id).files[0]?.name||(id==='links'?'Choose a link or MLR file':'Optional — add new gateways');
+  $(id+'Name').textContent=$(id).files[0]?.name||(id==='links'?'Built-in MLR links':'Optional — add new gateways');
 });
 $('copyImpact').onclick=async()=>{
   const value=$('impactResult').value;if(!value)return;
@@ -189,3 +192,12 @@ $('copyImpact').onclick=async()=>{
     $('copyLabel').textContent=copied?'Copied':'Selected — press Ctrl+C';
   }
 };
+
+// The bundled daily snapshot works from file:// without a fetch or upload.
+try{
+  const gates=[...new Set([...DefaultGNE,...additionalGates])];
+  const bundled=Network.applyConnections(DefaultLinks.links,gates);
+  setData(bundled.links,gates);
+  prepareDownloads(bundled.links,gates);
+  $('gneSelect').value='A06X232';draw();topologyView.focus('A06X232');
+}catch(error){$('status').hidden=false;$('status').textContent='The built-in network could not open: '+error.message;}

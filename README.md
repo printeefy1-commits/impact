@@ -4,11 +4,11 @@ An offline microwave network explorer with a global site finder, radial topology
 
 ## Run
 
-Open **athar-offline.html** in Chrome or Edge. It contains the interface, icons, and Excel reader in one file. Alternatively, open `index.html` alongside its supporting files, or run `python -m http.server 8000` from this folder.
+Open **athar-offline.html** in Chrome or Edge. It contains the interface, icons, Excel reader, and bundled network data in one file. Alternatively, open `index.html` alongside its supporting files, or run `python -m http.server 8000` from this folder.
 
 ## Import network data
 
-Upload your daily links file, then choose **Build network map**. The application already includes the confirmed **272 GNE gateways**: the 251 from the Ethernet-port analysis, A16X589 from the MLR name review, and 20 earlier confirmed gateways absent from the port analysis. This retains the complete original 191-gateway list. Supported formats are XLSX, CSV, and TXT, up to 10 MB per file. Only the first Excel worksheet is read; legacy XLS is not supported.
+The latest bundled MLR network is built automatically when the page opens, with **A06X232** selected at 32% zoom. No upload or button click is required, including in the offline edition. To replace the bundled links for the current session, optionally upload a newer daily links file and choose **Update network map**. Without a links upload, updates reuse the active network, so a GNE file can be added on its own. Reloading restores the bundled link snapshot and keeps saved GNE additions. The application already includes the confirmed **272 GNE gateways**: the 251 from the Ethernet-port analysis, A16X589 from the MLR name review, and 20 earlier confirmed gateways absent from the port analysis. This retains the complete original 191-gateway list. Supported formats are XLSX, CSV, and TXT, up to 10 MB per file. Only the first Excel worksheet is read; legacy XLS is not supported.
 
 **Add GNE gateways** is optional. Its cleaned names are merged with the built-in list and any earlier additions, with duplicates removed. New gateways are saved locally in this browser for subsequent daily imports and page reloads. Storage belongs to the browser and page location; keep the downloadable GNE CSV when moving to another browser or computer. If storage is unavailable, additions work for the current session and the import message explains how to retain them. The GNE CSV contains the complete active list, including additions.
 
@@ -55,3 +55,5 @@ The entered site is listed first; other names are sorted. Use **Copy list** or s
 Browser checks cover CSV/XLSX import, a 150,000-cell rejection report, cleaned exports and re-import, ownership ties, global site search, map interactions, special-name normalization and round trips, and comma-separated impact results.
 
 ExcelJS 4.4.0 is bundled in `vendor/` under the MIT license. System fonts and local icons keep the application independent of network access.
+
+To publish a newer bundled MLR snapshot, run `python build_default_links.py path/to/MLR.xlsx` (requires openpyxl and Node.js), then `python build_offline.py`. The snapshot stores normalized, undirected endpoint pairs and uses the website parser for consistent cleanup.

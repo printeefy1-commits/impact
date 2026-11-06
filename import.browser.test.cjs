@@ -16,6 +16,9 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
     await page.goto(`http://127.0.0.1:${server.address().port}`);
     await page.context().setOffline(true);
+    assert.equal(await page.inputValue('#gneSelect'),'A06X232');
+    assert.equal(await page.locator('#map svg').count(),1);
+    assert.equal(await page.locator('#downloadLinks').isEnabled(),true);
     const resetGatewayAdditions=async()=>{
       await page.context().setOffline(false);await page.evaluate(()=>localStorage.clear());
       await page.reload();await page.context().setOffline(true);
@@ -313,7 +316,17 @@ test('daily links use built-in GNEs and optional additions persist across reload
     assert.equal(await page.locator('#gatewayInfo').count(),0);
     assert.equal(await page.locator('label[for=impactSite]').count(),0);
     assert.match(await page.getAttribute('#impactSite','placeholder'),/NE or GNE name/);
-    await page.click('#load');assert.match(await page.textContent('#status'),/Choose a links file first/);
+    assert.equal(await page.inputValue('#gneSelect'),'A06X232');
+    assert.equal(await page.textContent('#nodesCount'),'5183');
+    assert.equal(await page.textContent('#offlineCount'),'0');
+    assert.equal(await page.locator('[data-node="A06X232"]').count(),1);
+    assert.equal(await page.textContent('#zoomLabel'),'32%');
+    assert.equal(await page.locator('#links').evaluate(input=>input.files.length),0);
+    const bundledCount=await page.evaluate(()=>state.links.length);
+    await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
+    assert.equal(await page.evaluate(()=>state.links.length),bundledCount);
+    assert.equal(await page.inputValue('#gneSelect'),'A06X232');
+    assert.ok(await page.locator('#status').evaluate(el=>el.hidden));
     const links='link\nA16X589-A99X100\nA99X100-A99X101\nO46T078-O46X158\n';
     await page.setInputFiles('#links',{name:'day-one.csv',mimeType:'text/csv',buffer:Buffer.from(links)});
     await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
@@ -340,6 +353,15 @@ test('daily links use built-in GNEs and optional additions persist across reload
     assert.deepEqual(exported,[...defaultGates,'A99X100']);
     await page.reload();
     assert.deepEqual(await page.evaluate(()=>additionalGates),['A99X100']);
+    assert.equal(await page.inputValue('#gneSelect'),'A06X232');
+    assert.equal(await page.textContent('#gatesCount'),'273');
+    await page.setInputFiles('#gates',{name:'gate-only.csv',mimeType:'text/csv',buffer:Buffer.from('GNE\nA16X617\n')});
+    await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
+    assert.equal(await page.textContent('#gatesCount'),'274');
+    assert.ok(await page.evaluate(()=>state.assignment.owner.get('A16X617')==='A16X617'));
+    // This temporary gate-only test must not affect the following daily-import assertions.
+    await page.evaluate(()=>{additionalGates=['A99X100'];localStorage.setItem(gatewayStorageKey,JSON.stringify(additionalGates));});
+    await page.setInputFiles('#gates',[]);
     assert.equal(await page.locator('#gates').evaluate(input=>input.files.length),0);
     await page.setInputFiles('#links',{name:'day-two.csv',mimeType:'text/csv',buffer:Buffer.from('link\nA16X589-A99X100\nA99X100-A99X101\nA99X101-A99X102\n')});
     await page.click('#load');await page.waitForFunction(()=>!document.getElementById('load').disabled);
