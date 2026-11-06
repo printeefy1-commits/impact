@@ -69,10 +69,12 @@
       }
       this.container.replaceChildren(svg);
       for(const node of this.nodeElements.values())wrapName(node.querySelector('.node-name'),node.querySelector('.node-label-bg'),node.classList.contains('gateway-node'));
-      this.parts=new Map();
+      this.parts=new Map();this.attachments=new Map();
       for(const [name,node] of this.nodeElements){
         const scale=name===this.key?1.8:1.4,device=node.querySelector('.device-icon').getBBox(),pad=9;
         this.parts.set(name,[{x:device.x*scale-pad,y:device.y*scale-pad,width:device.width*scale+pad*2,height:device.height*scale+pad*2}]);
+        const body=node.querySelector('.device-icon>rect').getBBox();
+        this.attachments.set(name,[{x:body.x*scale,y:body.y*scale,width:body.width*scale,height:body.height*scale}]);
       }
       if(changed){
         this.obstructions=clearance.arrange(this.points,this.parts,this.edges,this.key);
@@ -101,7 +103,7 @@
     clearSelection(){this.selected=new Set();this.syncSelection();}
     updateEdges(){
       for(const {a,b,path} of this.edges){
-        const start=clearance.endPoint(this.points.get(a),this.points.get(b),this.parts.get(a)),end=clearance.endPoint(this.points.get(b),this.points.get(a),this.parts.get(b));
+        const start=clearance.endPoint(this.points.get(a),this.points.get(b),this.attachments.get(a)),end=clearance.endPoint(this.points.get(b),this.points.get(a),this.attachments.get(b));
         const aPoint=this.points.get(a),bPoint=this.points.get(b);
         if((end.x-start.x)*(bPoint.x-aPoint.x)+(end.y-start.y)*(bPoint.y-aPoint.y)<0){const x=(start.x+end.x)/2,y=(start.y+end.y)/2;start.x=end.x=x;start.y=end.y=y;}
         const coordinates={x1:start.x,y1:start.y,x2:end.x,y2:end.y};

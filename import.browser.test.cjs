@@ -116,6 +116,12 @@ test('standalone edition imports large CSV reports and XLSX without argument ove
     ],['A01S001']));
     await page.selectOption('#gneSelect','A01S001');
     assert.equal(await page.locator('#map .tree-link').count(),3);
+    assert.ok(await page.evaluate(()=>topologyView.edges.every(({a,b,path})=>[[a,'x1','y1'],[b,'x2','y2']].every(([name,x,y])=>{
+      const p=topologyView.points.get(name),r=topologyView.attachments.get(name)[0];
+      const dx=Number(path.getAttribute(x))-p.x,dy=Number(path.getAttribute(y))-p.y;
+      return dx>=r.x-1e-5&&dx<=r.x+r.width+1e-5&&dy>=r.y-1e-5&&dy<=r.y+r.height+1e-5&&Math.min(Math.abs(dx-r.x),Math.abs(dx-r.x-r.width),Math.abs(dy-r.y),Math.abs(dy-r.y-r.height))<1e-5;
+    }))));
+
     assert.equal(await page.evaluate(()=>LayoutClearance.obstacles(topologyView.points,topologyView.parts,topologyView.edges).length),0);
     assert.ok(await page.evaluate(()=>[...topologyView.parts.values()].every(parts=>parts.length===1)));
     assert.ok(await page.evaluate(()=>Boolean(document.querySelector('.topology-edges').compareDocumentPosition(document.querySelector('.topology-nodes'))&Node.DOCUMENT_POSITION_FOLLOWING)));
