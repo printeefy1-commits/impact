@@ -711,6 +711,46 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     }
     return found;
   }
+  function compactLinks(points,parts,edges){
+    const tree=edges.filter(e=>e.tree),children=new Map([...points.keys()].map(n=>[n,[]]));
+    for(const e of tree)children.get(e.a).push(e.b);
+    const length=e=>{const a=points.get(e.a),b=points.get(e.b);return Math.hypot(a.x-b.x,a.y-b.y);};
+    const overlap=(a,b)=>{const p=points.get(a),q=points.get(b);return parts.get(a).some(r=>parts.get(b).some(s=>p.x+r.x<q.x+s.x+s.width&&p.x+r.x+r.width>q.x+s.x&&p.y+r.y<q.y+s.y+s.height&&p.y+r.y+r.height>q.y+s.y));};
+    function valid(group,moved,fixed){
+      for(const a of moved)for(const b of fixed)if(overlap(a,b))return false;
+      for(const e of edges){
+        const status=Number(group.has(e.a))+Number(group.has(e.b)),nodes=status===0?moved:status===2?fixed:points.keys();
+        const a=points.get(e.a),b=points.get(e.b);
+        for(const n of nodes){if(n===e.a||n===e.b)continue;const p=points.get(n);if(parts.get(n).some(r=>intersects(a,b,{...r,x:p.x+r.x,y:p.y+r.y})))return false;}
+      }
+      for(let i=0;i<tree.length;i++)for(let j=i+1;j<tree.length;j++){
+        const e=tree[i],f=tree[j];if(e.a===f.a||e.a===f.b||e.b===f.a||e.b===f.b)continue;
+        const first=Number(group.has(e.a))+Number(group.has(e.b)),second=Number(group.has(f.a))+Number(group.has(f.b));
+        if(first===0&&second===0||first===2&&second===2)continue;
+        const a=points.get(e.a),b=points.get(e.b),c=points.get(f.a),d=points.get(f.b);
+        if(orient(a,b,c)*orient(a,b,d)<-1e-6&&orient(c,d,a)*orient(c,d,b)<-1e-6)return false;
+      }
+      return true;
+    }
+    for(let pass=0;pass<3;pass++){
+      let changed=false;
+      const ordered=tree.slice().sort((a,b)=>length(b)-length(a));
+      for(const edge of ordered){
+        const originalLength=length(edge);if(originalLength<=340)continue;
+        const moved=[edge.b];for(let i=0;i<moved.length;i++)for(const n of children.get(moved[i]))moved.push(n);
+        const group=new Set(moved),fixed=[...points.keys()].filter(n=>!group.has(n)),saved=new Map(moved.map(n=>[n,points.get(n)]));
+        const boundary=edges.filter(e=>group.has(e.a)!==group.has(e.b)),before=boundary.reduce((s,e)=>s+length(e),0);
+        const parent=points.get(edge.a),child=points.get(edge.b);
+        for(const fraction of [.3,.5,.7,.85,.95]){
+          const target=Math.max(280,originalLength*fraction),ratio=1-target/originalLength;
+          for(const [n,p] of saved)points.set(n,{x:p.x+(parent.x-child.x)*ratio,y:p.y+(parent.y-child.y)*ratio});
+          if(boundary.reduce((s,e)=>s+length(e),0)<before-1e-6&&valid(group,moved,fixed)){changed=true;break;}
+          for(const [n,p] of saved)points.set(n,p);
+        }
+      }
+      if(!changed)break;
+    }
+  }
   function arrange(points,parts,edges,root){
     const incident=new Map([...points.keys()].map(n=>[n,[]]));
     for(const edge of edges){incident.get(edge.a).push(edge);incident.get(edge.b).push(edge);}
@@ -742,6 +782,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       }
       conflicts=obstacles(points,parts,edges);
     }
+    if(!conflicts.length)compactLinks(points,parts,edges);
     return conflicts;
   }
   // Clip a straight segment beyond the endpoint's protected device bounds.
@@ -749,7 +790,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     for(const r of boxes){let low=0,high=1,valid=true;for(const [delta,min,max] of [[dx,r.x,r.x+r.width],[dy,r.y,r.y+r.height]]){if(Math.abs(delta)<1e-10){if(min>0||max<0)valid=false;}else{let a=min/delta,b=max/delta;if(a>b)[a,b]=[b,a];low=Math.max(low,a);high=Math.min(high,b);}}if(valid&&low<=high&&high>=0&&low<=1)exit=Math.max(exit,Math.min(1,high));}
     return {x:p.x+dx*exit,y:p.y+dy*exit};
   }
-  const api={arrange,obstacles,intersects,endPoint};if(typeof module!=='undefined')module.exports=api;else root.LayoutClearance=api;
+  const api={arrange,compactLinks,obstacles,intersects,endPoint};if(typeof module!=='undefined')module.exports=api;else root.LayoutClearance=api;
 })(globalThis);
 </script><script>(function(root){
   const radial=typeof module!=='undefined'?require('./radial-layout.js'):root.RadialLayout;
