@@ -1,5 +1,6 @@
 (function(root){
   const radial=typeof module!=='undefined'?require('./radial-layout.js'):root.RadialLayout;
+  const clearance=typeof module!=='undefined'?require('./layout-clearance.js'):root.LayoutClearance;
   const layout=branch=>radial.layout(branch);
   // Each physical adjacency gets one direct segment, clipped to the two device icons.
   function segment(p,q,scaleP=1,scaleQ=1){
@@ -66,8 +67,18 @@
         g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();this.select(n,e.ctrlKey||e.metaKey);}else if(e.key==='Escape'){e.preventDefault();this.clearSelection();}};
         nodes.append(g);this.nodeElements.set(n,g);
       }
-      this.updateEdges();this.container.replaceChildren(svg);
+      this.container.replaceChildren(svg);
       for(const node of this.nodeElements.values())wrapName(node.querySelector('.node-name'),node.querySelector('.node-label-bg'),node.classList.contains('gateway-node'));
+      this.parts=new Map();
+      for(const [name,node] of this.nodeElements){
+        const scale=name===this.key?1.8:1.4,device=node.querySelector('.device-icon').getBBox(),label=node.querySelector('.node-label-bg').getBBox(),pad=9;
+        this.parts.set(name,[{x:device.x*scale-pad,y:device.y*scale-pad,width:device.width*scale+pad*2,height:device.height*scale+pad*2},{x:label.x-pad,y:label.y-pad,width:label.width+pad*2,height:label.height+pad*2}]);
+      }
+      if(changed){
+        this.obstructions=clearance.arrange(this.points,this.parts,this.edges,this.key);
+        for(const [name,p] of this.points)this.nodeElements.get(name).setAttribute('transform',`translate(${p.x} ${p.y})`);
+      }
+      this.updateEdges();
       this.bindInteractions(svg);
       this.syncSelection();
       if(changed)this.open();else this.applyCamera();
@@ -90,7 +101,10 @@
     clearSelection(){this.selected=new Set();this.syncSelection();}
     updateEdges(){
       for(const {a,b,path} of this.edges){
-        const coordinates=segment(this.points.get(a),this.points.get(b),a===this.key?1.8:1.4,b===this.key?1.8:1.4);
+        const start=clearance.endPoint(this.points.get(a),this.points.get(b),this.parts.get(a)),end=clearance.endPoint(this.points.get(b),this.points.get(a),this.parts.get(b));
+        const aPoint=this.points.get(a),bPoint=this.points.get(b);
+        if((end.x-start.x)*(bPoint.x-aPoint.x)+(end.y-start.y)*(bPoint.y-aPoint.y)<0){const x=(start.x+end.x)/2,y=(start.y+end.y)/2;start.x=end.x=x;start.y=end.y=y;}
+        const coordinates={x1:start.x,y1:start.y,x2:end.x,y2:end.y};
         for(const [name,value] of Object.entries(coordinates))path.setAttribute(name,value);
       }
     }
